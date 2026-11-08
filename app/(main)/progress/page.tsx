@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { HistoryList } from "@/components/progress/HistoryList";
 import { StreakBadge } from "@/components/progress/StreakBadge";
+import { MessageDrafts } from "@/components/progress/MessageDrafts";
 import { WeightCheckIn } from "@/components/progress/WeightCheckIn";
 import { Button } from "@/components/ui/Button";
 import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
@@ -80,6 +81,8 @@ export default function ProgressPage() {
       {profile?.trackWeight ? (
         <WeightCheckIn snapshots={snapshots} onSaved={reloadProgress} />
       ) : null}
+
+      {profile ? <MessageDrafts profile={profile} /> : null}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
