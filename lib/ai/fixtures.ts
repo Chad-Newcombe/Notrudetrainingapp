@@ -173,6 +173,14 @@ export function fixturePlanForProfile(profile: UserProfile): TrainingPlan {
   };
 }
 
+export function fixtureReflection(profile: UserProfile): string {
+  const snippet =
+    profile.goalText.length > 80
+      ? `${profile.goalText.slice(0, 77)}…`
+      : profile.goalText;
+  return `Looking back at your week: your goal—“${snippet}”—still guides you. Whatever you did or skipped, you are allowed to reset without shame. What felt like progress, even if small?`;
+}
+
 export function fixtureAcknowledgment(profile: UserProfile): string {
   const snippet =
     profile.goalText.length > 80

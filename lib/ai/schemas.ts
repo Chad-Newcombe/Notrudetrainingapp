@@ -19,3 +19,10 @@ export const planSchema = z.object({
 });
 
 export type PlanSchemaOutput = z.infer<typeof planSchema>;
+
+export const composedMessageBodySchema = z.object({
+  subject: z.string().optional(),
+  body: z.string(),
+});
+
+export type ComposedMessageBodySchema = z.infer<typeof composedMessageBodySchema>;
