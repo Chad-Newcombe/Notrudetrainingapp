@@ -1,7 +1,34 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 import { NotrudeMark } from "@/components/brand/NotrudeMark";
 import { Button } from "@/components/ui/Button";
+import { type DemoProfileId, seedDemoProfile } from "@/lib/demo/seed";
+import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
 
 export default function WelcomePage() {
+  const router = useRouter();
+  const { ready, profile, plan, reload } = useNotrudeStore();
+  const [seeding, setSeeding] = useState<DemoProfileId | null>(null);
+
+  const tryDemo = useCallback(
+    async (id: DemoProfileId) => {
+      setSeeding(id);
+      try {
+        await seedDemoProfile(id);
+        await reload();
+        router.push("/today");
+      } finally {
+        setSeeding(null);
+      }
+    },
+    [reload, router],
+  );
+
+  const continueHref =
+    profile && plan ? "/today" : profile ? "/acknowledgment" : undefined;
+
   return (
     <main className="flex min-h-[100dvh] flex-col justify-between px-6 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="flex flex-1 flex-col justify-center gap-8">
@@ -16,9 +43,45 @@ export default function WelcomePage() {
           </p>
         </div>
       </div>
-      <Button href="/quiz" className="w-full">
-        Start with a short quiz
-      </Button>
+
+      <div className="flex flex-col gap-3">
+        {ready && continueHref ? (
+          <Button href={continueHref} className="w-full">
+            Continue
+          </Button>
+        ) : null}
+
+        {!profile ? (
+          <>
+            <Button href="/quiz" className="w-full" variant={continueHref ? "ghost" : "primary"}>
+              Start with a short quiz
+            </Button>
+            <div className="space-y-2 border-t border-white/10 pt-3">
+              <p className="text-center text-sm text-[var(--muted)]">
+                Or try a demo profile (no quiz)
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  className="w-full sm:flex-1"
+                  variant="ghost"
+                  disabled={seeding != null}
+                  onClick={() => void tryDemo("ultra")}
+                >
+                  {seeding === "ultra" ? "Loading demo…" : "Ultra runner"}
+                </Button>
+                <Button
+                  className="w-full sm:flex-1"
+                  variant="ghost"
+                  disabled={seeding != null}
+                  onClick={() => void tryDemo("gentle-start")}
+                >
+                  {seeding === "gentle-start" ? "Loading demo…" : "Gentle start"}
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </div>
     </main>
   );
 }

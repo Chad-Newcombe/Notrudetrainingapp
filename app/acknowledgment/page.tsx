@@ -13,6 +13,20 @@ export default function AcknowledgmentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
+  const [offline, setOffline] = useState(
+    typeof navigator !== "undefined" ? !navigator.onLine : false,
+  );
+
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,8 +87,16 @@ export default function AcknowledgmentPage() {
         <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
           What I heard
         </h1>
+        {offline ? (
+          <p className="text-sm text-[var(--muted)]">
+            Offline — we&apos;ll use saved demo copy when the server can&apos;t
+            reach AI.
+          </p>
+        ) : null}
         {loading ? (
-          <p className="text-[var(--muted)]">Taking in your goal…</p>
+          <p className="text-[var(--muted)]" aria-live="polite">
+            Taking in your goal…
+          </p>
         ) : (
           <p
             className={`text-lg leading-relaxed text-[var(--ink)] ${
@@ -85,6 +107,14 @@ export default function AcknowledgmentPage() {
           </p>
         )}
       </div>
+      {planLoading ? (
+        <p
+          className="mb-2 text-center text-sm text-[var(--muted)]"
+          aria-live="polite"
+        >
+          Building your week — usually just a moment…
+        </p>
+      ) : null}
       <Button
         className="w-full"
         disabled={loading || planLoading || !profile}

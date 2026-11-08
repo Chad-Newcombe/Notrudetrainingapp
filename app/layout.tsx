@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   description:
     "Empathetic training that meets you where you are.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    apple: "/icons/icon-192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

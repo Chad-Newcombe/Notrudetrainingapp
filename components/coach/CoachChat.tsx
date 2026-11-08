@@ -95,7 +95,7 @@ function CoachChatInner({
   const [input, setInput] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error, clearError } = useChat({
     messages: boot,
     transport: new DefaultChatTransport({
       api: "/api/coach",
@@ -117,6 +117,34 @@ function CoachChatInner({
   });
 
   const busy = status === "submitted" || status === "streaming";
+  const [offline, setOffline] = useState(
+    typeof navigator !== "undefined" ? !navigator.onLine : false,
+  );
+
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+
+  const lastUserText = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === "user") return uiMessageText(m);
+    }
+    return null;
+  }, [messages]);
+
+  const retry = useCallback(() => {
+    clearError();
+    const text = lastUserText;
+    if (text) void sendMessage({ text });
+  }, [clearError, lastUserText, sendMessage]);
 
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -153,6 +181,12 @@ function CoachChatInner({
         <p className="mt-1 text-sm text-[var(--muted)]">
           No guilt, no streak shame — just help for the day you&apos;re in.
         </p>
+        {offline ? (
+          <p className="mt-2 rounded-xl bg-black/20 px-3 py-2 text-xs text-[var(--muted)]">
+            You appear offline. Messages queue locally; coach replies need a
+            connection or demo fixtures from the server.
+          </p>
+        ) : null}
       </div>
 
       <div
@@ -173,6 +207,22 @@ function CoachChatInner({
           </p>
         )}
       </div>
+
+      {error ? (
+        <div
+          className="flex flex-col gap-2 rounded-2xl bg-black/25 px-4 py-3 text-sm text-[var(--ink)]"
+          role="alert"
+        >
+          <p>Coach couldn&apos;t respond right now. Nothing you typed was lost.</p>
+          <button
+            type="button"
+            onClick={() => retry()}
+            className="self-start font-medium text-[var(--accent)] underline-offset-4 hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
 
       <QuickChips onPick={(text) => void submit(text)} disabled={busy} />
 
