@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { HealthConnections } from "@/components/progress/HealthConnections";
 import { HistoryList } from "@/components/progress/HistoryList";
 import { StreakBadge } from "@/components/progress/StreakBadge";
 import { MessageDrafts } from "@/components/progress/MessageDrafts";
@@ -76,6 +77,7 @@ export default function ProgressPage() {
       </div>
 
       <StreakBadge streak={streak} />
+      <HealthConnections />
       <HistoryList logs={logs} plan={plan} />
 
       {profile?.trackWeight ? (

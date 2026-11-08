@@ -11,6 +11,7 @@ import {
   uiMessagesToChat,
   uiMessageText,
 } from "@/lib/coach/messages";
+import { buildHealthSummary } from "@/lib/health/summary";
 import { listChat, listHealth, replaceChat } from "@/lib/store";
 import type { TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
@@ -19,15 +20,6 @@ type Props = {
   plan: TrainingPlan | null;
   logs: WorkoutLog[];
 };
-
-function summarizeHealth(
-  rows: Awaited<ReturnType<typeof listHealth>>,
-): string | undefined {
-  const parts = rows
-    .filter((c) => c.connected && c.sampleSummary)
-    .map((c) => `${c.provider}: ${c.sampleSummary}`);
-  return parts.length > 0 ? parts.join("; ") : undefined;
-}
 
 export function CoachChat({ profile, plan, logs }: Props) {
   const searchParams = useSearchParams();
@@ -43,7 +35,7 @@ export function CoachChat({ profile, plan, logs }: Props) {
       for (const m of stored) {
         createdAtById.current.set(m.id, m.createdAt);
       }
-      setHealthSummary(summarizeHealth(health));
+      setHealthSummary(buildHealthSummary(health));
       setBoot(stored.map(chatMessageToUi));
     })();
   }, []);
