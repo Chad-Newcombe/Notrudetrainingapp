@@ -2,6 +2,7 @@ export type EngagementTone = "gentle" | "steady" | "direct";
 export type EngagementCadence = "brief" | "conversational" | "quiet";
 export type MotivationStyle = "celebrate_wins" | "process_focus" | "accountability";
 export type ChannelPref = "in_app" | "text_style" | "email_outline";
+export type CoachId = "river" | "jax" | "sol" | "nova";
 
 export type UserProfile = {
   goalText: string;
@@ -15,6 +16,7 @@ export type UserProfile = {
   motivation: MotivationStyle;
   channels: ChannelPref[];
   trackWeight: boolean;
+  coachId: CoachId;
   createdAt: string;
 };
 
@@ -72,4 +74,7 @@ export type ComposedMessage = {
   subject?: string;
   body: string;
   createdAt: string;
+  fromCoachId: CoachId;
+  direction: "coach_to_user";
+  deliveredAt: string;
 };

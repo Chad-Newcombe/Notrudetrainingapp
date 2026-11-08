@@ -2,19 +2,23 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { CoachAvatar } from "@/components/coach/CoachAvatar";
+import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
 import { ChoiceCard } from "@/components/ui/ChoiceCard";
 import { ProgressDots } from "@/components/ui/ProgressDots";
+import { COACH_PRESETS, getCoach } from "@/lib/coaches/presets";
 import { saveProfile } from "@/lib/store";
 import type {
   ChannelPref,
+  CoachId,
   EngagementCadence,
   EngagementTone,
   MotivationStyle,
   UserProfile,
 } from "@/lib/types";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 const TONE_OPTIONS: { value: EngagementTone; title: string; description: string }[] = [
   { value: "gentle", title: "Gentle", description: "Soft encouragement, lots of permission to rest." },
@@ -43,9 +47,9 @@ const MOTIVATION_OPTIONS: {
 ];
 
 const CHANNEL_OPTIONS: { value: ChannelPref; title: string; description: string }[] = [
-  { value: "in_app", title: "In-app coach", description: "Chat inside Notrude (always available)." },
-  { value: "text_style", title: "Text-style nudges", description: "Short messages you can copy to SMS." },
-  { value: "email_outline", title: "Email outlines", description: "Draft check-ins you can send yourself." },
+  { value: "in_app", title: "In-app coach", description: "Chat with me inside Notrude anytime." },
+  { value: "text_style", title: "Text check-ins", description: "I’ll send short texts to you (in-app for now)." },
+  { value: "email_outline", title: "Email check-ins", description: "I’ll send you fuller weekly emails (in-app for now)." },
 ];
 
 const ACTIVITY_LEVELS = [
@@ -57,6 +61,7 @@ const ACTIVITY_LEVELS = [
 ];
 
 type Draft = {
+  coachId: CoachId | null;
   goalText: string;
   currentWeightLbs: string;
   activityLevel: string;
@@ -71,6 +76,7 @@ type Draft = {
 };
 
 const initialDraft: Draft = {
+  coachId: null,
   goalText: "",
   currentWeightLbs: "",
   activityLevel: "",
@@ -94,14 +100,25 @@ export function QuizWizard() {
   const [saving, setSaving] = useState(false);
 
   const goalValid = draft.goalText.trim().length > 0;
+  const coach = draft.coachId ? getCoach(draft.coachId) : null;
 
   const visibleStep = useMemo(() => {
-    if (step === 2 && !draft.trackWeight) return 3;
+    if (step === 3 && !draft.trackWeight) return 4;
     return step;
   }, [step, draft.trackWeight]);
 
   function patch(partial: Partial<Draft>) {
     setDraft((d) => ({ ...d, ...partial }));
+  }
+
+  function selectCoach(id: CoachId) {
+    const c = getCoach(id);
+    patch({
+      coachId: id,
+      tone: c.defaultTone,
+      cadence: c.defaultCadence,
+      motivation: c.defaultMotivation,
+    });
   }
 
   function toggleChannel(ch: ChannelPref) {
@@ -116,22 +133,23 @@ export function QuizWizard() {
   }
 
   function goNext() {
-    if (step === 1 && !draft.trackWeight) {
-      setStep(3);
+    if (step === 2 && !draft.trackWeight) {
+      setStep(4);
       return;
     }
     if (step < TOTAL_STEPS - 1) setStep((s) => s + 1);
   }
 
   function goBack() {
-    if (step === 3 && !draft.trackWeight) {
-      setStep(1);
+    if (step === 4 && !draft.trackWeight) {
+      setStep(2);
       return;
     }
     if (step > 0) setStep((s) => s - 1);
   }
 
   async function finish() {
+    if (!draft.coachId) return;
     setSaving(true);
     try {
       const channels =
@@ -143,6 +161,7 @@ export function QuizWizard() {
         motivation: draft.motivation,
         channels,
         trackWeight: draft.trackWeight,
+        coachId: draft.coachId,
         createdAt: new Date().toISOString(),
       };
       const cw = draft.currentWeightLbs.trim();
@@ -173,9 +192,52 @@ export function QuizWizard() {
           <>
             <div className="space-y-2">
               <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+                Who’s coaching you?
+              </h1>
+              <p className="leading-relaxed text-[var(--muted)]">
+                Pick a coach — same care, different energy. You can feel the vibe before you commit.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {COACH_PRESETS.map((c) => {
+                const selected = draft.coachId === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => selectCoach(c.id)}
+                    className={`flex flex-col items-center gap-2 rounded-[var(--radius-panel)] border px-3 py-4 text-center transition-colors ${
+                      selected
+                        ? "border-[var(--ink-strong)] bg-[var(--ink-strong)] text-[var(--ink-on-dark)]"
+                        : "border-[var(--line)] bg-[var(--canvas-light)] text-[var(--ink)]"
+                    }`}
+                  >
+                    <CoachAvatar coachId={c.id} size="md" />
+                    <span className="font-display text-base font-semibold tracking-tight">
+                      {c.name}
+                    </span>
+                    <span
+                      className={`text-xs leading-snug ${
+                        selected ? "text-[var(--ink-muted-on-dark)]" : "text-[var(--muted)]"
+                      }`}
+                    >
+                      {c.vibe}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {step === 1 && coach && (
+          <>
+            <CoachBubble coachId={coach.id}>{coach.whyPrompts.goal}</CoachBubble>
+            <div className="space-y-2">
+              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
                 What are you working toward?
               </h1>
-              <p className="text-[var(--muted)] leading-relaxed">
+              <p className="leading-relaxed text-[var(--muted)]">
                 In your own words—ultra, strength, moving more, anything counts.
               </p>
             </div>
@@ -190,14 +252,15 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 1 && (
+        {step === 2 && coach && (
           <>
+            <CoachBubble coachId={coach.id}>{coach.whyPrompts.now}</CoachBubble>
             <div className="space-y-2">
               <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-                Where are you now?
+                Where are you starting?
               </h1>
-              <p className="text-[var(--muted)] leading-relaxed">
-                All optional—you can skip anything you prefer not to share.
+              <p className="leading-relaxed text-[var(--muted)]">
+                Optional context helps me meet you where you are.
               </p>
             </div>
             <label className="block space-y-1.5">
@@ -235,10 +298,10 @@ export function QuizWizard() {
                 rows={3}
               />
             </label>
-            <label className="flex cursor-pointer items-start gap-3 panel p-4">
+            <label className="panel flex cursor-pointer items-start gap-3 p-4">
               <input
                 type="checkbox"
-                className="mt-1 h-4 w-4 accent-[var(--accent)]"
+                className="mt-1 h-4 w-4 accent-[var(--voltage)]"
                 checked={draft.trackWeight}
                 onChange={(e) => patch({ trackWeight: e.target.checked })}
               />
@@ -249,13 +312,14 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 2 && draft.trackWeight && (
+        {step === 3 && draft.trackWeight && coach && (
           <>
+            <CoachBubble coachId={coach.id}>{coach.whyPrompts.target}</CoachBubble>
             <div className="space-y-2">
               <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
                 What does better look like?
               </h1>
-              <p className="text-[var(--muted)] leading-relaxed">
+              <p className="leading-relaxed text-[var(--muted)]">
                 Optional numbers or words—whatever helps you picture progress.
               </p>
             </div>
@@ -283,14 +347,15 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 3 && (
+        {step === 4 && coach && (
           <>
+            <CoachBubble coachId={coach.id}>{coach.whyPrompts.engagement}</CoachBubble>
             <div className="space-y-2">
               <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-                How should coaching feel?
+                How should I show up?
               </h1>
-              <p className="text-[var(--muted)] leading-relaxed">
-                Pick what fits—you can change this later.
+              <p className="leading-relaxed text-[var(--muted)]">
+                Defaults follow {coach.name} — tweak anything.
               </p>
             </div>
             <div className="space-y-2">
@@ -338,14 +403,15 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 4 && (
+        {step === 5 && coach && (
           <>
+            <CoachBubble coachId={coach.id}>{coach.whyPrompts.channels}</CoachBubble>
             <div className="space-y-2">
               <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-                How do you want to hear from us?
+                How should I reach you?
               </h1>
-              <p className="text-[var(--muted)] leading-relaxed">
-                Choose any that help—in-app is always on if you pick nothing else.
+              <p className="leading-relaxed text-[var(--muted)]">
+                I’ll send check-ins to you — not the other way around.
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -365,11 +431,16 @@ export function QuizWizard() {
 
       <div className="mt-8 flex flex-col gap-3">
         {step === 0 && (
+          <Button className="w-full" disabled={!draft.coachId} onClick={goNext}>
+            Continue with {draft.coachId ? getCoach(draft.coachId).name : "coach"}
+          </Button>
+        )}
+        {step === 1 && (
           <Button className="w-full" disabled={!goalValid || saving} onClick={goNext}>
             Continue
           </Button>
         )}
-        {step === 1 && (
+        {step === 2 && (
           <>
             <Button className="w-full" onClick={goNext}>
               Continue
@@ -379,7 +450,7 @@ export function QuizWizard() {
             </Button>
           </>
         )}
-        {step === 2 && draft.trackWeight && (
+        {step === 3 && draft.trackWeight && (
           <>
             <Button className="w-full" onClick={goNext}>
               Continue
@@ -389,12 +460,12 @@ export function QuizWizard() {
             </Button>
           </>
         )}
-        {step === 3 && (
+        {step === 4 && (
           <Button className="w-full" onClick={goNext}>
             Continue
           </Button>
         )}
-        {step === 4 && (
+        {step === 5 && (
           <Button className="w-full" disabled={saving} onClick={finish}>
             {saving ? "Saving…" : "Finish"}
           </Button>

@@ -4,7 +4,9 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CoachAvatar } from "@/components/coach/CoachAvatar";
 import { QuickChips } from "@/components/coach/QuickChips";
+import { getCoach, DEFAULT_COACH_ID } from "@/lib/coaches/presets";
 import { createCoachFetch } from "@/lib/coach/fixture-fetch";
 import {
   chatMessageToUi,
@@ -174,9 +176,16 @@ function CoachChatInner({
 
   return (
     <div className="page-enter flex min-h-[calc(100dvh-8rem)] flex-col gap-5">
-      <div>
-        <p className="meta-label">Coach</p>
-        <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+      <div className="flex items-start gap-3">
+        <CoachAvatar
+          coachId={profile.coachId ?? DEFAULT_COACH_ID}
+          size="md"
+        />
+        <div>
+        <p className="meta-label">
+          {getCoach(profile.coachId).name}
+        </p>
+        <h1 className="mt-1 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
           In your corner
         </h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
@@ -187,6 +196,7 @@ function CoachChatInner({
             You appear offline. Replies need a connection (or server fixtures).
           </p>
         ) : null}
+        </div>
       </div>
 
       <div

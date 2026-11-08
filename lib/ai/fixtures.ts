@@ -213,32 +213,49 @@ export function fixtureComposedMessage(
   const createdAt = new Date().toISOString();
   const goal = profile.goalText;
 
+  const coachId = profile.coachId ?? "river";
+  const coachName =
+    coachId === "jax"
+      ? "Jax"
+      : coachId === "sol"
+        ? "Sol"
+        : coachId === "nova"
+          ? "Nova"
+          : "River";
+  const deliveredAt = createdAt;
+
   if (channel === "email_outline") {
     return {
       id: createId(),
       channel: "email_outline",
-      subject: "Your training week — gentle check-in",
+      subject: `From ${coachName}: your week check-in`,
       body: [
-        "Hi,",
+        "Hey,",
         "",
-        `I put together a week that respects your goal: ${goal}.`,
+        `It’s ${coachName}. I shaped a week around your goal: ${goal}.`,
         "",
         "Highlights:",
         "- Short sessions you can move or shorten without guilt",
         "- Recovery treated as part of progress, not a setback",
         "",
-        "Reply if anything felt too much or too little—we can adjust.",
+        "Reply in the app if anything felt too much or too little — we’ll adjust.",
         "",
-        "— Notrude",
+        `— ${coachName}`,
       ].join("\n"),
       createdAt,
+      fromCoachId: coachId,
+      direction: "coach_to_user",
+      deliveredAt,
     };
   }
 
   return {
     id: createId(),
     channel: "text_style",
-    body: `Quick nudge: one small session today still moves "${goal}" forward. You've got this—no pressure to be perfect.`,
+    body: `${coachName} here — one small session today still moves “${goal}” forward. No pressure to be perfect.`,
     createdAt,
+    fromCoachId: coachId,
+    direction: "coach_to_user",
+    deliveredAt,
   };
 }

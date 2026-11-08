@@ -22,22 +22,26 @@ export async function POST(req: Request) {
 
   const formHint =
     channel === "email_outline"
-      ? "Return subject and body for a supportive weekly email outline."
-      : "Return body only for a short text-style nudge (no subject).";
+      ? "Return subject and body for a supportive weekly email FROM the user's coach TO the user (first person as the coach)."
+      : "Return body only for a short text FROM the coach TO the user (no subject).";
 
   const result = await generateText({
     model: getModel(),
     output: Output.object({ schema: composedMessageBodySchema }),
-    system: `${EMPATHY_SYSTEM_RULES}\n${formHint}`,
+    system: `${EMPATHY_SYSTEM_RULES}\n${formHint}\nSign as the coach, not as the user.`,
     prompt: JSON.stringify({ profile, channel, recentSummary }),
   });
 
+  const now = new Date().toISOString();
   const message: ComposedMessage = {
     id: createId(),
     channel,
     subject: channel === "email_outline" ? result.output.subject : undefined,
     body: result.output.body,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    fromCoachId: profile.coachId ?? "river",
+    direction: "coach_to_user",
+    deliveredAt: now,
   };
 
   return Response.json({ message });

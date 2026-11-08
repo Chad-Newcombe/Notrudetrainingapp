@@ -14,6 +14,7 @@ describe("profile store", () => {
       cadence: "brief",
       motivation: "celebrate_wins",
       channels: ["in_app", "text_style"],
+      coachId: "jax",
       trackWeight: true,
       currentWeightLbs: 400,
       targetWeightLbs: 350,

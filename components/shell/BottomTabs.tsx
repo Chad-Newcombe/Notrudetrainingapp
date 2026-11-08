@@ -7,7 +7,8 @@ const tabs = [
   { href: "/today", label: "Today" },
   { href: "/plan", label: "Plan" },
   { href: "/coach", label: "Coach" },
-  { href: "/progress", label: "Progress" },
+  { href: "/inbox", label: "Inbox" },
+  { href: "/progress", label: "More" },
 ] as const;
 
 export function BottomTabs() {

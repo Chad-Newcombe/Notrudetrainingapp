@@ -13,6 +13,7 @@ export function demoProfileFor(id: DemoProfileId): UserProfile {
     motivation: "process_focus" as const,
     channels: ["in_app", "email_outline"] as UserProfile["channels"],
     trackWeight: false,
+    coachId: "jax" as const,
     createdAt: now(),
   };
 
@@ -22,6 +23,7 @@ export function demoProfileFor(id: DemoProfileId): UserProfile {
       goalText: "Complete a 50-mile ultra this fall without burning out",
       activityLevel: "moderate",
       constraints: "Long work weeks; need recoverable mileage",
+      coachId: "sol" as const,
     };
   }
 
@@ -37,6 +39,7 @@ export function demoProfileFor(id: DemoProfileId): UserProfile {
     cadence: "brief",
     motivation: "celebrate_wins",
     channels: ["in_app", "text_style", "email_outline"],
+    coachId: "river" as const,
   };
 }
 

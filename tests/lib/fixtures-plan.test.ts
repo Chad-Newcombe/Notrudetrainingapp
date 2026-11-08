@@ -7,6 +7,7 @@ const base = {
   cadence: "brief" as const,
   motivation: "celebrate_wins" as const,
   channels: ["in_app" as const],
+  coachId: "river" as const,
   trackWeight: false,
   createdAt: "2026-11-08T00:00:00.000Z",
 };

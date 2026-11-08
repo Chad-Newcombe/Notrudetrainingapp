@@ -9,6 +9,7 @@ describe("UserProfile shape", () => {
       cadence: "conversational",
       motivation: "process_focus",
       channels: ["in_app", "email_outline"],
+      coachId: "river",
       trackWeight: false,
       createdAt: "2026-11-08T00:00:00.000Z",
     };
