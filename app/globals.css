@@ -32,6 +32,9 @@ body {
   max-width: 430px;
   margin: 0 auto;
   min-height: 100dvh;
+}
+
+.main-tab-clearance {
   padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }
 

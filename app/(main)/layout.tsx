@@ -37,7 +37,7 @@ export default function MainLayout({
 
   return (
     <>
-      {children}
+      <div className="main-tab-clearance">{children}</div>
       <BottomTabs />
     </>
   );

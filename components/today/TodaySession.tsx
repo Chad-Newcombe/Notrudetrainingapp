@@ -58,8 +58,8 @@ export function TodaySession({ session, profile, loggedToday }: Props) {
       <div className="rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-white/10">
         <h2 className="text-sm font-medium text-[var(--muted)]">Steps</h2>
         <ul className="mt-3 flex flex-col gap-3">
-          {session.steps.map((step) => (
-            <li key={step.name} className="text-[var(--ink)]">
+          {session.steps.map((step, index) => (
+            <li key={index} className="text-[var(--ink)]">
               <span className="font-medium">{step.name}</span>
               <span className="text-[var(--muted)]"> — {step.detail}</span>
               {step.durationMin != null && (
