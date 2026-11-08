@@ -34,3 +34,33 @@ body {
   min-height: 100dvh;
   padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }
+
+@keyframes acknowledgment-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.acknowledgment-fade-in {
+  animation: acknowledgment-fade-in 0.85s ease-out forwards;
+}
+
+@keyframes quiz-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quiz-step-in {
+  animation: quiz-step-in 0.35s ease-out;
+}
