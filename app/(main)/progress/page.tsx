@@ -66,13 +66,14 @@ export default function ProgressPage() {
   }
 
   return (
-    <main className="flex flex-col gap-8 px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+    <main className="page-enter flex flex-col gap-10 px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <div>
-        <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
-          Progress
+        <p className="meta-label">Progress</p>
+        <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+          Your trail so far
         </h1>
         <p className="mt-2 text-base text-[var(--muted)]">
-          Your history on this device — streaks without shame.
+          On this device — history without the guilt trip.
         </p>
       </div>
 
@@ -99,7 +100,7 @@ export default function ProgressPage() {
           {reflectionLoading ? "Writing…" : "Write a short reflection"}
         </Button>
         {reflectionText ? (
-          <p className="rounded-2xl bg-[var(--surface)] px-4 py-3 text-base leading-relaxed text-[var(--ink)] ring-1 ring-white/10">
+          <p className="panel px-4 py-3 text-base leading-relaxed text-[var(--ink)]">
             {reflectionText}
           </p>
         ) : null}
@@ -111,7 +112,7 @@ export default function ProgressPage() {
             {pastReflections.slice(0, 3).map((r) => (
               <li
                 key={r.id}
-                className="rounded-2xl bg-[var(--surface)] px-4 py-3 text-sm leading-relaxed text-[var(--muted)] ring-1 ring-white/10"
+                className="panel px-4 py-3 text-sm leading-relaxed text-[var(--muted)]"
               >
                 <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
                   {new Date(r.createdAt).toLocaleDateString(undefined, {

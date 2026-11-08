@@ -59,7 +59,7 @@ export function WeightCheckIn({ snapshots, onSaved }: Props) {
           step="0.1"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="rounded-2xl bg-[var(--surface)] px-4 py-3 text-[var(--ink)] ring-1 ring-white/10 placeholder:text-[var(--muted)] focus:outline focus:outline-2 focus:outline-[var(--accent)]"
+          className="w-full rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--canvas-light)] px-4 py-3 text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink-strong)]"
           placeholder="e.g. 210"
         />
       </label>

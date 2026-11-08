@@ -17,18 +17,19 @@ export function TodaySession({
 }: Props) {
   if (!session) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="page-enter flex flex-col gap-7">
         <div>
-          <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
-            {outsidePlanWeek ? "Week complete" : "Rest day"}
+          <p className="meta-label">Today</p>
+          <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+            {outsidePlanWeek ? "Week in the rearview" : "Rest day"}
           </h1>
-          <p className="mt-3 text-lg leading-relaxed text-[var(--muted)]">
+          <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
             {outsidePlanWeek
-              ? "This saved week has ended. Rest is welcome — generate a fresh week when you are ready."
-              : "Nothing scheduled today. Recovery is part of training — no guilt needed."}
+              ? "This saved week has ended. The trail can wait — breathe, then build a fresh week when you’re ready."
+              : "Nothing scheduled. The trail can wait — today is for easy breath."}
           </p>
         </div>
-        <p className="text-base text-[var(--ink)]">
+        <p className="panel px-4 py-3 text-base text-[var(--ink)]">
           {coachNudgeForTone(profile.tone)}
         </p>
         <Button href="/coach" variant="ghost" className="w-full">
@@ -39,42 +40,42 @@ export function TodaySession({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="page-enter flex flex-col gap-7">
       <div>
-        <p className="text-sm uppercase tracking-wide text-[var(--muted)]">
-          Today
-        </p>
-        <h1 className="mt-1 font-display text-2xl font-medium text-[var(--ink)]">
+        <p className="meta-label">Today</p>
+        <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
           {session.title}
         </h1>
-        {loggedToday && (
-          <p className="mt-2 text-sm text-[var(--accent)]">
-            You already logged this one — nice work showing up.
+        {loggedToday ? (
+          <p className="mt-2 text-sm font-medium text-[var(--sage)]">
+            Already logged — showing up counts.
           </p>
-        )}
+        ) : null}
       </div>
 
-      <p className="text-lg leading-relaxed text-[var(--ink)]">
+      <p className="text-lg leading-relaxed text-[var(--ink-soft)]">
         {session.rationale}
       </p>
 
-      <p className="rounded-2xl bg-[var(--surface)] px-4 py-3 text-base text-[var(--muted)] ring-1 ring-white/10">
+      <p className="panel px-4 py-3 text-base text-[var(--muted)]">
         {coachNudgeForTone(profile.tone)}
       </p>
 
-      <div className="rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-white/10">
-        <h2 className="text-sm font-medium text-[var(--muted)]">Steps</h2>
+      <div className="panel p-4">
+        <h2 className="meta-label">Steps</h2>
         <ul className="mt-3 flex flex-col gap-3">
           {session.steps.map((step, index) => (
             <li key={index} className="text-[var(--ink)]">
-              <span className="font-medium">{step.name}</span>
+              <span className="font-display font-semibold tracking-tight">
+                {step.name}
+              </span>
               <span className="text-[var(--muted)]"> — {step.detail}</span>
-              {step.durationMin != null && (
+              {step.durationMin != null ? (
                 <span className="text-sm text-[var(--muted)]">
                   {" "}
                   · ~{step.durationMin} min
                 </span>
-              )}
+              ) : null}
             </li>
           ))}
         </ul>

@@ -100,7 +100,7 @@ export function MessageDrafts({ profile }: Props) {
           {messages.slice(0, 5).map((m) => (
             <li
               key={m.id}
-              className="rounded-2xl bg-[var(--surface)] px-4 py-3 ring-1 ring-white/10"
+              className="panel px-4 py-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="text-xs uppercase tracking-wide text-[var(--muted)]">

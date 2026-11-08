@@ -85,7 +85,7 @@ const initialDraft: Draft = {
 };
 
 const fieldClass =
-  "w-full rounded-2xl border-0 bg-[var(--surface)] px-4 py-3 text-base text-[var(--ink)] ring-1 ring-[var(--muted)]/25 placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]";
+  "w-full rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--canvas-light)] px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink-strong)]";
 
 export function QuizWizard() {
   const router = useRouter();
@@ -163,7 +163,7 @@ export function QuizWizard() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col px-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
+    <div className="flex min-h-[100dvh] flex-col bg-[var(--canvas-soft)] px-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="mb-8">
         <ProgressDots total={TOTAL_STEPS} current={visibleStep} />
       </div>
@@ -172,7 +172,7 @@ export function QuizWizard() {
         {step === 0 && (
           <>
             <div className="space-y-2">
-              <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
+              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
                 What are you working toward?
               </h1>
               <p className="text-[var(--muted)] leading-relaxed">
@@ -193,7 +193,7 @@ export function QuizWizard() {
         {step === 1 && (
           <>
             <div className="space-y-2">
-              <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
+              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
                 Where are you now?
               </h1>
               <p className="text-[var(--muted)] leading-relaxed">
@@ -235,7 +235,7 @@ export function QuizWizard() {
                 rows={3}
               />
             </label>
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-[var(--muted)]/25">
+            <label className="flex cursor-pointer items-start gap-3 panel p-4">
               <input
                 type="checkbox"
                 className="mt-1 h-4 w-4 accent-[var(--accent)]"
@@ -252,7 +252,7 @@ export function QuizWizard() {
         {step === 2 && draft.trackWeight && (
           <>
             <div className="space-y-2">
-              <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
+              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
                 What does better look like?
               </h1>
               <p className="text-[var(--muted)] leading-relaxed">
@@ -286,7 +286,7 @@ export function QuizWizard() {
         {step === 3 && (
           <>
             <div className="space-y-2">
-              <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
+              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
                 How should coaching feel?
               </h1>
               <p className="text-[var(--muted)] leading-relaxed">
@@ -341,7 +341,7 @@ export function QuizWizard() {
         {step === 4 && (
           <>
             <div className="space-y-2">
-              <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
+              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
                 How do you want to hear from us?
               </h1>
               <p className="text-[var(--muted)] leading-relaxed">

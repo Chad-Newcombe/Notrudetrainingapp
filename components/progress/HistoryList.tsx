@@ -54,7 +54,7 @@ export function HistoryList({ logs, plan }: Props) {
         {sorted.map((log) => (
           <li
             key={log.id}
-            className="rounded-2xl bg-[var(--surface)] px-4 py-3 ring-1 ring-white/10"
+            className="panel px-4 py-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -69,7 +69,7 @@ export function HistoryList({ logs, plan }: Props) {
                 className={`shrink-0 text-sm ${
                   log.status === "skipped"
                     ? "text-[var(--muted)]"
-                    : "text-[var(--accent)]"
+                    : "text-[var(--sage)]"
                 }`}
               >
                 {STATUS_LABEL[log.status]}

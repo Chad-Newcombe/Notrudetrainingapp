@@ -74,7 +74,7 @@ export function HealthConnections() {
           return (
             <li
               key={source.id}
-              className="flex flex-col gap-2 rounded-2xl bg-[var(--surface)] px-4 py-4 ring-1 ring-white/10"
+              className="panel flex flex-col gap-2 px-4 py-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -90,7 +90,7 @@ export function HealthConnections() {
                 <span
                   className={`shrink-0 text-xs uppercase tracking-wide ${
                     isConnected
-                      ? "text-[var(--accent)]"
+                      ? "text-[var(--sage)]"
                       : "text-[var(--muted)]"
                   }`}
                 >

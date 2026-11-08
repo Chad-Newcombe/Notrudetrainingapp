@@ -82,11 +82,14 @@ export default function AcknowledgmentPage() {
   }
 
   return (
-    <main className="flex min-h-[100dvh] flex-col justify-between px-6 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="flex flex-1 flex-col justify-center gap-6">
-        <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
-          What I heard
-        </h1>
+    <main className="flex min-h-[100dvh] flex-col justify-between bg-[var(--canvas-soft)] px-6 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="page-enter flex flex-1 flex-col justify-center gap-6">
+        <div>
+          <p className="meta-label">Acknowledgment</p>
+          <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+            What I heard
+          </h1>
+        </div>
         {offline ? (
           <p className="text-sm text-[var(--muted)]">
             Offline — we&apos;ll use saved demo copy when the server can&apos;t

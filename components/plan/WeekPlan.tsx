@@ -13,9 +13,10 @@ export function WeekPlan({ plan }: Props) {
   const sorted = [...plan.sessions].sort((a, b) => a.dayIndex - b.dayIndex);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="page-enter flex flex-col gap-7">
       <div>
-        <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
+        <p className="meta-label">Plan</p>
+        <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
           Your week
         </h1>
         <p className="mt-2 text-[var(--muted)]">
@@ -26,7 +27,7 @@ export function WeekPlan({ plan }: Props) {
       <ul className="flex flex-col gap-3">
         {sorted.map((session) => (
           <li key={session.id}>
-            <SessionCard
+            <SessionRow
               session={session}
               highlight={session.dayIndex === todayIndex}
             />
@@ -34,11 +35,11 @@ export function WeekPlan({ plan }: Props) {
         ))}
       </ul>
 
-      {sorted.length === 0 && (
+      {sorted.length === 0 ? (
         <p className="text-[var(--muted)]">
-          No sessions in this week yet. Coach can help you shape one.
+          No sessions yet. Coach can help you sketch one.
         </p>
-      )}
+      ) : null}
 
       <Button
         href={`/coach?prompt=${ADJUST_PROMPT}`}
@@ -51,7 +52,7 @@ export function WeekPlan({ plan }: Props) {
   );
 }
 
-function SessionCard({
+function SessionRow({
   session,
   highlight,
 }: {
@@ -62,19 +63,19 @@ function SessionCard({
 
   return (
     <article
-      className={`rounded-2xl p-4 ring-1 ${
-        highlight
-          ? "bg-[var(--accent-soft)] ring-[var(--accent)]/40"
-          : "bg-[var(--surface)] ring-white/10"
+      className={`panel p-4 ${
+        highlight ? "border-[var(--ink-strong)]" : ""
       }`}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-sm font-medium text-[var(--muted)]">{day}</p>
+        <p className="meta-label">{day}</p>
         <span className="text-xs capitalize text-[var(--muted)]">
           {session.intensity}
         </span>
       </div>
-      <h2 className="mt-1 font-medium text-[var(--ink)]">{session.title}</h2>
+      <h2 className="mt-2 font-display text-base font-semibold tracking-tight text-[var(--ink)]">
+        {session.title}
+      </h2>
       <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
         {session.rationale}
       </p>

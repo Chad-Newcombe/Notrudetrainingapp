@@ -30,21 +30,21 @@ export default function WelcomePage() {
     profile && plan ? "/today" : profile ? "/acknowledgment" : undefined;
 
   return (
-    <main className="flex min-h-[100dvh] flex-col justify-between px-6 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="flex flex-1 flex-col justify-center gap-8">
+    <main className="theme-dark atmosphere-dark flex min-h-[100dvh] flex-col justify-between px-6 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="page-enter flex flex-1 flex-col justify-center gap-10">
         <NotrudeMark />
         <div className="space-y-4">
-          <h1 className="font-display text-3xl font-medium leading-tight text-[var(--ink)]">
+          <h1 className="font-display max-w-[14ch] text-[1.85rem] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--ink)]">
             Training that meets you where you are.
           </h1>
-          <p className="max-w-[32ch] text-lg leading-relaxed text-[var(--muted)]">
+          <p className="max-w-[34ch] text-base leading-relaxed text-[var(--muted)]">
             Set a goal on your terms—no shame, no streak pressure—just a plan
             that adapts when life happens.
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="cta-settle flex flex-col gap-3">
         {ready && continueHref ? (
           <Button href={continueHref} className="w-full">
             Continue
@@ -53,12 +53,16 @@ export default function WelcomePage() {
 
         {!profile ? (
           <>
-            <Button href="/quiz" className="w-full" variant={continueHref ? "ghost" : "primary"}>
+            <Button
+              href="/quiz"
+              className="w-full"
+              variant={continueHref ? "ghost" : "primary"}
+            >
               Start with a short quiz
             </Button>
-            <div className="space-y-2 border-t border-white/10 pt-3">
+            <div className="space-y-2 border-t border-[var(--line)] pt-4">
               <p className="text-center text-sm text-[var(--muted)]">
-                Or try a demo profile (no quiz)
+                Or hop in with a demo — no quiz required
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
@@ -75,7 +79,9 @@ export default function WelcomePage() {
                   disabled={seeding != null}
                   onClick={() => void tryDemo("gentle-start")}
                 >
-                  {seeding === "gentle-start" ? "Loading demo…" : "Gentle start"}
+                  {seeding === "gentle-start"
+                    ? "Loading demo…"
+                    : "Gentle start"}
                 </Button>
               </div>
             </div>

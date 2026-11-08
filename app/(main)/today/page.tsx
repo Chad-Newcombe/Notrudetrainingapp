@@ -24,7 +24,7 @@ export default function TodayPage() {
     );
 
   return (
-    <main className="px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+    <main className="bg-[var(--canvas-soft)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <TodaySession
         session={session}
         profile={profile}

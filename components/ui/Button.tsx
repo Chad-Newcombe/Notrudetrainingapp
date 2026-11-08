@@ -20,13 +20,13 @@ type ButtonAsLink = SharedProps &
 export type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const base =
-  "inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]";
+  "inline-flex items-center justify-center rounded-[var(--radius-pill)] px-6 py-3.5 text-base font-semibold tracking-tight transition-[filter,background-color,border-color] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--voltage)] disabled:opacity-50";
 
 const variants = {
   primary:
-    "bg-[var(--accent)] text-[var(--bg0)] hover:brightness-105 active:brightness-95",
+    "bg-[var(--voltage)] text-[var(--on-voltage)] hover:bg-[var(--voltage-hover)] active:brightness-95",
   ghost:
-    "bg-[var(--surface)] text-[var(--ink)] ring-1 ring-[var(--muted)]/30 hover:bg-white/10",
+    "bg-transparent text-[var(--ink)] border border-[var(--line)] hover:bg-[var(--surface)]",
 };
 
 export function Button(props: ButtonProps) {

@@ -81,8 +81,8 @@ export default function WorkoutPlayPage() {
 
   if (!session) {
     return (
-      <main className="px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
-        <h1 className="font-display text-xl text-[var(--ink)]">
+      <main className="theme-dark atmosphere-dark px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+        <h1 className="font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
           Session not found
         </h1>
         <p className="mt-3 text-[var(--muted)]">
@@ -97,9 +97,9 @@ export default function WorkoutPlayPage() {
 
   if (skipAck) {
     return (
-      <main className="flex min-h-[100dvh] flex-col justify-between px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <main className="theme-dark atmosphere-dark flex min-h-[100dvh] flex-col justify-between px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
         <div className="flex flex-1 flex-col justify-center gap-4">
-          <h1 className="font-display text-2xl text-[var(--ink)]">
+          <h1 className="font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
             Okay — we can adjust.
           </h1>
           <p className="text-lg text-[var(--muted)]">
@@ -128,15 +128,15 @@ export default function WorkoutPlayPage() {
   }
 
   return (
-    <main className="flex min-h-[100dvh] flex-col px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
-      <p className="text-sm text-[var(--muted)]">{progressLabel}</p>
-      <h1 className="mt-1 font-display text-2xl text-[var(--ink)]">
+    <main className="theme-dark atmosphere-dark flex min-h-[100dvh] flex-col px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <p className="meta-label">{progressLabel}</p>
+      <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
         {session.title}
       </h1>
 
       {currentStep ? (
-        <article className="mt-8 flex flex-1 flex-col rounded-2xl bg-[var(--surface)] p-5 ring-1 ring-white/10">
-          <h2 className="text-xl font-medium text-[var(--ink)]">
+        <article className="panel mt-8 flex flex-1 flex-col p-5">
+          <h2 className="font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
             {currentStep.name}
           </h2>
           <p className="mt-3 text-lg leading-relaxed text-[var(--muted)]">

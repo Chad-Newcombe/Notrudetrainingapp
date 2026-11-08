@@ -20,7 +20,7 @@ export default function MainLayout({
 
   if (!ready) {
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center px-6">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-[var(--canvas-soft)] px-6">
         <p className="text-[var(--muted)]">Loading your week…</p>
       </main>
     );
@@ -29,16 +29,16 @@ export default function MainLayout({
   const dest = onboardingRedirect(profile, plan);
   if (dest) {
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center px-6">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-[var(--canvas-soft)] px-6">
         <p className="text-[var(--muted)]">One moment…</p>
       </main>
     );
   }
 
   return (
-    <>
+    <div className="min-h-[100dvh] bg-[var(--canvas-soft)]">
       <div className="main-tab-clearance">{children}</div>
       <BottomTabs />
-    </>
+    </div>
   );
 }

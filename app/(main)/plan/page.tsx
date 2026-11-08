@@ -24,7 +24,7 @@ export default function PlanPage() {
         </p>
         <Link
           href="/acknowledgment"
-          className="text-[var(--accent)] underline-offset-4 hover:underline"
+          className="font-semibold text-[var(--ink-strong)] underline-offset-4 hover:underline"
         >
           Build my first week
         </Link>

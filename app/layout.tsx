@@ -1,23 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Source_Sans_3 } from "next/font/google";
+import { Figtree, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
-const sourceSans = Source_Sans_3({
+const figtree = Figtree({
   subsets: ["latin"],
-  variable: "--font-body",
+  variable: "--font-figtree",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Notrude",
-  description:
-    "Empathetic training that meets you where you are.",
+  description: "Empathetic training that meets you where you are.",
   manifest: "/manifest.webmanifest",
   icons: {
     apple: "/icons/icon-192.png",
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f2a24",
+  themeColor: "#121212",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -42,7 +41,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${sourceSans.variable}`}>
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${figtree.variable}`}
+    >
       <body className="antialiased">
         <div className="app-shell">{children}</div>
       </body>

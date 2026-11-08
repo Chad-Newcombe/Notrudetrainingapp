@@ -18,7 +18,7 @@ export function QuickChips({ onPick, disabled }: Props) {
           type="button"
           disabled={disabled}
           onClick={() => onPick(label)}
-          className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-sm text-[var(--ink)] ring-1 ring-white/10 transition-colors hover:bg-white/10 disabled:opacity-50"
+          className="rounded-[var(--radius-pill)] border border-[var(--line)] bg-[var(--canvas-light)] px-3 py-1.5 font-display text-sm font-medium tracking-tight text-[var(--ink)] transition-colors hover:border-[var(--ink-strong)] disabled:opacity-50"
         >
           {label}
         </button>

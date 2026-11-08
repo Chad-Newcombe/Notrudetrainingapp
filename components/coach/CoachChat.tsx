@@ -173,30 +173,35 @@ function CoachChatInner({
   );
 
   return (
-    <div className="flex min-h-[calc(100dvh-8rem)] flex-col gap-4">
+    <div className="page-enter flex min-h-[calc(100dvh-8rem)] flex-col gap-5">
       <div>
-        <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
-          Coach
+        <p className="meta-label">Coach</p>
+        <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+          In your corner
         </h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
           No guilt, no streak shame — just help for the day you&apos;re in.
         </p>
         {offline ? (
-          <p className="mt-2 rounded-xl bg-black/20 px-3 py-2 text-xs text-[var(--muted)]">
-            You appear offline. Messages queue locally; coach replies need a
-            connection or demo fixtures from the server.
+          <p className="panel mt-2 px-3 py-2 text-xs text-[var(--muted)]">
+            You appear offline. Replies need a connection (or server fixtures).
           </p>
         ) : null}
       </div>
 
       <div
         ref={listRef}
-        className="flex max-h-[min(52dvh,28rem)] min-h-48 flex-1 flex-col gap-3 overflow-y-auto rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-white/10"
+        className="panel flex max-h-[min(52dvh,28rem)] min-h-48 flex-1 flex-col gap-3 overflow-y-auto p-4"
       >
         {messages.length === 0 && (
-          <p className="text-sm text-[var(--muted)]">
-            Ask anything about your plan, energy level, or what to do today.
-          </p>
+          <div className="space-y-1">
+            <p className="text-sm text-[var(--muted)]">
+              Ask anything about your plan, energy, or what to do today.
+            </p>
+            <p className="text-sm text-[var(--ink-muted-light)]">
+              Bonus points for honesty. Zero points for pretending you slept 9 hours.
+            </p>
+          </div>
         )}
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
@@ -210,14 +215,14 @@ function CoachChatInner({
 
       {error ? (
         <div
-          className="flex flex-col gap-2 rounded-2xl bg-black/25 px-4 py-3 text-sm text-[var(--ink)]"
+          className="panel flex flex-col gap-2 px-4 py-3 text-sm text-[var(--ink)]"
           role="alert"
         >
           <p>Coach couldn&apos;t respond right now. Nothing you typed was lost.</p>
           <button
             type="button"
             onClick={() => retry()}
-            className="self-start font-medium text-[var(--accent)] underline-offset-4 hover:underline"
+            className="self-start font-semibold text-[var(--ink-strong)] underline-offset-4 hover:underline"
           >
             Try again
           </button>
@@ -242,12 +247,12 @@ function CoachChatInner({
           onChange={(e) => setInput(e.target.value)}
           placeholder="What's on your mind?"
           disabled={busy}
-          className="min-w-0 flex-1 rounded-full bg-[var(--surface)] px-4 py-3 text-base text-[var(--ink)] ring-1 ring-white/10 placeholder:text-[var(--muted)] focus:outline-none focus:ring-[var(--accent)]/50 disabled:opacity-60"
+          className="min-w-0 flex-1 rounded-[var(--radius-pill)] border border-[var(--line)] bg-[var(--canvas-light)] px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink-strong)] disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="shrink-0 rounded-full bg-[var(--accent)] px-5 py-3 text-base font-medium text-[var(--bg0)] disabled:opacity-50"
+          className="shrink-0 rounded-[var(--radius-pill)] bg-[var(--voltage)] px-5 py-3 text-base font-semibold text-[var(--on-voltage)] disabled:opacity-50"
         >
           Send
         </button>
@@ -263,13 +268,14 @@ function MessageBubble({ message }: { message: UIMessage }) {
 
   return (
     <div
-      className={`max-w-[90%] rounded-2xl px-4 py-3 text-base leading-relaxed ${
+      className={`max-w-[90%] rounded-[var(--radius-panel)] px-4 py-3 text-base leading-relaxed ${
         isUser
-          ? "ml-auto bg-[var(--accent-soft)] text-[var(--ink)]"
-          : "mr-auto bg-black/20 text-[var(--ink)]"
+          ? "ml-auto bg-[var(--canvas-soft)] text-[var(--ink)] border border-[var(--line)]"
+          : "mr-auto bg-[var(--canvas-light)] text-[var(--ink)] border border-[var(--line)]"
       }`}
     >
       {text}
     </div>
   );
 }
+

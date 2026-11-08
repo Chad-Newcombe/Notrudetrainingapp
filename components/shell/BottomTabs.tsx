@@ -15,7 +15,7 @@ export function BottomTabs() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[var(--bg0)]/95 backdrop-blur-md"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--hairline)] bg-[var(--canvas-light)]/95 backdrop-blur-md"
       style={{
         paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
       }}
@@ -29,20 +29,28 @@ export function BottomTabs() {
             <Link
               key={href}
               href={href}
-              className={`flex flex-1 flex-col items-center gap-0.5 px-2 py-3 text-xs font-medium transition-colors ${
+              className={`relative flex flex-1 flex-col items-center gap-1 px-2 pt-3 pb-2.5 font-display text-xs font-semibold tracking-tight transition-colors ${
                 active
-                  ? "text-[var(--accent)]"
-                  : "text-[var(--muted)] hover:text-[var(--ink)]"
+                  ? "text-[var(--ink-strong)]"
+                  : "text-[var(--ink-muted-light)] hover:text-[var(--ink-strong)]"
               }`}
               aria-current={active ? "page" : undefined}
             >
               <span
-                className={`h-0.5 w-8 rounded-full transition-colors ${
-                  active ? "bg-[var(--accent)]" : "bg-transparent"
+                className={`absolute top-0 h-0.5 w-8 rounded-full transition-colors ${
+                  active ? "bg-[var(--ink-strong)]" : "bg-transparent"
                 }`}
                 aria-hidden
               />
               {label}
+              {active ? (
+                <span
+                  className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[var(--voltage)]"
+                  aria-hidden
+                />
+              ) : (
+                <span className="absolute bottom-1.5 h-1 w-1" aria-hidden />
+              )}
             </Link>
           );
         })}
