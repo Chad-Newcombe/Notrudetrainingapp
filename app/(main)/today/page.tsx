@@ -11,7 +11,9 @@ export default function TodayPage() {
 
   const dayIndex = dayIndexInPlanWeek(plan.weekStartIso);
   const session =
-    plan.sessions.find((s) => s.dayIndex === dayIndex) ?? null;
+    dayIndex == null
+      ? null
+      : (plan.sessions.find((s) => s.dayIndex === dayIndex) ?? null);
 
   const loggedToday =
     session != null &&
@@ -27,6 +29,7 @@ export default function TodayPage() {
         session={session}
         profile={profile}
         loggedToday={loggedToday}
+        outsidePlanWeek={dayIndex == null}
       />
     </main>
   );

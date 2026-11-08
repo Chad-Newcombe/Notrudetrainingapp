@@ -7,19 +7,26 @@ export function weekStartIso(d = new Date()): string {
   return x.toISOString();
 }
 
-/** Mon=0 … Sun=6, relative to the plan week that starts at `planWeekStartIso`. */
+/** Local calendar day as UTC ms (for stable day deltas in the runtime timezone). */
+function localCalendarDayMs(d: Date): number {
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/**
+ * Mon=0 … Sun=6 within the plan week starting at `planWeekStartIso` (local Monday).
+ * Returns null when `d` falls outside that Mon–Sun window (do not clamp).
+ */
 export function dayIndexInPlanWeek(
   planWeekStartIso: string,
   d = new Date(),
-): number {
+): number | null {
   const start = new Date(planWeekStartIso);
-  start.setHours(0, 0, 0, 0);
-  const day = new Date(d);
-  day.setHours(0, 0, 0, 0);
   const diffDays = Math.round(
-    (day.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
+    (localCalendarDayMs(d) - localCalendarDayMs(start)) /
+      (24 * 60 * 60 * 1000),
   );
-  return Math.max(0, Math.min(6, diffDays));
+  if (diffDays < 0 || diffDays > 6) return null;
+  return diffDays;
 }
 
 export const DAY_LABELS = [

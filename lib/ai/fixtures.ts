@@ -1,3 +1,4 @@
+import { weekStartIso } from "@/lib/dates";
 import { createId } from "@/lib/ids";
 import type {
   ChannelPref,
@@ -6,16 +7,6 @@ import type {
   TrainingPlan,
   UserProfile,
 } from "@/lib/types";
-
-function weekStartIso(): string {
-  const now = new Date();
-  const day = now.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setUTCDate(now.getUTCDate() + diff);
-  monday.setUTCHours(0, 0, 0, 0);
-  return monday.toISOString();
-}
 
 function session(
   dayIndex: number,
@@ -32,10 +23,10 @@ function isEnduranceGoal(goalText: string): boolean {
 }
 
 function isGentleGoal(profile: UserProfile): boolean {
-  const gentleLanguage = /lose|weight|begin|start/i.test(profile.goalText);
+  const weightLanguage = /lose|weight/i.test(profile.goalText);
   const highWeight =
     profile.currentWeightLbs !== undefined && profile.currentWeightLbs >= 300;
-  return gentleLanguage || highWeight;
+  return weightLanguage || highWeight || profile.trackWeight;
 }
 
 function enduranceSessions(profile: UserProfile): PlanSession[] {

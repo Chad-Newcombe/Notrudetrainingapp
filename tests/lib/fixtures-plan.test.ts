@@ -27,4 +27,16 @@ describe("fixturePlanForProfile", () => {
     });
     expect(plan.sessions.every((s) => s.intensity !== "hard")).toBe(true);
   });
+
+  it("builds a mixed consistency week for habit goals without weight focus", () => {
+    const plan = fixturePlanForProfile({
+      ...base,
+      goalText: "Start a push-up habit",
+    });
+    const titles = plan.sessions.map((s) => s.title).join(" ");
+    expect(/Mobility and breathing|Easy walk/i.test(titles)).toBe(false);
+    expect(plan.sessions.some((s) => /walk|circuit|recovery/i.test(s.title))).toBe(
+      true,
+    );
+  });
 });

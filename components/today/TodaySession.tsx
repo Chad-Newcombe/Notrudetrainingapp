@@ -6,19 +6,26 @@ type Props = {
   session: PlanSession | null;
   profile: UserProfile;
   loggedToday?: boolean;
+  outsidePlanWeek?: boolean;
 };
 
-export function TodaySession({ session, profile, loggedToday }: Props) {
+export function TodaySession({
+  session,
+  profile,
+  loggedToday,
+  outsidePlanWeek,
+}: Props) {
   if (!session) {
     return (
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="font-display text-2xl font-medium text-[var(--ink)]">
-            Rest day
+            {outsidePlanWeek ? "Week complete" : "Rest day"}
           </h1>
           <p className="mt-3 text-lg leading-relaxed text-[var(--muted)]">
-            Nothing scheduled today. Recovery is part of training — no guilt
-            needed.
+            {outsidePlanWeek
+              ? "This saved week has ended. Rest is welcome — generate a fresh week when you are ready."
+              : "Nothing scheduled today. Recovery is part of training — no guilt needed."}
           </p>
         </div>
         <p className="text-base text-[var(--ink)]">

@@ -152,9 +152,8 @@ export function QuizWizard() {
       if (draft.trackWeight) {
         const tw = draft.targetWeightLbs.trim();
         if (tw) profile.targetWeightLbs = Number(tw);
-      }
-      if (draft.targetDescription.trim()) {
-        profile.targetDescription = draft.targetDescription.trim();
+        const td = draft.targetDescription.trim();
+        if (td) profile.targetDescription = td;
       }
       await saveProfile(profile);
       router.push("/acknowledgment");
