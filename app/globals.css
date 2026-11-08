@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --bg0: #0f2a24;
+  --bg1: #1a3d34;
+  --ink: #f3efe6;
+  --muted: #b7c4be;
+  --accent: #e2b15a;
+  --accent-soft: rgba(226, 177, 90, 0.18);
+  --surface: rgba(255, 255, 255, 0.06);
+  --danger-soft: #f0c7b4;
+  --font-display: "Fraunces", serif;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(120% 80% at 10% -10%, #2a5a4c 0%, transparent 55%),
+    radial-gradient(90% 60% at 100% 0%, #3d4a2e 0%, transparent 45%),
+    linear-gradient(165deg, var(--bg0), var(--bg1));
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.app-shell {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
