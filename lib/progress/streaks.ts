@@ -35,6 +35,10 @@ export function computeStreak(logs: WorkoutLog[], now = new Date()): number {
   const cursor = new Date(now);
   cursor.setHours(0, 0, 0, 0);
 
+  if (!qualifying.has(todayKey)) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
   while (qualifying.has(dayKey(cursor.toISOString()))) {
     streak++;
     cursor.setDate(cursor.getDate() - 1);
