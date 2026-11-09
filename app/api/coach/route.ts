@@ -6,7 +6,7 @@ import {
 import { EMPATHY_SYSTEM_RULES } from "@/lib/ai/empathy";
 import { lastUserText } from "@/lib/ai/coach-messages";
 import { fixtureCoachReply } from "@/lib/ai/fixtures";
-import { getModel, hasAiKey } from "@/lib/ai/model";
+import { getModel, localGenerationOptions } from "@/lib/ai/model";
 import { getCoach } from "@/lib/coaches/presets";
 import type { TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
@@ -27,7 +27,7 @@ function buildCoachSystem(body: CoachRequestBody): string {
     JSON.stringify({
       profile: body.profile,
       plan: body.plan ?? null,
-      logs: body.logs ?? [],
+      logs: body.logs?.slice(-7) ?? [],
       healthSummary: body.healthSummary ?? null,
     }),
   ].join("\n\n");
@@ -36,7 +36,8 @@ function buildCoachSystem(body: CoachRequestBody): string {
 export async function POST(req: Request) {
   const body = (await req.json()) as CoachRequestBody;
 
-  if (!hasAiKey()) {
+  const model = getModel();
+  if (!model) {
     const userText = lastUserText(body.messages);
     const text = fixtureCoachReply(userText, body.profile);
     return Response.json(
@@ -49,10 +50,15 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: getModel(),
+    model,
+    ...localGenerationOptions(req.signal),
     system: buildCoachSystem(body),
-    messages: await convertToModelMessages(body.messages),
+    messages: await convertToModelMessages(body.messages.slice(-16)),
+    maxOutputTokens: 400,
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    sendReasoning: false,
+    onError: () => "Your local coach is unavailable. Check that Ollama is running and try again.",
+  });
 }

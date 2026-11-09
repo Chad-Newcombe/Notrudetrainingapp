@@ -29,3 +29,8 @@
 - Older profiles use River by default. Pre-Inbox drafts remain readable with a saved-draft label.
 - Verified 22 tests, lint, and the production build. A phone-width Chromium run covered onboarding, Today, Coach, both Inbox formats, reload persistence, and older IndexedDB records using fixture responses.
 - PR #3 is the review point for this release. Live AI and a hosted deployment are outside the verification above. Phone and email delivery are demos by design.
+
+## November 9 3D and local inference update
+
+- The four coaches now have original Blender-generated models, rendered portraits, and an on-demand orbit preview in the coach picker.
+- Notrude's four AI routes use a configured self-hosted endpoint or deterministic fixtures. The README documents Ollama with Qwen3 4B Instruct and the loopback deployment setup.

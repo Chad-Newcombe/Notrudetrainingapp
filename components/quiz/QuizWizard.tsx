@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { CoachAvatar } from "@/components/coach/CoachAvatar";
+import { CoachModelPreview } from "@/components/coach/CoachModelPreview";
 import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
 import { ChoiceCard } from "@/components/ui/ChoiceCard";
@@ -98,6 +99,7 @@ export function QuizWizard() {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>(initialDraft);
   const [saving, setSaving] = useState(false);
+  const [showModel, setShowModel] = useState(false);
 
   const goalValid = draft.goalText.trim().length > 0;
   const coach = draft.coachId ? getCoach(draft.coachId) : null;
@@ -205,6 +207,7 @@ export function QuizWizard() {
                   <button
                     key={c.id}
                     type="button"
+                    aria-pressed={selected}
                     onClick={() => selectCoach(c.id)}
                     className={`flex flex-col items-center gap-2 rounded-[var(--radius-panel)] border px-3 py-4 text-center transition-colors ${
                       selected
@@ -212,7 +215,7 @@ export function QuizWizard() {
                         : "border-[var(--line)] bg-[var(--canvas-light)] text-[var(--ink)]"
                     }`}
                   >
-                    <CoachAvatar coachId={c.id} size="md" />
+                    <CoachAvatar coachId={c.id} size="lg" />
                     <span className="font-display text-base font-semibold tracking-tight">
                       {c.name}
                     </span>
@@ -227,6 +230,19 @@ export function QuizWizard() {
                 );
               })}
             </div>
+            {coach ? (
+              <div className="space-y-3">
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  aria-expanded={showModel}
+                  onClick={() => setShowModel((open) => !open)}
+                >
+                  {showModel ? "Hide 3D preview" : `View ${coach.name} in 3D`}
+                </Button>
+                {showModel ? <CoachModelPreview key={coach.id} coach={coach} /> : null}
+              </div>
+            ) : null}
           </>
         )}
 
