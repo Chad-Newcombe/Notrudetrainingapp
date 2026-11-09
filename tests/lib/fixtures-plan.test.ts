@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { fixturePlanForProfile } from "@/lib/ai/fixtures";
-import type { UserProfile } from "@/lib/types";
 
 const base = {
   tone: "gentle" as const,

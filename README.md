@@ -9,7 +9,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Onboarding: **Welcome → Quiz → Acknowledgment → Today**, or use **demo profiles** on Welcome to skip the quiz.
+Open [http://localhost:3000](http://localhost:3000). Choose River, Jax, Sol, or Nova at the start of the onboarding quiz, or use a demo profile on Welcome to go straight to Today. Profiles saved before coach selection use River by default.
+
+Request text and email check-ins from the **Inbox** tab. Both formats appear inside Notrude. Phone and email connection controls are demos.
 
 ## Environment (optional)
 
@@ -19,7 +21,7 @@ Open [http://localhost:3000](http://localhost:3000). Onboarding: **Welcome → Q
 | `OPENAI_API_KEY` | Fallback if Gateway key is unset |
 | `NOTRUDE_MODEL` | Model id (default `openai/gpt-4.1-mini`) |
 
-If neither API key is set, the app stays fully demoable: APIs return **fixture** plans, acknowledgments, coach replies, and message drafts (`X-Notrude-Fixture` header on coach).
+If neither API key is set, the APIs return **fixture** plans, acknowledgments, coach replies, and Inbox check-ins (`X-Notrude-Fixture` header on coach).
 
 Create `.env.local` in the project root:
 

@@ -22,3 +22,10 @@
 ### Task 2: Conversational quiz + acknowledgment coach voice
 ### Task 3: Inbox tab + coach-delivered messages
 ### Task 4: Wire Coach/Today presence; verify; PR; republish
+
+## November 8 handoff
+
+- Continued from Cursor's PR #3 at `eff7837`. Today now shows the selected coach on both training and rest days, and live chat and Inbox prompts use the selected persona.
+- Older profiles use River by default. Pre-Inbox drafts remain readable with a saved-draft label.
+- Verified 22 tests, lint, and the production build. A phone-width Chromium run covered onboarding, Today, Coach, both Inbox formats, reload persistence, and older IndexedDB records using fixture responses.
+- PR #3 is the review point for this release. Live AI and a hosted deployment are outside the verification above. Phone and email delivery are demos by design.

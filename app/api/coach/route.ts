@@ -7,6 +7,7 @@ import { EMPATHY_SYSTEM_RULES } from "@/lib/ai/empathy";
 import { lastUserText } from "@/lib/ai/coach-messages";
 import { fixtureCoachReply } from "@/lib/ai/fixtures";
 import { getModel, hasAiKey } from "@/lib/ai/model";
+import { getCoach } from "@/lib/coaches/presets";
 import type { TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 type CoachRequestBody = {
@@ -18,9 +19,10 @@ type CoachRequestBody = {
 };
 
 function buildCoachSystem(body: CoachRequestBody): string {
+  const coach = getCoach(body.profile.coachId);
   return [
     EMPATHY_SYSTEM_RULES,
-    "You are the in-app coach. Answer in plain language matching the user's tone and cadence.",
+    `You are ${coach.name}, the user's in-app coach. Your default style is ${coach.vibe}. Match the user's chosen tone and cadence.`,
     "Context (JSON):",
     JSON.stringify({
       profile: body.profile,

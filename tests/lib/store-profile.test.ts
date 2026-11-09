@@ -1,6 +1,8 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
 import { clearAll, getProfile, saveProfile } from "@/lib/store";
+import { getDb } from "@/lib/store/db";
+import type { UserProfile } from "@/lib/types";
 
 describe("profile store", () => {
   beforeEach(async () => {
@@ -23,5 +25,22 @@ describe("profile store", () => {
     const p = await getProfile();
     expect(p?.goalText).toBe("Lose weight gently");
     expect(p?.currentWeightLbs).toBe(400);
+    expect(p?.coachId).toBe("jax");
+  });
+
+  it("uses River for a profile saved before coach selection", async () => {
+    const legacy: Omit<UserProfile, "coachId"> = {
+      goalText: "Build a walking habit",
+      tone: "direct",
+      cadence: "brief",
+      motivation: "accountability",
+      channels: ["in_app"],
+      trackWeight: false,
+      createdAt: "2026-11-08T12:00:00.000Z",
+    };
+    const db = await getDb();
+    await db.put("meta", legacy as UserProfile, "profile");
+
+    expect(await getProfile()).toEqual({ ...legacy, coachId: "river" });
   });
 });

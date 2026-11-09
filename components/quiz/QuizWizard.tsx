@@ -408,10 +408,10 @@ export function QuizWizard() {
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.channels}</CoachBubble>
             <div className="space-y-2">
               <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-                How should I reach you?
+                How would you like to check in?
               </h1>
               <p className="leading-relaxed text-[var(--muted)]">
-                I’ll send check-ins to you — not the other way around.
+                Text and email check-ins appear in your Notrude Inbox.
               </p>
             </div>
             <div className="flex flex-col gap-2">

@@ -4,6 +4,7 @@ import { EMPATHY_SYSTEM_RULES } from "@/lib/ai/empathy";
 import { fixtureComposedMessage } from "@/lib/ai/fixtures";
 import { getModel, hasAiKey } from "@/lib/ai/model";
 import { composedMessageBodySchema } from "@/lib/ai/schemas";
+import { getCoach } from "@/lib/coaches/presets";
 import type { ComposedMessage, UserProfile } from "@/lib/types";
 
 type ComposeChannel = "text_style" | "email_outline";
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
     return Response.json({ message: fixtureComposedMessage(channel, profile) });
   }
 
+  const coach = getCoach(profile.coachId);
   const formHint =
     channel === "email_outline"
       ? "Return subject and body for a supportive weekly email FROM the user's coach TO the user (first person as the coach)."
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
   const result = await generateText({
     model: getModel(),
     output: Output.object({ schema: composedMessageBodySchema }),
-    system: `${EMPATHY_SYSTEM_RULES}\n${formHint}\nSign as the coach, not as the user.`,
+    system: `${EMPATHY_SYSTEM_RULES}\nYou are ${coach.name}. Your default style is ${coach.vibe}. Match the user's chosen tone and cadence.\n${formHint}\nSign as ${coach.name}.`,
     prompt: JSON.stringify({ profile, channel, recentSummary }),
   });
 
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
     subject: channel === "email_outline" ? result.output.subject : undefined,
     body: result.output.body,
     createdAt: now,
-    fromCoachId: profile.coachId ?? "river",
+    fromCoachId: coach.id,
     direction: "coach_to_user",
     deliveredAt: now,
   };

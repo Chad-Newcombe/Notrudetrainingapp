@@ -78,7 +78,7 @@ export function InboxView({ profile }: Props) {
             From {coach.name}
           </h1>
           <p className="mt-2 text-base text-[var(--muted)]">
-            Check-ins {coach.name} sends you — texts and emails land here.
+            Text and email check-ins from {coach.name} appear here in the app.
           </p>
         </div>
       </div>
@@ -151,43 +151,45 @@ export function InboxView({ profile }: Props) {
       </section>
 
       <section className="flex flex-col gap-3">
-        <p className="meta-label">Delivered</p>
+        <p className="meta-label">Message history</p>
         {messages.length === 0 ? (
           <p className="text-base text-[var(--muted)]">
             Nothing yet — ask {coach.name} to send you a nudge above.
           </p>
         ) : (
           <ul className="flex flex-col gap-3">
-            {messages.map((m) => (
-              <li key={m.id} className="panel p-4">
-                <div className="flex items-center gap-2">
-                  <CoachAvatar
-                    coachId={m.fromCoachId ?? coachId}
-                    size="sm"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-display text-sm font-semibold text-[var(--ink)]">
-                      {getCoach(m.fromCoachId ?? coachId).name}
-                    </p>
-                    <p className="text-xs text-[var(--muted)]">
-                      {m.channel === "email_outline" ? "Email" : "Text"} ·{" "}
-                      {new Date(m.deliveredAt || m.createdAt).toLocaleString(
-                        undefined,
-                        { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
-                      )}
-                    </p>
+            {messages.map((m) => {
+              const sender = m.direction === "coach_to_user"
+                ? getCoach(m.fromCoachId)
+                : null;
+              return (
+                <li key={m.id} className="panel p-4">
+                  <div className="flex items-center gap-2">
+                    {sender ? <CoachAvatar coachId={sender.id} size="sm" /> : null}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display text-sm font-semibold text-[var(--ink)]">
+                        {sender?.name ?? "Saved draft"}
+                      </p>
+                      <p className="text-xs text-[var(--muted)]">
+                        {m.channel === "email_outline" ? "Email" : "Text"} ·{" "}
+                        {new Date((sender && m.deliveredAt) || m.createdAt).toLocaleString(
+                          undefined,
+                          { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                {m.subject ? (
-                  <p className="mt-3 font-display text-sm font-semibold text-[var(--ink)]">
-                    {m.subject}
+                  {m.subject ? (
+                    <p className="mt-3 font-display text-sm font-semibold text-[var(--ink)]">
+                      {m.subject}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--ink)]">
+                    {m.body}
                   </p>
-                ) : null}
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--ink)]">
-                  {m.body}
-                </p>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

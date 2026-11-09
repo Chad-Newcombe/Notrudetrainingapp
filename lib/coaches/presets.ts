@@ -38,7 +38,7 @@ export const COACH_PRESETS: CoachPreset[] = [
       now: "A little context helps me meet you where you are. Skip anything that doesn’t feel useful.",
       target: "Only if you want a weight marker — plenty of people train without one.",
       engagement: "How should I show up day to day? We’ll tune this together.",
-      channels: "I’ll check in with you here — and text or email when you want that.",
+      channels: "Pick the kind of check-in you’d like to see in your Inbox.",
     },
   },
   {
@@ -55,7 +55,7 @@ export const COACH_PRESETS: CoachPreset[] = [
       now: "Where you’re starting matters. No judgment, just signal so I can help.",
       target: "Weight goals optional. If you track it, I’ll treat it gently.",
       engagement: "Pick the vibe that keeps you coming back — not the one that scolds.",
-      channels: "Want nudges from me by text or email? I’ll send them to you.",
+      channels: "A quick text or a bigger recap? Pick what you’d like in your Inbox.",
     },
   },
   {
@@ -72,7 +72,7 @@ export const COACH_PRESETS: CoachPreset[] = [
       now: "Honest baseline beats a perfect story. Share what you can.",
       target: "If weight is part of the plan, say so. If not, we skip it.",
       engagement: "Choose how direct I should be — still kind, always.",
-      channels: "I’ll message you when it helps. Text and email come from me to you.",
+      channels: "Pick a short text or a fuller email for your Inbox. Both are optional.",
     },
   },
   {
@@ -89,7 +89,7 @@ export const COACH_PRESETS: CoachPreset[] = [
       now: "Paint the starting line for me. Tiny details unlock better plans.",
       target: "Targets are tools, not verdicts. Optional always.",
       engagement: "How chatty / peppy should I be when we train together?",
-      channels: "I can ping you in-app, by text, or email — I’ll send it your way.",
+      channels: "What feels right? A quick Inbox nudge, a weekly recap, or just chatting here?",
     },
   },
 ];

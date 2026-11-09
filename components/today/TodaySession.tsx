@@ -1,5 +1,7 @@
+import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
 import { coachNudgeForTone } from "@/lib/coach-nudge";
+import { getCoach } from "@/lib/coaches/presets";
 import type { PlanSession, UserProfile } from "@/lib/types";
 
 type Props = {
@@ -15,6 +17,9 @@ export function TodaySession({
   loggedToday,
   outsidePlanWeek,
 }: Props) {
+  const coach = getCoach(profile.coachId);
+  const nudge = coachNudgeForTone(profile.tone);
+
   if (!session) {
     return (
       <div className="page-enter flex flex-col gap-7">
@@ -29,11 +34,9 @@ export function TodaySession({
               : "Nothing scheduled. The trail can wait — today is for easy breath."}
           </p>
         </div>
-        <p className="panel px-4 py-3 text-base text-[var(--ink)]">
-          {coachNudgeForTone(profile.tone)}
-        </p>
+        <CoachBubble coachId={coach.id}>{nudge}</CoachBubble>
         <Button href="/coach" variant="ghost" className="w-full">
-          Chat with Coach
+          Chat with {coach.name}
         </Button>
       </div>
     );
@@ -57,9 +60,7 @@ export function TodaySession({
         {session.rationale}
       </p>
 
-      <p className="panel px-4 py-3 text-base text-[var(--muted)]">
-        {coachNudgeForTone(profile.tone)}
-      </p>
+      <CoachBubble coachId={coach.id}>{nudge}</CoachBubble>
 
       <div className="panel p-4">
         <h2 className="meta-label">Steps</h2>
