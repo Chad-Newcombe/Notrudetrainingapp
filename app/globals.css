@@ -164,3 +164,182 @@ body {
     animation: none;
   }
 }
+
+/* Layered surfaces borrow their color from the active coach. */
+:root {
+  --canvas-soft: #f3f1f7;
+  --hairline: #e6e0ec;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 50% -25%, #ded4f5 0%, transparent 62%),
+    var(--canvas-soft);
+}
+
+.app-shell {
+  isolation: isolate;
+  box-shadow: 0 0 86px #34234d18;
+}
+
+.main-tab-clearance {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+.panel {
+  box-shadow: 0 1px 1px #29184006, 0 10px 22px -18px #2918406b;
+}
+
+.coach-stage {
+  --coach-accent: #7771d3;
+  --coach-tint: #ded5ff;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 35%;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: 11rem;
+  padding: 1.25rem 1rem 1.25rem 1.3rem;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  border: 1px solid #ffffff29;
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 90% 16%, color-mix(in srgb, var(--coach-accent), transparent 23%), transparent 64%),
+    linear-gradient(147deg, #24203c 6%, #302649 68%, #211c37 100%);
+  box-shadow: inset 0 1px #ffffff26, 0 14px 26px -14px #32244c99;
+}
+
+.coach-stage::before {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  inset: -35% -16% -42% 38%;
+  border-radius: 50%;
+  background: repeating-radial-gradient(ellipse at center, transparent 0 13px, #ffffff17 14px 15px, transparent 16px 23px);
+  transform: rotate(-18deg);
+  opacity: .68;
+  pointer-events: none;
+}
+
+.coach-stage-label {
+  color: var(--coach-tint);
+  font-size: .68rem;
+  font-weight: 750;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.coach-stage-subtitle {
+  color: #eee9fa;
+  font-size: .92rem;
+  line-height: 1.4;
+}
+
+.coach-stage-portrait {
+  position: relative;
+  align-self: center;
+  justify-self: end;
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid #ffffff40;
+  background: radial-gradient(circle at 45% 34%, color-mix(in srgb, var(--coach-tint), transparent 24%), transparent 71%);
+  box-shadow: 0 0 0 7px #ffffff12, inset 0 0 20px #ffffff30, 0 12px 32px #14102163;
+}
+
+.coach-stage-portrait img {
+  width: 94%;
+  height: 94%;
+  border-radius: 50%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 6px #20183069);
+}
+
+.account-stage { grid-template-columns: 1fr; }
+
+.floating-tabs {
+  position: fixed;
+  z-index: 40;
+  bottom: max(.65rem, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  width: min(calc(100% - 1.2rem), 418px);
+  padding: .35rem;
+  border: 1px solid #ffffff;
+  border-radius: 1.45rem;
+  background: #fffefdED;
+  box-shadow: 0 12px 34px #29194433, 0 1px 4px #2919441d;
+  backdrop-filter: blur(16px);
+}
+
+.floating-tab {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .2rem;
+  padding: .45rem .15rem;
+  border-radius: 1rem;
+  color: #5a536a;
+  font-size: .69rem;
+  font-weight: 650;
+}
+
+.floating-tab[aria-current="page"] { color: #332450; }
+.floating-tab-active {
+  position: absolute;
+  z-index: -1;
+  inset: 0 .08rem;
+  border-radius: .95rem;
+  background: linear-gradient(135deg, #eee6ff, #e4daf9);
+  box-shadow: inset 0 1px #fff, 0 3px 9px #725ba22b;
+}
+
+.inbox-action {
+  min-height: 5rem;
+  flex-direction: column;
+  gap: .45rem;
+  padding: .65rem .35rem;
+  border-radius: 1.15rem;
+  font-size: .87rem;
+  box-shadow: inset 0 1px #ffffff6b, 0 7px 15px -10px #33244d80;
+}
+
+.inbox-action:only-child { grid-column: 1 / -1; }
+
+.inbox-empty {
+  display: grid;
+  justify-items: center;
+  gap: .55rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: #574681;
+  background: radial-gradient(ellipse at 50% 15%, #f1eaff, #fff 72%);
+}
+
+.coach-choice {
+  border-color: var(--line);
+  background: radial-gradient(circle at 50% 26%, var(--coach-tint), #fff 73%);
+  box-shadow: 0 7px 16px -13px #32244c85;
+  transition: box-shadow 160ms ease-out, border-color 160ms ease-out;
+}
+.coach-choice[aria-pressed="true"] {
+  border-color: var(--coach-accent);
+  box-shadow: 0 0 0 2px var(--coach-accent), 0 9px 16px -12px var(--coach-accent);
+}
+.coach-choice:focus-visible, .floating-tab:focus-visible {
+  outline: 2px solid #563e91;
+  outline-offset: 2px;
+}
+.coach-conversation {
+  background: linear-gradient(160deg, #fff 48%, #faf7ff);
+}

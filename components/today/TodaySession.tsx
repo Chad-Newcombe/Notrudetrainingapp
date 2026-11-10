@@ -1,3 +1,4 @@
+import { CoachStage } from "@/components/coach/CoachStage";
 import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
 import { coachNudgeForTone } from "@/lib/coach-nudge";
@@ -23,17 +24,11 @@ export function TodaySession({
   if (!session) {
     return (
       <div className="page-enter flex flex-col gap-7">
-        <div>
-          <p className="meta-label">Today</p>
-          <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-            {outsidePlanWeek ? "Week in the rearview" : "Rest day"}
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-[var(--muted)]">
-            {outsidePlanWeek
-              ? "This saved week has ended. The trail can wait — breathe, then build a fresh week when you’re ready."
-              : "Nothing scheduled. The trail can wait — today is for easy breath."}
-          </p>
-        </div>
+        <CoachStage coachId={coach.id} label={`Today · ${coach.name}`}
+          title={outsidePlanWeek ? "Week in the rearview" : "Rest day"}
+          description={outsidePlanWeek
+            ? "Your saved week is complete. Take a breath and check in when you’re ready."
+            : "You have room to rest today."} />
         <CoachBubble coachId={coach.id}>{nudge}</CoachBubble>
         <Button href="/coach" variant="ghost" className="w-full">
           Chat with {coach.name}
@@ -44,21 +39,10 @@ export function TodaySession({
 
   return (
     <div className="page-enter flex flex-col gap-7">
-      <div>
-        <p className="meta-label">Today</p>
-        <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-          {session.title}
-        </h1>
-        {loggedToday ? (
-          <p className="mt-2 text-sm font-medium text-[var(--sage)]">
-            Already logged — showing up counts.
-          </p>
-        ) : null}
-      </div>
-
-      <p className="text-lg leading-relaxed text-[var(--ink-soft)]">
-        {session.rationale}
-      </p>
+      <CoachStage coachId={coach.id} label={`Today · ${session.intensity} effort`}
+        title={session.title} description={session.rationale}>
+        {loggedToday && <span className="mt-3 inline-flex rounded-full bg-white/15 px-2 py-1 text-xs font-semibold">Workout logged</span>}
+      </CoachStage>
 
       <CoachBubble coachId={coach.id}>{nudge}</CoachBubble>
 
@@ -66,8 +50,9 @@ export function TodaySession({
         <h2 className="meta-label">Steps</h2>
         <ul className="mt-3 flex flex-col gap-3">
           {session.steps.map((step, index) => (
-            <li key={index} className="text-[var(--ink)]">
-              <span className="font-display font-semibold tracking-tight">
+            <li key={index} className="grid grid-cols-[1.75rem_1fr] items-start gap-3 text-[var(--ink)]">
+              <span className="grid size-7 place-items-center rounded-full bg-violet-100 text-xs font-bold text-violet-900">{index + 1}</span>
+              <div><span className="font-display font-semibold tracking-tight">
                 {step.name}
               </span>
               <span className="text-[var(--muted)]"> — {step.detail}</span>
@@ -76,7 +61,7 @@ export function TodaySession({
                   {" "}
                   · ~{step.durationMin} min
                 </span>
-              ) : null}
+              ) : null}</div>
             </li>
           ))}
         </ul>

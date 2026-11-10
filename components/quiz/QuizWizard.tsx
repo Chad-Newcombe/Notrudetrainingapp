@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { CoachAvatar } from "@/components/coach/CoachAvatar";
 import { CoachModelPreview } from "@/components/coach/CoachModelPreview";
 import { CoachBubble } from "@/components/coach/CoachBubble";
@@ -297,21 +297,14 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
                     type="button"
                     aria-pressed={selected}
                     onClick={() => selectCoach(c.id)}
-                    className={`flex flex-col items-center gap-2 rounded-[var(--radius-panel)] border px-3 py-4 text-center transition-colors ${
-                      selected
-                        ? "border-[var(--ink-strong)] bg-[var(--ink-strong)] text-[var(--ink-on-dark)]"
-                        : "border-[var(--line)] bg-[var(--canvas-light)] text-[var(--ink)]"
-                    }`}
+                    className="coach-choice flex flex-col items-center gap-2 rounded-[var(--radius-panel)] border px-3 py-4 text-center"
+                    style={{ "--coach-tint": c.secondary, "--coach-accent": c.accent } as CSSProperties}
                   >
                     <CoachAvatar coachId={c.id} size="lg" />
                     <span className="font-display text-base font-semibold tracking-tight">
                       {c.name}
                     </span>
-                    <span
-                      className={`text-xs leading-snug ${
-                        selected ? "text-[var(--ink-muted-on-dark)]" : "text-[var(--muted)]"
-                      }`}
-                    >
+                    <span className="text-xs leading-snug text-[var(--muted)]">
                       {c.vibe}
                     </span>
                   </button>

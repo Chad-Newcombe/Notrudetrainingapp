@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CoachAvatar } from "@/components/coach/CoachAvatar";
+import { CoachStage } from "@/components/coach/CoachStage";
 import { QuickChips } from "@/components/coach/QuickChips";
 import { getCoach, DEFAULT_COACH_ID } from "@/lib/coaches/presets";
 import { createCoachFetch } from "@/lib/coach/fixture-fetch";
@@ -39,7 +39,7 @@ export function CoachChat({ profile, plan, logs }: Props) {
       }
       setHealthSummary(buildHealthSummary(health));
       setBoot(stored.map(chatMessageToUi));
-    })();
+    })().catch(() => { /* The account provider surfaces storage errors. */ });
   }, []);
 
   const persist = useCallback(async (messages: UIMessage[]) => {
@@ -114,7 +114,7 @@ function CoachChatInner({
       }),
     }),
     onFinish: ({ messages }) => {
-      void persist(messages);
+      void persist(messages).catch(() => { /* The account provider surfaces storage errors. */ });
     },
   });
 
@@ -176,32 +176,16 @@ function CoachChatInner({
 
   return (
     <div className="page-enter flex min-h-[calc(100dvh-8rem)] flex-col gap-5">
-      <div className="flex items-start gap-3">
-        <CoachAvatar
-          coachId={profile.coachId ?? DEFAULT_COACH_ID}
-          size="md"
-        />
-        <div>
-        <p className="meta-label">
-          {getCoach(profile.coachId).name}
-        </p>
-        <h1 className="mt-1 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-          In your corner
-        </h1>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          No guilt, no streak shame — just help for the day you&apos;re in.
-        </p>
-        {offline ? (
-          <p className="panel mt-2 px-3 py-2 text-xs text-[var(--muted)]">
-            You appear offline. Replies need a connection (or server fixtures).
-          </p>
-        ) : null}
-        </div>
-      </div>
+      <CoachStage coachId={profile.coachId ?? DEFAULT_COACH_ID}
+        label={`Your coach · ${getCoach(profile.coachId).name}`}
+        title="In your corner" description="A place to figure out what fits today." />
+      {offline && <p className="panel px-3 py-2 text-sm text-[var(--muted)]">
+        You’re offline. Reconnect to get a reply.
+      </p>}
 
       <div
         ref={listRef}
-        className="panel flex max-h-[min(52dvh,28rem)] min-h-48 flex-1 flex-col gap-3 overflow-y-auto p-4"
+        className="panel coach-conversation flex max-h-[min(52dvh,28rem)] min-h-48 flex-1 flex-col gap-3 overflow-y-auto p-4"
       >
         {messages.length === 0 && (
           <div className="space-y-1">

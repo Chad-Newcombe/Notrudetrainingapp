@@ -80,6 +80,8 @@ export default function ProgressPage() {
         Update coaching preferences
       </Button>
 
+      <Button href="/account" variant="ghost" className="w-full">Your account</Button>
+
       <StreakBadge streak={streak} />
       <HealthConnections />
       <HistoryList logs={logs} plan={plan} />

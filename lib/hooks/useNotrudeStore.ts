@@ -19,7 +19,7 @@ export function useNotrudeStore() {
   }, []);
 
   useEffect(() => {
-    void reload();
+    void reload().catch(() => { /* The account provider surfaces storage errors. */ });
   }, [reload]);
 
   return { ready, profile, plan, logs, reload };

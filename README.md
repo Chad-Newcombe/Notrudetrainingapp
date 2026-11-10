@@ -4,6 +4,8 @@ Empathetic, local-first training coach (Next.js PWA). Goals, week plans, workout
 
 ## Run locally
 
+Use Node 24.
+
 ```bash
 npm install
 npm run dev
@@ -71,3 +73,25 @@ npm run lint      # ESLint
 ## Data
 
 Profile, plan, logs, chat, and health connections live in **IndexedDB** in the browser (no account required).
+
+## Accounts and saved training data
+
+Guest mode saves data in this browser. To enable email/password accounts, add these settings to `.env.local` before starting the app.
+
+```dotenv
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=replace-with-your-generated-secret
+# NOTRUDE_DB_PATH=/absolute/path/to/notrude.sqlite
+```
+
+Generate a secret with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Keep it out of Git. Open the exact origin in `BETTER_AUTH_URL` in your browser. Use an HTTPS origin on a hosted server.
+
+Use **Sign in or create an account** from Welcome or **More → Your account**. Signed-in profiles, plans, workouts, conversations, progress, Inbox messages, and demo connection settings are saved to the account database as you use the app. Sign in on another browser pointed at the same server to see the same records. Account mode requires a connection to that server.
+
+On the account page, **Copy device data to account** imports the guest records from that browser into an empty account. The original guest data remains available when signed out. Accounts with existing records reject the import.
+
+SQLite is initialized on first use at `.notrude/notrude.sqlite` by default. For hosting, use a single Node server with persistent disk and keep the database backed up. Email verification and password recovery need an email service and are outside this iteration.
+
+## Interface
+
+[Motion](https://github.com/motiondivision/motion) powers the coach entrances and sliding tab indicator, with support for reduced-motion preferences. [Motion Primitives](https://github.com/ibelick/motion-primitives) is a reference for small interactions that fit the existing React and Tailwind stack. Coach portraits and 3D models are Notrude assets.

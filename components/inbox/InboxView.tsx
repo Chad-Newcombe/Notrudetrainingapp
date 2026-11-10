@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Mail, MessageCircle } from "lucide-react";
+import { CoachStage } from "@/components/coach/CoachStage";
 import { CoachAvatar } from "@/components/coach/CoachAvatar";
 import { Button } from "@/components/ui/Button";
 import { getCoach, DEFAULT_COACH_ID } from "@/lib/coaches/presets";
@@ -37,7 +39,7 @@ export function InboxView({ profile }: Props) {
   }, []);
 
   useEffect(() => {
-    void reload();
+    void reload().catch(() => setError("Couldn’t load your messages. Refresh to try again."));
   }, [reload]);
 
   async function requestFromCoach(channel: ComposeChannel) {
@@ -70,38 +72,29 @@ export function InboxView({ profile }: Props) {
 
   return (
     <div className="page-enter flex flex-col gap-8">
-      <div className="flex items-start gap-3">
-        <CoachAvatar coachId={coachId} size="md" />
-        <div>
-          <p className="meta-label">Inbox</p>
-          <h1 className="mt-1 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-            From {coach.name}
-          </h1>
-          <p className="mt-2 text-base text-[var(--muted)]">
-            Text and email check-ins from {coach.name} appear here in the app.
-          </p>
-        </div>
-      </div>
-
+      <CoachStage coachId={coachId} label="Coach Inbox" title={`From ${coach.name}`}
+        description="A little support, whenever you ask for it." />
       <section className="flex flex-col gap-3">
         <p className="meta-label">Ask {coach.name} to send</p>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="grid grid-cols-2 gap-3">
           {(hasText || !hasEmail) && (
             <Button
-              className="w-full sm:flex-1"
+              className="inbox-action"
               disabled={loading != null}
               onClick={() => void requestFromCoach("text_style")}
             >
+              <MessageCircle size={19} aria-hidden="true" />
               {loading === "text_style" ? "Sending…" : "Send me a text"}
             </Button>
           )}
           {(hasEmail || !hasText) && (
             <Button
-              className="w-full sm:flex-1"
+              className="inbox-action"
               variant={hasText ? "ghost" : "primary"}
               disabled={loading != null}
               onClick={() => void requestFromCoach("email_outline")}
             >
+              <Mail size={19} aria-hidden="true" />
               {loading === "email_outline" ? "Sending…" : "Send me an email"}
             </Button>
           )}
@@ -110,52 +103,13 @@ export function InboxView({ profile }: Props) {
       </section>
 
       <section className="flex flex-col gap-3">
-        <p className="meta-label">Delivery</p>
-        <div className="panel flex flex-col gap-3 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="font-display text-sm font-semibold text-[var(--ink)]">
-                Phone
-              </p>
-              <p className="text-xs text-[var(--muted)]">
-                Real SMS coming soon — demo marks you as reachable.
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              className="shrink-0 px-3 py-2 text-sm"
-              onClick={() => setPhoneDemo((v) => !v)}
-            >
-              {phoneDemo ? "Connected (demo)" : "Connect"}
-            </Button>
-          </div>
-          <div className="border-t border-[var(--line)]" />
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="font-display text-sm font-semibold text-[var(--ink)]">
-                Email
-              </p>
-              <p className="text-xs text-[var(--muted)]">
-                Real email coming soon — messages stay in-app for now.
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              className="shrink-0 px-3 py-2 text-sm"
-              onClick={() => setEmailDemo((v) => !v)}
-            >
-              {emailDemo ? "Connected (demo)" : "Connect"}
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3">
         <p className="meta-label">Message history</p>
         {messages.length === 0 ? (
-          <p className="text-base text-[var(--muted)]">
-            Nothing yet — ask {coach.name} to send you a nudge above.
-          </p>
+          <div className="panel inbox-empty">
+            <Mail size={27} aria-hidden="true" />
+            <p className="font-display text-base font-bold">A quiet inbox</p>
+            <p className="text-sm text-[var(--muted)]">Ask {coach.name} for a nudge and it’ll appear here.</p>
+          </div>
         ) : (
           <ul className="flex flex-col gap-3">
             {messages.map((m) => {
@@ -193,6 +147,47 @@ export function InboxView({ profile }: Props) {
           </ul>
         )}
       </section>
+      <details className="panel p-4">
+        <summary className="cursor-pointer font-semibold">Delivery settings</summary>
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-display text-sm font-semibold text-[var(--ink)]">
+                Phone
+              </p>
+              <p className="text-xs text-[var(--muted)]">
+                Real SMS coming soon — demo marks you as reachable.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              className="shrink-0 px-3 py-2 text-sm"
+              onClick={() => setPhoneDemo((v) => !v)}
+            >
+              {phoneDemo ? "Connected (demo)" : "Connect"}
+            </Button>
+          </div>
+          <div className="border-t border-[var(--line)]" />
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-display text-sm font-semibold text-[var(--ink)]">
+                Email
+              </p>
+              <p className="text-xs text-[var(--muted)]">
+                Real email coming soon — messages stay in-app for now.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              className="shrink-0 px-3 py-2 text-sm"
+              onClick={() => setEmailDemo((v) => !v)}
+            >
+              {emailDemo ? "Connected (demo)" : "Connect"}
+            </Button>
+          </div>
+        </div>
+      </details>
+
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { AccountProvider } from "@/components/account/AccountProvider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -46,7 +47,7 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${figtree.variable}`}
     >
       <body className="antialiased">
-        <div className="app-shell">{children}</div>
+        <div className="app-shell"><AccountProvider>{children}</AccountProvider></div>
       </body>
     </html>
   );
