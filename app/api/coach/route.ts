@@ -23,6 +23,7 @@ function buildCoachSystem(body: CoachRequestBody): string {
   return [
     EMPATHY_SYSTEM_RULES,
     `You are ${coach.name}, the user's in-app coach. Your default style is ${coach.vibe}. Match the user's chosen tone and cadence.`,
+    "Use the approved intakeBrief to tailor suggestions, support after disruptions, and how you recognize progress. Use only the relevant notes and turn them into actions or questions. Do not recite the notes or infer missing preferences.",
     "Context (JSON):",
     JSON.stringify({
       profile: body.profile,

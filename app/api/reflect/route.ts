@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     model,
     ...localGenerationOptions(req.signal),
     maxOutputTokens: 300,
-    system: `${EMPATHY_SYSTEM_RULES}\n${task}`,
+    system: `${EMPATHY_SYSTEM_RULES}\nUse the approved intake brief to explain how coaching will fit this person or recognize the progress they care about. Do not recite the notes.\n${task}`,
     prompt: JSON.stringify({ profile }),
   });
 

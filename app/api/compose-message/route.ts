@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     ...localGenerationOptions(req.signal),
     maxOutputTokens: 450,
     output: Output.object({ schema: composedMessageBodySchema }),
-    system: `${EMPATHY_SYSTEM_RULES}\nYou are ${coach.name}. Your default style is ${coach.vibe}. Match the user's chosen tone and cadence.\n${formHint}\nSign as ${coach.name}.`,
+    system: `${EMPATHY_SYSTEM_RULES}\nYou are ${coach.name}. Your default style is ${coach.vibe}. Match the user's chosen tone and cadence. Apply approved supportApproach and progressSignal from the intake brief when relevant. Do not recite the notes.\n${formHint}\nSign as ${coach.name}.`,
     prompt: JSON.stringify({ profile, channel, recentSummary }),
   });
 

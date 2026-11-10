@@ -1,3 +1,5 @@
+import type { IntakeBrief } from "@/lib/intake";
+
 export type EngagementTone = "gentle" | "steady" | "direct";
 export type EngagementCadence = "brief" | "conversational" | "quiet";
 export type MotivationStyle = "celebrate_wins" | "process_focus" | "accountability";
@@ -6,6 +8,7 @@ export type CoachId = "river" | "jax" | "sol" | "nova";
 
 export type UserProfile = {
   goalText: string;
+  intakeBrief?: IntakeBrief;
   currentWeightLbs?: number;
   targetWeightLbs?: number;
   targetDescription?: string;

@@ -173,6 +173,10 @@ export function fixtureReflection(profile: UserProfile): string {
 }
 
 export function fixtureAcknowledgment(profile: UserProfile): string {
+  if (profile.intakeBrief) {
+    return "Your coaching notes are saved. You can revisit them anytime under More.";
+  }
+
   const snippet =
     profile.goalText.length > 80
       ? `${profile.goalText.slice(0, 77)}…`

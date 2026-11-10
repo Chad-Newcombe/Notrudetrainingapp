@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     ...localGenerationOptions(req.signal, 360_000),
     maxOutputTokens: 1800,
     output: Output.object({ schema: planSchema }),
-    system: `${EMPATHY_SYSTEM_RULES}\nReturn a one-week training plan as JSON matching the schema. Include only scheduled sessions, with dayIndex 0 for Monday through 6 for Sunday. Keep each rationale to one sentence and use 1–3 short, actionable steps per session.`,
+    system: `${EMPATHY_SYSTEM_RULES}\nReturn a one-week training plan as JSON matching the schema. Use profile.intakeBrief.trainingApproach, when present, to adapt schedule, setting, and session design. Use progressSignal in the rationale where it fits. Honor explicit constraints and ask no questions in the plan. Include only scheduled sessions, with dayIndex 0 for Monday through 6 for Sunday. Keep each rationale to one sentence and use 1–3 short, actionable steps per session.`,
     prompt: JSON.stringify({ profile, notes }),
   });
 

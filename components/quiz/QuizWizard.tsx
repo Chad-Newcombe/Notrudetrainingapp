@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CoachAvatar } from "@/components/coach/CoachAvatar";
 import { CoachModelPreview } from "@/components/coach/CoachModelPreview";
 import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
 import { ChoiceCard } from "@/components/ui/ChoiceCard";
+import { IntakeConversation } from "./IntakeConversation";
+import { IntakeReview } from "./IntakeReview";
+import { INTAKE_ANSWER_LIMIT, intakeProposalSchema, quickIntakeProposal, type IntakeBrief, type IntakeInput, type IntakeProposal } from "@/lib/intake";
 import { ProgressDots } from "@/components/ui/ProgressDots";
 import { COACH_PRESETS, getCoach } from "@/lib/coaches/presets";
 import { saveProfile } from "@/lib/store";
@@ -19,7 +22,10 @@ import type {
   UserProfile,
 } from "@/lib/types";
 
-const TOTAL_STEPS = 6;
+const STEPS = ["coach", "goal", "routine", "support", "baseline", "weight", "style", "channels", "review"] as const;
+type Step = (typeof STEPS)[number];
+
+const emptyBrief: IntakeBrief = { trainingApproach: "", supportApproach: "", progressSignal: "" };
 
 const TONE_OPTIONS: { value: EngagementTone; title: string; description: string }[] = [
   { value: "gentle", title: "Gentle", description: "Soft encouragement, lots of permission to rest." },
@@ -64,6 +70,9 @@ const ACTIVITY_LEVELS = [
 type Draft = {
   coachId: CoachId | null;
   goalText: string;
+  routine: string;
+  support: string;
+  progress: string;
   currentWeightLbs: string;
   activityLevel: string;
   constraints: string;
@@ -79,6 +88,9 @@ type Draft = {
 const initialDraft: Draft = {
   coachId: null,
   goalText: "",
+  routine: "",
+  support: "",
+  progress: "",
   currentWeightLbs: "",
   activityLevel: "",
   constraints: "",
@@ -94,26 +106,40 @@ const initialDraft: Draft = {
 const fieldClass =
   "w-full rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--canvas-light)] px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink-strong)]";
 
-export function QuizWizard() {
+export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfile | null; hasPlan: boolean }) {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [draft, setDraft] = useState<Draft>(initialDraft);
+  const [step, setStep] = useState<Step>("coach");
+  const [draft, setDraft] = useState<Draft>(() => existing ? {
+    ...initialDraft,
+    ...existing,
+    constraints: existing.constraints ?? "",
+    activityLevel: existing.activityLevel ?? "",
+    currentWeightLbs: String(existing.currentWeightLbs ?? ""),
+    targetWeightLbs: String(existing.targetWeightLbs ?? ""),
+    targetDescription: existing.targetDescription ?? "",
+  } : initialDraft);
+  const [brief, setBrief] = useState(existing?.intakeBrief ?? emptyBrief);
+  const [review, setReview] = useState<{ reply: string; source: "quick" | "coach" } | null>(null);
+  const [saveError, setSaveError] = useState(false);
+  const reviewRequest = useRef<AbortController | null>(null);
+  const reviewedInput = useRef<string | null>(null);
+
+  useEffect(() => () => reviewRequest.current?.abort(), []);
   const [saving, setSaving] = useState(false);
   const [showModel, setShowModel] = useState(false);
 
   const goalValid = draft.goalText.trim().length > 0;
   const coach = draft.coachId ? getCoach(draft.coachId) : null;
 
-  const visibleStep = useMemo(() => {
-    if (step === 3 && !draft.trackWeight) return 4;
-    return step;
-  }, [step, draft.trackWeight]);
+  const steps = STEPS.filter((name) => name !== "weight" || draft.trackWeight);
+  const stepIndex = steps.indexOf(step);
 
   function patch(partial: Partial<Draft>) {
     setDraft((d) => ({ ...d, ...partial }));
   }
 
   function selectCoach(id: CoachId) {
+    if (id === draft.coachId) return;
     const c = getCoach(id);
     patch({
       coachId: id,
@@ -135,36 +161,96 @@ export function QuizWizard() {
   }
 
   function goNext() {
-    if (step === 2 && !draft.trackWeight) {
-      setStep(4);
-      return;
-    }
-    if (step < TOTAL_STEPS - 1) setStep((s) => s + 1);
+    const next = steps[stepIndex + 1];
+    if (next) setStep(next);
   }
 
   function goBack() {
-    if (step === 4 && !draft.trackWeight) {
-      setStep(2);
+    reviewRequest.current?.abort();
+    setSaveError(false);
+    const previous = steps[stepIndex - 1];
+    if (previous) setStep(previous);
+  }
+
+  function intakeInput(): IntakeInput {
+    return {
+      coachId: draft.coachId!,
+      goal: draft.goalText.trim().slice(0, INTAKE_ANSWER_LIMIT),
+      routine: draft.routine.trim(),
+      support: draft.support.trim(),
+      progress: draft.progress.trim(),
+      constraints: draft.constraints.trim().slice(0, INTAKE_ANSWER_LIMIT),
+      tone: draft.tone,
+    };
+  }
+
+  function showReview(proposal: IntakeProposal, source: "quick" | "coach", input: IntakeInput) {
+    const { reply, ...notes } = proposal;
+    setBrief({
+      trainingApproach: notes.trainingApproach || existing?.intakeBrief?.trainingApproach || "",
+      supportApproach: notes.supportApproach || existing?.intakeBrief?.supportApproach || "",
+      progressSignal: notes.progressSignal || existing?.intakeBrief?.progressSignal || "",
+    });
+    reviewedInput.current = JSON.stringify(input);
+    setReview({ reply, source });
+  }
+
+  function useQuickReview() {
+    reviewRequest.current?.abort();
+    const input = intakeInput();
+    showReview(quickIntakeProposal(input), "quick", input);
+  }
+
+  async function prepareReview() {
+    const input = intakeInput();
+    setStep("review");
+    if (reviewedInput.current === JSON.stringify(input)) return;
+    if (!input.routine && !input.support && !input.progress && !input.constraints) {
+      showReview(quickIntakeProposal(input), "quick", input);
       return;
     }
-    if (step > 0) setStep((s) => s - 1);
+
+    const request = new AbortController();
+    reviewRequest.current = request;
+    setReview(null);
+    try {
+      const res = await fetch("/api/intake", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input),
+        signal: AbortSignal.any([request.signal, AbortSignal.timeout(80_000)]),
+      });
+      if (!res.ok) throw new Error("Could not prepare coaching notes");
+      const data = await res.json();
+      if (!request.signal.aborted) {
+        showReview(intakeProposalSchema.parse(data.proposal), data.source === "coach" ? "coach" : "quick", input);
+      }
+    } catch {
+      if (!request.signal.aborted) showReview(quickIntakeProposal(input), "quick", input);
+    }
   }
 
   async function finish() {
     if (!draft.coachId) return;
     setSaving(true);
+    setSaveError(false);
     try {
       const channels =
         draft.channels.length > 0 ? draft.channels : (["in_app"] as ChannelPref[]);
       const profile: UserProfile = {
         goalText: draft.goalText.trim(),
+        intakeBrief: Object.values(brief).some((value) => value.trim()) ? {
+          trainingApproach: brief.trainingApproach.trim(),
+          supportApproach: brief.supportApproach.trim(),
+          progressSignal: brief.progressSignal.trim(),
+        } : undefined,
         tone: draft.tone,
         cadence: draft.cadence,
         motivation: draft.motivation,
         channels,
         trackWeight: draft.trackWeight,
         coachId: draft.coachId,
-        createdAt: new Date().toISOString(),
+        createdAt: existing?.createdAt ?? new Date().toISOString(),
       };
       const cw = draft.currentWeightLbs.trim();
       if (cw) profile.currentWeightLbs = Number(cw);
@@ -177,7 +263,9 @@ export function QuizWizard() {
         if (td) profile.targetDescription = td;
       }
       await saveProfile(profile);
-      router.push("/acknowledgment");
+      router.push(hasPlan ? "/coach" : "/acknowledgment");
+    } catch {
+      setSaveError(true);
     } finally {
       setSaving(false);
     }
@@ -186,11 +274,11 @@ export function QuizWizard() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[var(--canvas-soft)] px-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="mb-8">
-        <ProgressDots total={TOTAL_STEPS} current={visibleStep} />
+        <ProgressDots total={steps.length} current={stepIndex} />
       </div>
 
       <div key={step} className="quiz-step-in flex flex-1 flex-col gap-6">
-        {step === 0 && (
+        {step === "coach" && (
           <>
             <div className="space-y-2">
               <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
@@ -246,7 +334,7 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 1 && coach && (
+        {step === "goal" && coach && (
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.goal}</CoachBubble>
             <div className="space-y-2">
@@ -260,6 +348,8 @@ export function QuizWizard() {
             <textarea
               className={`${fieldClass} min-h-[140px] resize-y`}
               placeholder="e.g. train for a 50k, or start walking again without guilt"
+              aria-label="What are you working toward?"
+              maxLength={INTAKE_ANSWER_LIMIT}
               value={draft.goalText}
               onChange={(e) => patch({ goalText: e.target.value })}
               rows={5}
@@ -268,7 +358,20 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 2 && coach && (
+        {(step === "routine" || step === "support") && coach && (
+          <IntakeConversation
+            coachId={coach.id}
+            goal={draft.goalText}
+            routine={draft.routine}
+            support={draft.support}
+            progress={draft.progress}
+            onChange={(field, value) => patch({ [field]: value })}
+            followUp={step === "support"}
+            fieldClass={fieldClass}
+          />
+        )}
+
+        {step === "baseline" && coach && (
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.now}</CoachBubble>
             <div className="space-y-2">
@@ -309,6 +412,7 @@ export function QuizWizard() {
               <textarea
                 className={`${fieldClass} min-h-[80px] resize-y`}
                 placeholder="Optional—knee issues, schedule limits, etc."
+                maxLength={INTAKE_ANSWER_LIMIT}
                 value={draft.constraints}
                 onChange={(e) => patch({ constraints: e.target.value })}
                 rows={3}
@@ -328,7 +432,7 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 3 && draft.trackWeight && coach && (
+        {step === "weight" && draft.trackWeight && coach && (
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.target}</CoachBubble>
             <div className="space-y-2">
@@ -363,7 +467,7 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 4 && coach && (
+        {step === "style" && coach && (
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.engagement}</CoachBubble>
             <div className="space-y-2">
@@ -419,7 +523,7 @@ export function QuizWizard() {
           </>
         )}
 
-        {step === 5 && coach && (
+        {step === "channels" && coach && (
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.channels}</CoachBubble>
             <div className="space-y-2">
@@ -443,20 +547,38 @@ export function QuizWizard() {
             </div>
           </>
         )}
+        {step === "review" && coach && (
+          <IntakeReview
+            coachId={coach.id}
+            brief={brief}
+            reply={review?.reply ?? ""}
+            source={review?.source ?? "quick"}
+            pending={!review}
+            onQuickReview={useQuickReview}
+            onChange={(field, value) => setBrief((current) => ({ ...current, [field]: value }))}
+            fieldClass={fieldClass}
+          />
+        )}
       </div>
 
       <div className="mt-8 flex flex-col gap-3">
-        {step === 0 && (
+        {step === "coach" && (
           <Button className="w-full" disabled={!draft.coachId} onClick={goNext}>
             Continue with {draft.coachId ? getCoach(draft.coachId).name : "coach"}
           </Button>
         )}
-        {step === 1 && (
+        {step === "goal" && (
           <Button className="w-full" disabled={!goalValid || saving} onClick={goNext}>
             Continue
           </Button>
         )}
-        {step === 2 && (
+        {(step === "routine" || step === "support") && (
+          <Button className="w-full" onClick={goNext}>
+            {step === "routine" ? (draft.routine.trim() ? "Continue" : "Skip for now")
+              : (draft.support.trim() || draft.progress.trim() ? "Continue" : "Skip for now")}
+          </Button>
+        )}
+        {step === "baseline" && (
           <>
             <Button className="w-full" onClick={goNext}>
               Continue
@@ -466,7 +588,7 @@ export function QuizWizard() {
             </Button>
           </>
         )}
-        {step === 3 && draft.trackWeight && (
+        {step === "weight" && draft.trackWeight && (
           <>
             <Button className="w-full" onClick={goNext}>
               Continue
@@ -476,18 +598,24 @@ export function QuizWizard() {
             </Button>
           </>
         )}
-        {step === 4 && (
+        {step === "style" && (
           <Button className="w-full" onClick={goNext}>
             Continue
           </Button>
         )}
-        {step === 5 && (
-          <Button className="w-full" disabled={saving} onClick={finish}>
-            {saving ? "Saving…" : "Finish"}
+        {step === "channels" && (
+          <Button className="w-full" onClick={() => void prepareReview()}>
+            Review with {coach?.name}
           </Button>
         )}
-        {step > 0 && (
-          <Button variant="ghost" className="w-full" onClick={goBack}>
+        {step === "review" && (
+          <Button className="w-full" disabled={saving || !review} onClick={() => void finish()}>
+            {saving ? "Saving…" : "Save coaching preferences"}
+          </Button>
+        )}
+        {saveError && <p role="alert" className="text-sm text-[var(--muted)]">Couldn’t save your preferences. Try again.</p>}
+        {stepIndex > 0 && (
+          <Button variant="ghost" className="w-full" disabled={saving} onClick={goBack}>
             Back
           </Button>
         )}

@@ -76,6 +76,10 @@ export default function ProgressPage() {
         </p>
       </div>
 
+      <Button href="/quiz" variant="ghost" className="w-full">
+        Update coaching preferences
+      </Button>
+
       <StreakBadge streak={streak} />
       <HealthConnections />
       <HistoryList logs={logs} plan={plan} />

@@ -1,6 +1,6 @@
 # Notrude
 
-Empathetic, local-first training coach (Next.js PWA). Goals, week plans, workouts, progress, and an always-on coach chat — with fixture fallbacks when no AI key is configured.
+Empathetic, local-first training coach (Next.js PWA). Goals, week plans, workouts, progress, and an always-on coach chat — with fixture fallbacks when no local model is configured.
 
 ## Run locally
 
@@ -11,11 +11,15 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). Choose River, Jax, Sol, or Nova at the start of the onboarding quiz, or use a demo profile on Welcome to go straight to Today. Profiles saved before coach selection use River by default.
 
+In intake, tell your coach what fits your week, how you want support on difficult days, and what progress means to you. Review and edit the resulting coaching notes before saving. When a local model is configured, it interprets your answers. The quick draft uses built-in suggestions and leaves unfamiliar preferences open for you to fill in. The conversation answers are temporary. The app saves your approved notes alongside your explicit profile fields.
+
+Already using Notrude? Open **More → Update coaching preferences** to revisit intake. This preserves your saved week and workout history. The new notes inform live chat, future plan generation, and check-ins.
+
 Request text and email check-ins from the **Inbox** tab. Both formats appear inside Notrude. Phone and email connection controls are demos.
 
 ## Run the live coach on your own machine
 
-Notrude uses a self-hosted OpenAI-compatible endpoint for chat, onboarding acknowledgments, weekly plans, and Inbox check-ins. The default model is **Qwen3 4B Instruct 2507**, a 2.5 GB quantized download under Apache 2.0. Running it on your own machine requires no provider account or per-request fee.
+Notrude uses a self-hosted OpenAI-compatible endpoint for intake interpretation, chat, onboarding acknowledgments, weekly plans, and Inbox check-ins. The default model is **Qwen3 4B Instruct 2507**, a 2.5 GB quantized download under Apache 2.0. Running it on your own machine requires no provider account or per-request fee.
 
 1. Install [Ollama](https://ollama.com/download). Start it with cloud features disabled and leave it running. If the desktop app has already started Ollama, quit it before starting the local service below.
 
