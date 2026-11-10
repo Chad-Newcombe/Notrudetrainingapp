@@ -41,12 +41,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const previewBuild = process.env.NOTRUDE_PREVIEW_BUILD;
+
   return (
     <html
       lang="en"
       className={`${spaceGrotesk.variable} ${figtree.variable}`}
     >
       <body className="antialiased">
+        {previewBuild && (
+          <p className="bg-violet-950 px-3 py-1 text-center font-mono text-xs text-violet-100">
+            Notrude Preview · {previewBuild}
+          </p>
+        )}
         <div className="app-shell"><AccountProvider>{children}</AccountProvider></div>
       </body>
     </html>
