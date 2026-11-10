@@ -34,6 +34,8 @@ To pick up a new push, stop the preview with Ctrl+C, run `git pull --ff-only` fr
 
 If the preview was started on the shared cloud desktop, open the URL inside **Cloud browser**. To open the same URL in your own browser, run the preview on your own computer. If you’ve set up local Ollama, the preview uses the same model settings as the app.
 
+Use a desktop browser with WebGL 2 for interactive coaches. If you see the portrait and a message that 3D is unavailable, the browser either couldn't start its graphics renderer or couldn't load the model. The rest of the app remains available. For an end-to-end test in your own browser, run the preview and Ollama together on your computer.
+
 ## Run the live coach on your own machine
 
 Notrude uses a self-hosted OpenAI-compatible endpoint for intake interpretation, chat, onboarding acknowledgments, weekly plans, and Inbox check-ins. The default model is **Qwen3 4B Instruct 2507**, a 2.5 GB quantized download under Apache 2.0. Running it on your own machine requires no provider account or per-request fee.
