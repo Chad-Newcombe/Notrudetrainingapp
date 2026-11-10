@@ -175,17 +175,18 @@ function CoachChatInner({
   );
 
   return (
-    <div className="page-enter flex min-h-[calc(100dvh-8rem)] flex-col gap-5">
+    <div className="page-enter flex flex-col gap-4">
       <CoachStage coachId={profile.coachId ?? DEFAULT_COACH_ID}
         label={`Your coach · ${getCoach(profile.coachId).name}`}
-        title="In your corner" description="A place to figure out what fits today." />
+        title="In your corner" description="A place to figure out what fits today."
+        conversation replying={busy} />
       {offline && <p className="panel px-3 py-2 text-sm text-[var(--muted)]">
         You’re offline. Reconnect to get a reply.
       </p>}
 
       <div
         ref={listRef}
-        className="panel coach-conversation flex max-h-[min(52dvh,28rem)] min-h-48 flex-1 flex-col gap-3 overflow-y-auto p-4"
+        className="panel coach-conversation flex max-h-[min(52dvh,28rem)] min-h-32 flex-col gap-3 overflow-y-auto p-4"
       >
         {messages.length === 0 && (
           <div className="space-y-1">

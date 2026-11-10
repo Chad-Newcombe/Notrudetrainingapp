@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import math
+import sys
 
 import bpy
 from mathutils import Vector
@@ -94,6 +95,7 @@ def build(coach):
         oval("Sneaker upper", (x * 1.20, -0.155, 0.265), (0.245, 0.39, 0.195), shoe)
         oval("Sneaker outsole", (x * 1.20, -0.16, 0.14), (0.254, 0.40, 0.10), trim)
         stroke("Sneaker seam", [(x * 1.20 - .09, -.36, .39), (x * 1.20, -.40, .40), (x * 1.20 + .09, -.36, .39)], trim, .017)
+    lower_body = set(bpy.context.scene.objects)
     oval("Training jacket", (0, 0, 1.50), (0.57, 0.35, 0.63), jacket)
     oval("Collar", (0, -0.01, 2.01), (0.34, 0.30, 0.155), trim)
     if kind == "headband":
@@ -158,6 +160,35 @@ def build(coach):
             oval("Headphone cup", (side * .704, .09, 2.65), (.156, .214, .236), jacket)
             oval("Headphone cap", (side * .818, .09, 2.65), (.068, .16, .177), trim)
 
+    return sorted(set(bpy.context.scene.objects) - lower_body, key=lambda obj: obj.name)
+
+
+def animate(upper_body):
+    pivot = bpy.data.objects.new("Upper body", None)
+    bpy.context.scene.collection.objects.link(pivot)
+    pivot.location.z = 1.22
+    bpy.context.view_layer.update()
+    for obj in upper_body:
+        obj.parent = pivot
+        obj.matrix_parent_inverse = pivot.matrix_world.inverted()
+
+    clips = {
+        "Idle": [(1, 0, 0), (26, 0, 1.4), (58, 0, -1.25), (97, 0, 0)],
+        "Reply": [(1, 0, 0), (12, 3.5, 1), (23, -.8, 1.5), (52, 0, 0)],
+    }
+    for name, poses in clips.items():
+        for frame, nod, lean in poses:
+            pivot.rotation_euler = (math.radians(nod), math.radians(lean), 0)
+            pivot.keyframe_insert(data_path="rotation_euler", frame=frame)
+        animation = pivot.animation_data
+        action = animation.action
+        action.name = name
+        track = animation.nla_tracks.new()
+        track.name = name
+        track.strips.new(name, 1, action)
+        animation.action = None
+    bpy.context.scene.frame_set(1)
+
 
 def point_at(obj, target):
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
@@ -202,12 +233,13 @@ def portrait(path):
 OUT.mkdir(exist_ok=True, parents=True)
 for slug, coach in COACHES.items():
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    build(coach)
+    animate(build(coach))
     bpy.ops.export_scene.gltf(
         filepath=str(OUT / f"{slug}.glb"), export_format="GLB",
         export_cameras=False, export_lights=False, export_texcoords=False,
-        export_yup=True,
+        export_yup=True, export_animation_mode="NLA_TRACKS",
     )
-    if bpy.context.scene.world is None:
-        bpy.context.scene.world = bpy.data.worlds.new("Studio")
-    portrait(OUT / f"{slug}.webp")
+    if "--models-only" not in sys.argv:
+        if bpy.context.scene.world is None:
+            bpy.context.scene.world = bpy.data.worlds.new("Studio")
+        portrait(OUT / f"{slug}.webp")

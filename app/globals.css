@@ -237,26 +237,55 @@ body {
   line-height: 1.4;
 }
 
-.coach-stage-portrait {
-  position: relative;
-  align-self: center;
-  justify-self: end;
-  width: 100%;
-  aspect-ratio: 1;
+.coach-companion {
   display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid #ffffff40;
-  background: radial-gradient(circle at 45% 34%, color-mix(in srgb, var(--coach-tint), transparent 24%), transparent 71%);
-  box-shadow: 0 0 0 7px #ffffff12, inset 0 0 20px #ffffff30, 0 12px 32px #14102163;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: .4rem;
+  color: var(--ink);
 }
 
-.coach-stage-portrait img {
-  width: 94%;
-  height: 94%;
-  border-radius: 50%;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 6px #20183069);
+.coach-companion-chat,
+.theme-dark .coach-companion {
+  grid-template-columns: minmax(0, 1fr);
+  text-align: center;
+}
+
+.coach-companion-scene {
+  position: relative;
+  isolation: isolate;
+}
+
+.coach-companion-scene::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0 -3% 0;
+  content: "";
+  background: radial-gradient(ellipse at 50% 42%,
+    color-mix(in srgb, var(--coach-accent), transparent 67%), transparent 69%);
+  pointer-events: none;
+}
+
+.coach-model-space {
+  height: 12rem;
+}
+
+.theme-dark .coach-model-space {
+  height: clamp(12rem, 34dvh, 17.5rem);
+}
+
+.coach-companion-chat .coach-model-space {
+  height: clamp(11rem, 30dvh, 15rem);
+}
+
+.coach-companion-hint {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  color: var(--muted);
+  font-size: .68rem;
+  text-align: center;
+  pointer-events: none;
 }
 
 .account-stage { grid-template-columns: 1fr; }

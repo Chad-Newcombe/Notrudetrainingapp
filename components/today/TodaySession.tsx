@@ -41,7 +41,7 @@ export function TodaySession({
     <div className="page-enter flex flex-col gap-7">
       <CoachStage coachId={coach.id} label={`Today · ${session.intensity} effort`}
         title={session.title} description={session.rationale}>
-        {loggedToday && <span className="mt-3 inline-flex rounded-full bg-white/15 px-2 py-1 text-xs font-semibold">Workout logged</span>}
+        {loggedToday && <span className="mt-3 inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-900">Workout logged</span>}
       </CoachStage>
 
       <CoachBubble coachId={coach.id}>{nudge}</CoachBubble>

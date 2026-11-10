@@ -73,7 +73,7 @@ export function InboxView({ profile }: Props) {
   return (
     <div className="page-enter flex flex-col gap-8">
       <CoachStage coachId={coachId} label="Coach Inbox" title={`From ${coach.name}`}
-        description="A little support, whenever you ask for it." />
+        description="A little support, whenever you ask for it." replying={loading != null} />
       <section className="flex flex-col gap-3">
         <p className="meta-label">Ask {coach.name} to send</p>
         <div className="grid grid-cols-2 gap-3">

@@ -65,7 +65,9 @@ With no model URL, the app uses built-in demo responses. A configured model neve
 
 ## Coach models
 
-The coach picker loads the selected coach's 3D preview on demand. Other screens use lightweight portraits rendered from the same models. The Blender source in `design/coaches/build_models.py` generates the four GLBs and WebP portraits.
+The coach picker loads the selected coach's 3D preview on demand. Welcome, Today, Coach, and Inbox show the active coach in 3D. The model can be rotated and has idle and reply animations. Reduced motion pauses automatic animation, and a portrait is available if the model fails to load. Message bubbles use lightweight portraits from the same models.
+
+The Blender source in `design/coaches/build_models.py` generates the four GLBs and WebP portraits. Append `-- --models-only` to regenerate just the models.
 
 ```bash
 blender --background --python-exit-code 1 --python design/coaches/build_models.py
