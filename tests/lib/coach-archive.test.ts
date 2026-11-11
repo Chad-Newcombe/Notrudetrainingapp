@@ -55,3 +55,40 @@ describe("deterministic conversation archives", () => {
     ]) expect(conversationArchiveSchema.safeParse(invalid).success).toBe(false);
   });
 });
+
+describe("review regression: factual fallback with user filler", () => {
+  it("uses factual metadata instead of rephrasing excerpts containing prohibited filler", () => {
+    const current = conversation("I see, move my run to Sunday.", "No pressure, keep Saturday free.");
+    const archive = fallbackConversationArchive(current);
+    expect(archive.title).toBe("Conversation");
+    expect(archive.summary).toBe("2 user messages.");
+    expect(archive.resultLabels).toEqual(["Plan updated", "Plan restored"]);
+    expect(conversationArchiveSchema.safeParse(archive).success).toBe(true);
+    expect(current.messages[0].content).toBe("I see, move my run to Sunday.");
+  });
+
+  it("uses literal conversation metadata when a user turn consists only of filler", () => {
+    const current = conversation("I see.", "You've got this. No pressure.");
+    const archive = fallbackConversationArchive(current);
+    expect(archive.title).toBe("Conversation");
+    expect(archive.summary).toBe("2 user messages.");
+    expect(fallbackConversationArchive(current)).toEqual(archive);
+    expect(conversationArchiveSchema.safeParse(archive).success).toBe(true);
+  });
+
+  it("preserves useful excerpts independently and never removes meaning from a constraint", () => {
+    const current = conversation("Move my run to Sunday.", "No pressure on my knee.");
+    const archive = fallbackConversationArchive(current);
+    expect(archive.title).toBe("Move my run to Sunday.");
+    expect(archive.summary).toBe("2 user messages.");
+    expect(current.messages[2].content).toBe("No pressure on my knee.");
+    expect(conversationArchiveSchema.safeParse(archive).success).toBe(true);
+  });
+
+  it("checks the normalized excerpt that will actually be emitted", () => {
+    const archive = fallbackConversationArchive(conversation("I\nsee.", "Keep Saturday free."));
+    expect(archive.title).toBe("Conversation");
+    expect(archive.summary).toBe('Last request: "Keep Saturday free."');
+    expect(conversationArchiveSchema.safeParse(archive).success).toBe(true);
+  });
+});

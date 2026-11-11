@@ -17,9 +17,16 @@ function excerpt(text: string, limit: number): string {
 export function fallbackConversationArchive(conversation: CoachConversation): ConversationArchive {
   const turns = conversation.messages.filter((message) => message.role === "user" && message.content.trim());
   if (!turns.length) throw new Error("Cannot archive a conversation without a user turn");
+  const title = excerpt(turns[0].content, 80);
+  const lastRequest = excerpt(turns[turns.length - 1].content, 204);
+  const userCount = conversation.messages.filter((message) => message.role === "user").length;
+  // Do not edit potentially meaningful user language such as "No pressure on my
+  // knee". Use literal metadata for an affected excerpt and keep the transcript.
   return {
-    title: excerpt(turns[0].content, 80),
-    summary: `Last request: "${excerpt(turns[turns.length - 1].content, 204)}"`,
+    title: filler.test(title) ? "Conversation" : title,
+    summary: filler.test(lastRequest)
+      ? `${userCount} user ${userCount === 1 ? "message" : "messages"}.`
+      : `Last request: "${lastRequest}"`,
     resultLabels: [...conversation.resultLabels],
   };
 }
