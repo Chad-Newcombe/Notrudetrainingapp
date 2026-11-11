@@ -29,8 +29,12 @@ const outsideCore: Record<CoachId, RegExp> = {
   nova: /\b(?:chaotic|childish|vague|endless question|quirky as performance)\b/i,
 };
 
+function comparableText(text: string): string {
+  return text.normalize("NFKC").replace(/[\s_-]+/g, " ").trim();
+}
+
 function assertSafeText(text: string, coachId: CoachId): void {
-  const comparable = text.normalize("NFKC").replace(/[\s_]+/g, " ");
+  const comparable = comparableText(text);
   if (hiddenInstructions.test(comparable)
     || COACH_PRESETS.some((coach) => coach.id !== coachId && new RegExp(`\\b${coach.name}\\b`, "i").test(comparable))) {
     throw new Error("Memory must stay within the selected coach's delivery range");
@@ -40,7 +44,7 @@ function assertSafeText(text: string, coachId: CoachId): void {
 function assertSafeEntry(entry: Pick<CoachMemoryEntry, "key" | "value" | "evidence">, coachId: CoachId): void {
   if (!deliveryKey.test(normalizedKey(entry.key))) throw new Error("Unsupported coaching memory key");
   for (const text of [entry.key, entry.value, entry.evidence]) assertSafeText(text, coachId);
-  const value = entry.value.normalize("NFKC").replace(/\s+/g, " ").trim();
+  const value = comparableText(entry.value);
   if (!outsideCore[coachId].test(value)) return;
   // Allow only a simple negative list of forbidden behaviors, not arbitrary text
   // following a negation. Evidence and rejected patterns remain literal data.
