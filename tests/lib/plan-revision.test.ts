@@ -40,6 +40,11 @@ describe("plan revision", () => {
     "Add a rest day to my plan.",
     "I can only do 15 minutes on Tuesday.",
     "Make this week's sessions easier.",
+    "I can't train Friday.",
+    "I need Tuesday to be shorter.",
+    "No running this week.",
+    "I want three sessions.",
+    "Make workouts ten minutes.",
   ])("recognizes an explicit plan instruction: %s", (text) => {
     expect(classifyPlanIntent(text)).toBe("explicit");
   });
@@ -114,6 +119,18 @@ describe("plan revision", () => {
     expect(corrected.sessions.find((session) => session.dayIndex === 3)?.steps[0].durationMin).toBe(10);
     expect(corrected.sessions.some((session) => session.dayIndex === 4)).toBe(false);
     expect(corrected.sessions.find((session) => session.dayIndex === 0)).toEqual(current.sessions[0]);
+  });
+
+  it("leaves compound instructions to the full plan revision instead of dropping parts", () => {
+    const compound = enforceLatestTimeConstraint(proposed, current, [
+      { role: "user", content: "Move Friday to Saturday and make Thursday 10 minutes." },
+    ]);
+    const activityChange = enforceLatestTimeConstraint(proposed, current, [
+      { role: "user", content: "Make Thursday a 10-minute walk instead of strength." },
+    ]);
+
+    expect(compound).toBe(proposed);
+    expect(activityChange).toBe(proposed);
   });
 
   it("keeps a day the user mentioned when a draft has too many sessions", () => {

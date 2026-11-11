@@ -12,10 +12,11 @@ export type PlanTransition = {
 export function classifyPlanIntent(text: string): PlanIntent {
   const value = text.toLowerCase().replace(/[’]/g, "'").trim();
   const day = /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow|weekend)\b/;
-  const duration = /\b(?:\d{1,3}\s*(?:minutes?|mins?|hours?|hrs?)|shorter|longer)\b/;
+  const number = "(?:one|two|three|four|five|six|seven|ten|fifteen|twenty|thirty|forty(?:-five)?|forty five|sixty)";
+  const duration = new RegExp(`\\b(?:(?:\\d{1,3}|${number})\\s*(?:minutes?|mins?|hours?|hrs?)|shorter|longer)\\b`);
   const planContext = /\b(?:plan|week|schedule|sessions?|workouts?|training|recovery|rest day|run|running|walk|walking|swim|swimming|ride|riding|strength|mobility)\b/;
   const intensity = /\b(?:easier|harder|lighter|gentler|easy|moderate|hard|intensity)\b/;
-  const sessionCount = /\b(?:fewer|more|\d+)\s+(?:sessions?|workouts?|days?)\b/;
+  const sessionCount = new RegExp(`\\b(?:fewer|more|\\d+|${number})\\s+(?:sessions?|workouts?|days?)\\b`);
   const replacement = /\bfrom\b.+\bto\b|\bwith\b/;
   const action = /\b(?:make|move|reschedule|replace|swap|add|remove|drop|skip|shorten|cut|reduce|increase|change|update|adjust|set|switch)\b/;
   const concrete = day.test(value) || duration.test(value) || intensity.test(value)
@@ -23,8 +24,14 @@ export function classifyPlanIntent(text: string): PlanIntent {
   const contextual = planContext.test(value) || day.test(value) || duration.test(value);
   const explicitConstraint = /\b(?:i\s+(?:can|have)\s+only|i\s+only\s+(?:can|have))\b/.test(value)
     && duration.test(value) && contextual;
+  const unavailable = /\b(?:i\s+)?(?:can(?:no|')t|cannot|won't|unavailable)\b/.test(value)
+    && day.test(value) && /\b(?:train|workout|run|walk|ride|swim|make it)\b/.test(value);
+  const directExclusion = /\bno\s+(?:running|walking|riding|swimming|strength|workouts?|training)\b/.test(value)
+    && /\b(?:this\s+week|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/.test(value);
+  const statedNeed = /\bi\s+(?:need|want)\b/.test(value) && contextual && concrete;
 
-  return (explicitConstraint || (action.test(value) && contextual && concrete))
+  return (explicitConstraint || unavailable || directExclusion || statedNeed
+    || (action.test(value) && contextual && concrete))
     ? "explicit"
     : "discussion";
 }
@@ -151,7 +158,12 @@ export function enforceLatestTimeConstraint(
 ): TrainingPlan {
   const latest = [...conversation].reverse().find((turn) => turn.role === "user")?.content ?? "";
   const timeMatch = latest.match(/\b(\d{1,3}|five|ten|fifteen|twenty|thirty|forty(?:-five)?|forty five|sixty)\s*(?:minutes?|mins?)\b/i);
-  const dayIndex = DAY_LABELS.findIndex((day) => new RegExp(`\\b${day}\\b`, "i").test(latest));
+  const namedDays = DAY_LABELS
+    .map((day, index) => ({ index, present: new RegExp(`\\b${day}\\b`, "i").test(latest) }))
+    .filter(({ present }) => present);
+  const hasAdditionalChange = /\b(?:move|reschedule|replace|swap|instead\s+of|with|add|remove|drop|skip)\b/i.test(latest);
+  if (namedDays.length !== 1 || hasAdditionalChange) return proposed;
+  const dayIndex = namedDays[0].index;
   const minuteWords: Record<string, number> = {
     five: 5, ten: 10, fifteen: 15, twenty: 20, thirty: 30,
     forty: 40, "forty-five": 45, "forty five": 45, sixty: 60,

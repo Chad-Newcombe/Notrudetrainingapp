@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { PlanTransition } from "@/lib/coach/plan-revision";
 
 type Props = {
-  state: "updating" | "saved" | "error" | "undoing";
+  state: "updating" | "saved" | "error" | "undoing" | "undo-error";
   transition: PlanTransition | null;
   onRetry: () => void;
   onUndo: () => void;
@@ -31,7 +31,9 @@ export function PlanUpdateStatus({ state, transition, onRetry, onUndo }: Props) 
   return (
     <section className="panel space-y-2 px-4 py-3" aria-live="polite">
       <div className="flex items-center justify-between gap-3">
-        <p className="font-semibold text-[var(--ink)]">{state === "undoing" ? "Restoring your plan…" : "Plan updated"}</p>
+        <p className="font-semibold text-[var(--ink)]" role={state === "undo-error" ? "alert" : undefined}>
+          {state === "undoing" ? "Restoring your plan…" : state === "undo-error" ? "Couldn’t restore the previous plan." : "Plan updated"}
+        </p>
         <Link href="/plan" className="text-sm font-semibold text-[var(--ink)] underline-offset-4 hover:underline">See plan</Link>
       </div>
       <ul className="space-y-1 text-sm text-[var(--muted)]">
@@ -40,7 +42,7 @@ export function PlanUpdateStatus({ state, transition, onRetry, onUndo }: Props) 
       {transition.previous ? (
         <button type="button" onClick={onUndo} disabled={state === "undoing"}
           className="text-sm font-semibold text-[var(--ink)] underline-offset-4 hover:underline disabled:opacity-50">
-          Undo
+          {state === "undo-error" ? "Try undo again" : "Undo"}
         </button>
       ) : null}
     </section>

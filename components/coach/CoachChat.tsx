@@ -95,13 +95,12 @@ function CoachChatInner({
 }) {
   const [input, setInput] = useState("");
   const [activeProfile, setActiveProfile] = useState(profile);
-  const [activePlan, setActivePlan] = useState(plan);
   const activePlanRef = useRef(plan);
   const profileRef = useRef(activeProfile);
   const updatingMessageId = useRef<string | null>(null);
   const handledPlanMessageIds = useRef(new Set<string>());
   const pendingRevision = useRef<{ id: string; conversation: PlanConversationTurn[] } | null>(null);
-  const [planUpdateState, setPlanUpdateState] = useState<"idle" | "updating" | "saved" | "error" | "undoing">("idle");
+  const [planUpdateState, setPlanUpdateState] = useState<"idle" | "updating" | "saved" | "error" | "undoing" | "undo-error">("idle");
   const [planTransition, setPlanTransition] = useState<PlanTransition | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -134,7 +133,6 @@ function CoachChatInner({
       if (!data.plan || !Array.isArray(data.plan.sessions)) throw new Error("Invalid plan");
       const transition = await persistPlanTransition(previous, data.plan, savePlan);
       activePlanRef.current = data.plan;
-      setActivePlan(data.plan);
       setPlanTransition(transition);
       handledPlanMessageIds.current.add(id);
       pendingRevision.current = null;
@@ -155,8 +153,8 @@ function CoachChatInner({
         body: {
           ...body,
           messages,
-          profile: activeProfile,
-          plan: activePlan,
+          profile: profileRef.current,
+          plan: activePlanRef.current,
           logs,
           healthSummary,
         },
@@ -178,7 +176,8 @@ function CoachChatInner({
     },
   });
 
-  const busy = status === "submitted" || status === "streaming";
+  const busy = status === "submitted" || status === "streaming"
+    || planUpdateState === "updating" || planUpdateState === "undoing";
   const [offline, setOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false,
   );
@@ -236,11 +235,10 @@ function CoachChatInner({
     try {
       await savePlan(previous);
       activePlanRef.current = previous;
-      setActivePlan(previous);
       setPlanTransition(null);
       setPlanUpdateState("idle");
     } catch {
-      setPlanUpdateState("saved");
+      setPlanUpdateState("undo-error");
     }
   }, [planTransition]);
 
@@ -250,7 +248,10 @@ function CoachChatInner({
         label={`Your coach · ${getCoach(activeProfile.coachId).name}`}
         title="In your corner" description="A place to figure out what fits today."
         conversation replying={busy} />
-      <CoachSwitcher profile={activeProfile} onChanged={setActiveProfile} />
+      <CoachSwitcher profile={activeProfile} onChanged={(next) => {
+        profileRef.current = next;
+        setActiveProfile(next);
+      }} />
       {offline && <p className="panel px-3 py-2 text-sm text-[var(--muted)]">
         You’re offline. Reconnect to get a reply.
       </p>}

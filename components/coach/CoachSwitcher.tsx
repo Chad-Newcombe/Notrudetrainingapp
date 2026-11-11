@@ -52,6 +52,7 @@ export function CoachSwitcher({ profile, onChanged }: Props) {
               className={`rounded-[var(--radius-panel)] border p-3 text-left disabled:opacity-60 ${selected ? "border-[var(--ink-strong)] bg-[var(--canvas-soft)]" : "border-[var(--line)] bg-[var(--canvas-light)]"}`}>
               <span className="block font-semibold text-[var(--ink)]">{coach.name}</span>
               <span className="mt-1 block text-sm text-[var(--muted)]">{coach.vibe}</span>
+              <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">{coach.communication}</span>
               {selected ? <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Current coach</span> : null}
             </button>
           );
