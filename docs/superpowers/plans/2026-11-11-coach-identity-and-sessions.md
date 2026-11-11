@@ -108,6 +108,7 @@ git commit -m "Add coach conversation domain"
 - Consumes: conversation types and helpers from Task 1.
 - Produces: collections `coachConversations` and `coachRelationships`, plus meta key `coach-conversation-migration-v2`.
 - Produces: `CoachRelationship` and `CoachMemoryEntry` persistence types in `lib/types.ts`.
+- Produces: optional `UserProfile.sharedFacts?: SharedProfileFact[]`, where `SharedProfileFact.category` is `"ability" | "constraint" | "schedule"`, the statement is user-confirmed, and every fact has `id` and `confirmedAt`.
 - Produces: `listCoachConversations(coachId?: CoachId): Promise<CoachConversation[]>`.
 - Produces: `getCoachConversation(id: string): Promise<CoachConversation | undefined>`.
 - Produces: `saveCoachConversation(value: CoachConversation): Promise<void>`.
@@ -128,7 +129,7 @@ Expected: FAIL because the collections, schemas, and storage functions do not ex
 
 - [ ] **Step 3: Add Zod schemas and collection names**
 
-Define the relationship persistence shape, then validate all conversation fields, cap each message body at the existing 24,000-character limit, cap messages per conversation at 200, and validate one relationship record per `CoachId`.
+Define the relationship persistence shape and optional confirmed `sharedFacts`, then validate all conversation fields, cap each message body at the existing 24,000-character limit, cap messages per conversation at 200, and validate one relationship record per `CoachId`. Legacy profiles without `sharedFacts` remain valid.
 
 - [ ] **Step 4: Upgrade IndexedDB to version 2**
 
@@ -172,7 +173,7 @@ git commit -m "Store coach conversations separately"
 
 **Interfaces:**
 - Consumes: `CoachId`, `CoachRelationship`, `CoachMemoryEntry`, `CoachConversation`, `emptyCoachRelationship()`, and core presets.
-- Produces: `CoachMemoryDelta` and `SharedFactCandidate`.
+- Produces: `CoachMemoryDelta`, `SharedFactCandidate`, and `SharedProfileFact`.
 - Produces: `applyMemoryDelta(current: CoachRelationship, delta: CoachMemoryDelta, now: string): CoachRelationship`.
 - Produces: `removeMemoryEntry(current: CoachRelationship, entryId: string, now: string): CoachRelationship`.
 - Produces: `relationshipPrompt(memory: CoachRelationship): string`.
@@ -437,7 +438,7 @@ Deleting an archived chat removes only that conversation after confirmation. It 
 
 - [ ] **Step 3: Add failing shared-fact confirmation tests**
 
-Assert a candidate remains coach-local until accepted, acceptance updates the explicit profile field or intake note selected by the product, and dismissal leaves global context unchanged.
+Assert a candidate remains coach-local until accepted, acceptance appends one typed `SharedProfileFact` without overwriting existing profile fields, deduplicates an equivalent confirmed fact, and dismissal leaves global context unchanged.
 
 - [ ] **Step 4: Run component tests and confirm RED**
 
@@ -451,7 +452,7 @@ Use literal copy: `Remove from {coach}'s memory` and `Delete this conversation`.
 
 - [ ] **Step 6: Implement shared-fact confirmation**
 
-Only write supported profile/intake fields; unsupported candidates stay coach-local. Never silently concatenate arbitrary model text into the user profile.
+Accept only `ability`, `constraint`, or `schedule` candidates with a literal user-confirmed statement of at most 220 characters. Append the normalized value to `profile.sharedFacts`; never overwrite existing profile/intake fields or silently concatenate arbitrary model text.
 
 - [ ] **Step 7: Run focused and full tests**
 
