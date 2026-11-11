@@ -1,15 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow_Condensed, Figtree } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import { AccountProvider } from "@/components/account/AccountProvider";
 import { AppThemeProvider } from "@/components/theme/AppThemeProvider";
-
-const barlowCondensed = Barlow_Condensed({
-  subsets: ["latin"],
-  variable: "--font-barlow-condensed",
-  weight: ["500", "600", "700", "800"],
-  display: "swap",
-});
 
 const figtree = Figtree({
   subsets: ["latin"],
@@ -50,7 +43,7 @@ export default function RootLayout({
       lang="en"
       data-coach="river"
       data-appearance="system"
-      className={`${barlowCondensed.variable} ${figtree.variable}`}
+      className={figtree.variable}
     >
       <body className="antialiased">
         {previewBuild && (

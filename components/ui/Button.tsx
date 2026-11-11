@@ -21,13 +21,13 @@ type ButtonAsLink = SharedProps &
 export type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const base =
-  "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] border-2 border-[var(--ink-strong)] px-6 py-3 text-base font-bold tracking-tight shadow-[4px_4px_0_var(--ink-strong)] transition-[transform,box-shadow,background-color] duration-100 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_var(--ink-strong)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--voltage)] disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none";
+  "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] border px-6 py-3 text-base font-semibold transition-[transform,background-color,border-color] duration-100 active:scale-[0.985] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus)] disabled:pointer-events-none disabled:opacity-45";
 
 const variants = {
   primary:
-    "bg-[var(--voltage)] text-[var(--on-voltage)] hover:bg-[var(--voltage-hover)]",
+    "border-transparent bg-[var(--app-accent)] text-[var(--app-on-accent)] hover:bg-[color-mix(in_srgb,var(--app-accent),var(--app-text)_9%)]",
   ghost:
-    "bg-[var(--canvas-light)] text-[var(--ink-strong)] hover:bg-[var(--canvas-soft)]",
+    "border-[var(--app-line)] bg-[var(--app-raised)] text-[var(--app-text)] hover:bg-[var(--app-raised-strong)]",
 };
 
 export function Button(props: ButtonProps) {
