@@ -57,6 +57,29 @@ export type ChatMessage = {
   createdAt: string;
 };
 
+export type CoachConversationStatus = "active" | "archived";
+export type ConversationResultLabel = string;
+
+export type ConversationArchive = {
+  title?: string;
+  summary?: string;
+  resultLabels: ConversationResultLabel[];
+};
+
+export type CoachConversation = {
+  id: string;
+  coachId: CoachId;
+  status: CoachConversationStatus;
+  messages: ChatMessage[];
+  title?: string;
+  summary?: string;
+  resultLabels: ConversationResultLabel[];
+  continuedFromId?: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string;
+};
+
 export type ProgressSnapshot = {
   id: string;
   type: "weight" | "checkin" | "reflection";
