@@ -85,6 +85,15 @@ export type Collection = (typeof collections)[number];
 export const collectionSchema = z.enum(collections);
 export const recordSchema = z.object({ collection: collectionSchema, key: id, value: z.unknown() });
 export type StoredRecord = z.infer<typeof recordSchema>;
+export const COACH_MIGRATION_KEY = "coach-conversation-migration-v2";
+
+export function canWriteRecord(current: unknown, record: StoredRecord): boolean {
+  if (record.collection !== "coachConversations" || current === undefined) return true;
+  const previous = coachConversationSchema.safeParse(current);
+  const next = coachConversationSchema.safeParse(record.value);
+  if (!previous.success || !next.success || previous.data.coachId !== next.data.coachId) return false;
+  return previous.data.status !== "archived" || JSON.stringify(previous.data) === JSON.stringify(next.data);
+}
 
 export function validRecordKey(collection: Collection, key: string): boolean {
   if (!id.safeParse(key).success) return false;

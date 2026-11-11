@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { collectionSchema, parseRecord, recordSchema, validRecordKey } from "@/lib/account/records";
+import { canWriteRecord, coachConversationSchema, COACH_MIGRATION_KEY, collectionSchema, parseRecord, recordSchema, validRecordKey } from "@/lib/account/records";
 import { getAccountServices } from "@/lib/account/server";
 
 export const runtime = "nodejs";
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 const operation = z.discriminatedUnion("action", [
   z.object({ action: z.literal("put"), record: recordSchema }),
   z.object({ action: z.literal("putMany"), records: z.array(recordSchema).min(1).max(5000) }),
+  z.object({ action: z.literal("migrateLegacyChat"), records: z.array(recordSchema).min(1).max(2) }),
   z.object({ action: z.literal("delete"), collection: collectionSchema, key: z.string().min(1).max(200) }),
   z.object({ action: z.literal("mergeChat"), records: z.array(recordSchema).max(3000) }),
   z.object({ action: z.literal("import"), records: z.array(recordSchema).min(1).max(5000) }),
@@ -72,9 +73,25 @@ export async function POST(request: Request) {
   if (records.some((record) => !record || (action === "mergeChat" && record.collection !== "chat"))) {
     return respond({ error: "A record could not be saved." }, 400);
   }
+  if (action === "migrateLegacyChat") {
+    const marker = records.at(-1);
+    const archive = records.length === 2 ? records[0] : null;
+    const conversation = archive ? coachConversationSchema.safeParse(archive.value) : null;
+    if (marker?.collection !== "meta" || marker.key !== COACH_MIGRATION_KEY || marker.value !== true ||
+        (archive && (archive.collection !== "coachConversations" || archive.key !== "legacy-chat-v2" ||
+          !conversation?.success || conversation.data.status !== "archived"))) {
+      return respond({ error: "Invalid legacy migration." }, 400);
+    }
+  }
 
   db.exec("BEGIN IMMEDIATE");
   try {
+    if (action === "migrateLegacyChat" && db.prepare(
+      "SELECT 1 FROM coaching_record WHERE user_id = ? AND collection = 'meta' AND record_key = ?",
+    ).get(userId, COACH_MIGRATION_KEY)) {
+      db.exec("COMMIT");
+      return respond({ ok: true, migrated: false });
+    }
     if (action === "import" && db.prepare("SELECT 1 FROM coaching_record WHERE user_id = ? LIMIT 1").get(userId)) {
       db.exec("ROLLBACK");
       return respond({ error: "This account already has data. Your local data was left on this device." }, 409);
@@ -85,12 +102,20 @@ export async function POST(request: Request) {
       ON CONFLICT (user_id, collection, record_key) DO UPDATE SET payload = excluded.payload
     `);
     for (const record of records) {
-      if (record) upsert.run(userId, record.collection, record.key, JSON.stringify(record.value));
+      if (!record) continue;
+      const current = record.collection === "coachConversations" ? db.prepare(
+        "SELECT payload FROM coaching_record WHERE user_id = ? AND collection = ? AND record_key = ?",
+      ).get(userId, record.collection, record.key) : undefined;
+      if (!canWriteRecord(current ? JSON.parse(String(current.payload)) : undefined, record)) {
+        db.exec("ROLLBACK");
+        return respond({ error: "Conversation is immutable or belongs to another coach." }, 409);
+      }
+      upsert.run(userId, record.collection, record.key, JSON.stringify(record.value));
     }
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;
   }
-  return respond({ ok: true });
+  return respond({ ok: true, ...(action === "migrateLegacyChat" ? { migrated: true } : {}) });
 }

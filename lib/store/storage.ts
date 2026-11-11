@@ -1,5 +1,5 @@
-import { parseRecord, type Collection, type StoredRecord } from "@/lib/account/records";
-import type { ChatMessage } from "@/lib/types";
+import { canWriteRecord, COACH_MIGRATION_KEY, parseRecord, type Collection, type StoredRecord } from "@/lib/account/records";
+import type { ChatMessage, CoachConversation } from "@/lib/types";
 import { getDb, type NotrudeSchema } from "./db";
 
 let accountId: string | null = null;
@@ -48,6 +48,10 @@ export async function readRecords<C extends Collection>(collection: C): Promise<
 export async function writeRecord<C extends Collection>(
   collection: C, key: NotrudeSchema[C]["key"], value: Value<C>,
 ) {
+  if (collection === "coachConversations") {
+    await writeRecords([{ collection, key, value }]);
+    return;
+  }
   if (accountId) {
     await accountRequest("", { action: "put", record: { collection, key, value } });
     return;
@@ -65,22 +69,48 @@ export async function deleteRecord<C extends Collection>(collection: C, key: Not
 }
 
 export async function writeRecords(records: StoredRecord[]): Promise<void> {
+  await putRecords(records);
+}
+
+export async function commitLegacyChatMigration(conversation?: CoachConversation): Promise<boolean> {
+  return putRecords([
+    ...(conversation ? [{ collection: "coachConversations" as const, key: conversation.id, value: conversation }] : []),
+    { collection: "meta", key: COACH_MIGRATION_KEY, value: true },
+  ], true);
+}
+
+async function putRecords(records: StoredRecord[], migration = false): Promise<boolean> {
   const parsed = records.map(parseRecord);
   if (parsed.some((record) => !record)) throw new Error("A record could not be saved.");
-  if (parsed.length === 0) return;
+  if (parsed.length === 0) return false;
   if (accountId) {
-    await accountRequest("", { action: "putMany", records: parsed });
-    return;
+    const result = await accountRequest<{ migrated?: boolean }>("", {
+      action: migration ? "migrateLegacyChat" : "putMany", records: parsed,
+    });
+    return migration ? result.migrated === true : true;
   }
   const db = await getDb();
   const tx = db.transaction([...new Set(records.map(({ collection }) => collection))], "readwrite");
-  await Promise.all(parsed.map((record) => {
-    if (!record) return;
-    return tx.objectStore(record.collection).put(
-      record.value as NotrudeSchema[Collection]["value"], record.collection === "meta" ? record.key : undefined,
-    );
-  }));
-  await tx.done;
+  try {
+    if (migration && await tx.objectStore("meta").get(COACH_MIGRATION_KEY)) {
+      await tx.done;
+      return false;
+    }
+    for (const record of parsed) {
+      if (!record) continue;
+      const store = tx.objectStore(record.collection);
+      const current = record.collection === "coachConversations" ? await store.get(record.key) : undefined;
+      if (!canWriteRecord(current, record)) throw new Error("Conversation is immutable or belongs to another coach.");
+      await store.put(record.value as NotrudeSchema[Collection]["value"], record.collection === "meta" ? record.key : undefined);
+    }
+    await tx.done;
+    return true;
+  } catch (error) {
+    // A failed IndexedDB request may already have aborted its transaction.
+    try { tx.abort(); } catch { /* Already completed or aborted. */ }
+    await tx.done.catch(() => {});
+    throw error;
+  }
 }
 
 export async function saveConversation(messages: ChatMessage[]) {

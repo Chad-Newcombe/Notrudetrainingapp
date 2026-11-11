@@ -16,7 +16,7 @@ import {
   saveCoachConversation, saveCoachRelationship,
 } from "@/lib/store";
 import { appendChat, listChat } from "@/lib/store/chat";
-import { guestRecords, importGuestData, readRecord, setStorageAccount } from "@/lib/store/storage";
+import { commitLegacyChatMigration, guestRecords, importGuestData, readRecord, setStorageAccount, writeRecord, writeRecords } from "@/lib/store/storage";
 
 const now = "2026-11-11T12:00:00.000Z";
 const profile: UserProfile = {
@@ -43,6 +43,7 @@ afterEach(() => { setStorageAccount(null); accountDb.close(); vi.unstubAllGlobal
 
 function useAccount() {
   setStorageAccount("account-one");
+  vi.stubGlobal("window", new EventTarget());
   vi.stubGlobal("fetch", async (path: string, init: RequestInit) => {
     const request = new Request(new URL(path, "https://notrude.test"), {
       ...init, headers: { ...init.headers, origin: "https://notrude.test" },
@@ -97,6 +98,76 @@ for (const mode of ["guest", "account"] as const) {
       })]);
       expect(await readRecord("meta", "coach-conversation-migration-v2")).toBe(true);
       expect(await listChat()).toEqual([legacyMessage]);
+    });
+
+    it("keeps the winning coach and archive stable across simultaneous migrations", async () => {
+      await appendChat(legacyMessage);
+      const snapshots: CoachConversation[][] = [];
+      await Promise.all([
+        migrateLegacyChat(profile).then(async () => snapshots.push(await listCoachConversations())),
+        migrateLegacyChat({ ...profile, coachId: "jax" }).then(async () => snapshots.push(await listCoachConversations())),
+      ]);
+      const records = await listCoachConversations();
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatchObject({ id: "legacy-chat-v2", status: "archived", messages: [legacyMessage] });
+      expect(["nova", "jax"]).toContain(records[0].coachId);
+      expect(snapshots).toEqual([records, records]);
+      expect(await readRecord("meta", "coach-conversation-migration-v2")).toBe(true);
+      await migrateLegacyChat({ ...profile, coachId: "sol" });
+      expect(await listCoachConversations()).toEqual(records);
+    });
+
+    it("atomically commits only one competing migration and reports the winner", async () => {
+      const archived = { ...conversation("legacy-chat-v2", "nova"), status: "archived" as const, archivedAt: now, messages: [legacyMessage] };
+      const results = await Promise.all([
+        commitLegacyChatMigration(archived),
+        commitLegacyChatMigration({ ...archived, coachId: "jax" }),
+      ]);
+      expect(results.filter(Boolean)).toHaveLength(1);
+      expect(await listCoachConversations()).toEqual([{ ...archived, coachId: results[0] ? "nova" : "jax" }]);
+      expect(await readRecord("meta", "coach-conversation-migration-v2")).toBe(true);
+    });
+
+    it("rejects archive edits, reactivation, and coach reassignment through every write path", async () => {
+      const archived: CoachConversation = {
+        ...conversation("immutable", "river"), status: "archived", messages: [legacyMessage], archivedAt: now,
+      };
+      await saveCoachConversation(archived);
+      for (const patch of [
+        { messages: [] }, { status: "active" as const }, { coachId: "jax" as const }, { summary: "Changed" },
+      ]) {
+        const changed = { ...archived, ...patch };
+        await expect(saveCoachConversation(changed)).rejects.toThrow("Conversation is immutable or belongs to another coach.");
+        await expect(writeRecord("coachConversations", changed.id, changed)).rejects.toThrow("Conversation is immutable or belongs to another coach.");
+        await expect(writeRecords([{ collection: "coachConversations", key: changed.id, value: changed }])).rejects.toThrow("Conversation is immutable or belongs to another coach.");
+        expect(await getCoachConversation(archived.id)).toEqual(archived);
+      }
+      await saveCoachConversation(archived);
+      await deleteCoachConversation(archived.id);
+      expect(await getCoachConversation(archived.id)).toBeUndefined();
+    });
+
+    it("rolls back earlier writes when a later record conflicts with an archive", async () => {
+      const archived = { ...conversation("protected-batch", "river"), status: "archived" as const, archivedAt: now };
+      await saveCoachConversation(archived);
+      await expect(writeRecords([
+        { collection: "coachConversations", key: "new-batch", value: conversation("new-batch", "river") },
+        { collection: "coachConversations", key: archived.id, value: { ...archived, messages: [legacyMessage] } },
+      ])).rejects.toThrow("Conversation is immutable or belongs to another coach.");
+      expect(await getCoachConversation("new-batch")).toBeUndefined();
+      expect(await getCoachConversation(archived.id)).toEqual(archived);
+    });
+
+    it("persists active message updates and archival without allowing ownership changes", async () => {
+      const active = conversation("active-update", "river");
+      await saveCoachConversation(active);
+      const updated = { ...active, messages: [legacyMessage] };
+      await saveCoachConversation(updated);
+      expect(await getCoachConversation(active.id)).toEqual(updated);
+      await expect(saveCoachConversation({ ...updated, coachId: "jax" })).rejects.toThrow("Conversation is immutable or belongs to another coach.");
+      const archived = { ...updated, status: "archived" as const, archivedAt: now };
+      await saveCoachConversation(archived);
+      expect(await getCoachConversation(active.id)).toEqual(archived);
     });
 
     it("preserves a legacy archive larger than the active conversation limit", async () => {
@@ -202,4 +273,20 @@ it("scopes exact deletion to the authorized account and collection", async () =>
     { user_id: "account-one", collection: "chat" },
     { user_id: "account-two", collection: "coachConversations" },
   ]);
+});
+
+
+it("rolls back an entire account batch if a later record attempts to overwrite an archive", async () => {
+  const archived = { ...conversation("protected", "river"), status: "archived", archivedAt: now };
+  expect((await post({ action: "put", record: { collection: "coachConversations", key: "protected", value: archived } })).status).toBe(200);
+  const directChange = await post({ action: "put", record: {
+    collection: "coachConversations", key: "protected", value: { ...archived, coachId: "jax" },
+  } });
+  expect(directChange.status).toBe(409);
+  const response = await post({ action: "putMany", records: [
+    { collection: "coachConversations", key: "new", value: conversation("new", "river") },
+    { collection: "coachConversations", key: "protected", value: { ...archived, messages: [legacyMessage] } },
+  ] });
+  expect(response.status).toBe(409);
+  expect(accountDb.prepare("SELECT record_key FROM coaching_record").all()).toEqual([{ record_key: "protected" }]);
 });

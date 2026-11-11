@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseRecord } from "@/lib/account/records";
+import { canWriteRecord, parseRecord } from "@/lib/account/records";
 
 describe("account record validation", () => {
   it("accepts an older profile without a coach or intake brief", () => {
@@ -79,5 +79,24 @@ describe("coach record validation", () => {
       { id: "fact-1", category: "schedule", statement: "Free on Tuesdays" },
       { id: "fact-1", category: "ability", statement: "x".repeat(221), confirmedAt: stamp },
     ]) expect(parseRecord({ collection: "meta", key: "profile", value: { ...profile, sharedFacts: [fact] } })).toBeNull();
+  });
+});
+
+
+describe("conversation replacement policy", () => {
+  it("allows new records and same-coach active updates but rejects ownership changes", () => {
+    const active = { ...conversation, status: "active" };
+    const record = { collection: "coachConversations" as const, key: "c1", value: { ...active, messages: [] } };
+    expect(canWriteRecord(undefined, record)).toBe(true);
+    expect(canWriteRecord(active, record)).toBe(true);
+    expect(canWriteRecord(active, { ...record, value: { ...active, coachId: "jax" } })).toBe(false);
+  });
+
+  it("allows identical archive retries and rejects every changed archive", () => {
+    const record = { collection: "coachConversations" as const, key: "c1", value: conversation };
+    expect(canWriteRecord(conversation, record)).toBe(true);
+    for (const patch of [{ messages: [] }, { status: "active" }, { coachId: "jax" }, { summary: "Changed" }]) {
+      expect(canWriteRecord(conversation, { ...record, value: { ...conversation, ...patch } })).toBe(false);
+    }
   });
 });
