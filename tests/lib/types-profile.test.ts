@@ -5,6 +5,7 @@ describe("UserProfile shape", () => {
   it("allows open-ended goal without weight", () => {
     const profile: UserProfile = {
       goalText: "Train for my first ultra",
+      appearance: "dark",
       tone: "steady",
       cadence: "conversational",
       motivation: "process_focus",
@@ -15,5 +16,6 @@ describe("UserProfile shape", () => {
     };
     expect(profile.trackWeight).toBe(false);
     expect(profile.currentWeightLbs).toBeUndefined();
+    expect(profile.appearance).toBe("dark");
   });
 });

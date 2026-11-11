@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Figtree } from "next/font/google";
 import "./globals.css";
 import { AccountProvider } from "@/components/account/AccountProvider";
+import { AppThemeProvider } from "@/components/theme/AppThemeProvider";
 
 const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
@@ -47,6 +48,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-coach="river"
+      data-appearance="system"
       className={`${barlowCondensed.variable} ${figtree.variable}`}
     >
       <body className="antialiased">
@@ -55,7 +58,11 @@ export default function RootLayout({
             Not Rude Training Preview · {previewBuild}
           </p>
         )}
-        <div className="app-shell"><AccountProvider>{children}</AccountProvider></div>
+        <div className="app-shell">
+          <AccountProvider>
+            <AppThemeProvider>{children}</AppThemeProvider>
+          </AccountProvider>
+        </div>
       </body>
     </html>
   );

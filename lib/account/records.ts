@@ -20,6 +20,7 @@ const profile = z.object({
   channels: z.array(z.enum(["in_app", "text_style", "email_outline"])).max(3),
   trackWeight: z.boolean(),
   coachId: coach.optional(),
+  appearance: z.enum(["system", "light", "dark"]).optional(),
   createdAt: stamp,
 });
 const plan = z.object({

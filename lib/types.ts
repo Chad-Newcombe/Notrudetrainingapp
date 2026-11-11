@@ -5,6 +5,7 @@ export type EngagementCadence = "brief" | "conversational" | "quiet";
 export type MotivationStyle = "celebrate_wins" | "process_focus" | "accountability";
 export type ChannelPref = "in_app" | "text_style" | "email_outline";
 export type CoachId = "river" | "jax" | "sol" | "nova";
+export type AppearanceMode = "system" | "light" | "dark";
 
 export type UserProfile = {
   goalText: string;
@@ -20,6 +21,7 @@ export type UserProfile = {
   channels: ChannelPref[];
   trackWeight: boolean;
   coachId: CoachId;
+  appearance?: AppearanceMode;
   createdAt: string;
 };
 

@@ -29,7 +29,7 @@ describe("profile store", () => {
   });
 
   it("uses River for a profile saved before coach selection", async () => {
-    const legacy: Omit<UserProfile, "coachId"> = {
+    const legacy: Omit<UserProfile, "coachId" | "appearance"> = {
       goalText: "Build a walking habit",
       tone: "direct",
       cadence: "brief",
@@ -41,6 +41,28 @@ describe("profile store", () => {
     const db = await getDb();
     await db.put("meta", legacy as UserProfile, "profile");
 
-    expect(await getProfile()).toEqual({ ...legacy, coachId: "river" });
+    expect(await getProfile()).toEqual({
+      ...legacy,
+      coachId: "river",
+      appearance: "system",
+    });
+  });
+
+  it("round-trips an explicit appearance preference", async () => {
+    const profile: UserProfile = {
+      goalText: "Build durable strength",
+      tone: "steady",
+      cadence: "brief",
+      motivation: "process_focus",
+      channels: ["in_app"],
+      coachId: "nova",
+      appearance: "dark",
+      trackWeight: false,
+      createdAt: "2026-11-10T12:00:00.000Z",
+    };
+
+    await saveProfile(profile);
+
+    expect(await getProfile()).toEqual(profile);
   });
 });
