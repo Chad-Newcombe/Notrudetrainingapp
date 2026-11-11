@@ -1,4 +1,4 @@
-import type { Collection, StoredRecord } from "@/lib/account/records";
+import { parseRecord, type Collection, type StoredRecord } from "@/lib/account/records";
 import type { ChatMessage } from "@/lib/types";
 import { getDb, type NotrudeSchema } from "./db";
 
@@ -56,6 +56,33 @@ export async function writeRecord<C extends Collection>(
   await db.put(collection, value, collection === "meta" ? key : undefined);
 }
 
+export async function deleteRecord<C extends Collection>(collection: C, key: NotrudeSchema[C]["key"]): Promise<void> {
+  if (accountId) {
+    await accountRequest("", { action: "delete", collection, key });
+    return;
+  }
+  await (await getDb()).delete(collection, key);
+}
+
+export async function writeRecords(records: StoredRecord[]): Promise<void> {
+  const parsed = records.map(parseRecord);
+  if (parsed.some((record) => !record)) throw new Error("A record could not be saved.");
+  if (parsed.length === 0) return;
+  if (accountId) {
+    await accountRequest("", { action: "putMany", records: parsed });
+    return;
+  }
+  const db = await getDb();
+  const tx = db.transaction([...new Set(records.map(({ collection }) => collection))], "readwrite");
+  await Promise.all(parsed.map((record) => {
+    if (!record) return;
+    return tx.objectStore(record.collection).put(
+      record.value as NotrudeSchema[Collection]["value"], record.collection === "meta" ? record.key : undefined,
+    );
+  }));
+  await tx.done;
+}
+
 export async function saveConversation(messages: ChatMessage[]) {
   if (accountId) {
     const records = messages.slice(-30).map((value) => ({ collection: "chat", key: value.id, value }));
@@ -71,12 +98,14 @@ export async function saveConversation(messages: ChatMessage[]) {
 
 export async function guestRecords(): Promise<StoredRecord[]> {
   const db = await getDb();
-  const tx = db.transaction(["meta", "logs", "chat", "progress", "health", "messages"], "readonly");
-  const [profile, plan, logs, chat, progress, health, messages] = await Promise.all([
+  const tx = db.transaction(["meta", "logs", "chat", "progress", "health", "messages", "coachConversations", "coachRelationships"], "readonly");
+  const [profile, plan, marker, logs, chat, progress, health, messages, conversations, relationships] = await Promise.all([
     tx.objectStore("meta").get("profile"), tx.objectStore("meta").get("plan"),
+    tx.objectStore("meta").get("coach-conversation-migration-v2"),
     tx.objectStore("logs").getAll(), tx.objectStore("chat").getAll(),
     tx.objectStore("progress").getAll(), tx.objectStore("health").getAll(),
     tx.objectStore("messages").getAll(),
+    tx.objectStore("coachConversations").getAll(), tx.objectStore("coachRelationships").getAll(),
   ]);
   await tx.done;
   const records: StoredRecord[] = [
@@ -85,9 +114,12 @@ export async function guestRecords(): Promise<StoredRecord[]> {
     ...progress.map((value): StoredRecord => ({ collection: "progress", key: value.id, value })),
     ...health.map((value): StoredRecord => ({ collection: "health", key: value.provider, value })),
     ...messages.map((value): StoredRecord => ({ collection: "messages", key: value.id, value })),
+    ...conversations.map((value): StoredRecord => ({ collection: "coachConversations", key: value.id, value })),
+    ...relationships.map((value): StoredRecord => ({ collection: "coachRelationships", key: value.coachId, value })),
   ];
   if (profile) records.push({ collection: "meta", key: "profile", value: profile });
   if (plan) records.push({ collection: "meta", key: "plan", value: plan });
+  if (marker) records.push({ collection: "meta", key: "coach-conversation-migration-v2", value: marker });
   return records;
 }
 

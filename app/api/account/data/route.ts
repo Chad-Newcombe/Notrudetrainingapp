@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { collectionSchema, parseRecord, recordSchema } from "@/lib/account/records";
+import { collectionSchema, parseRecord, recordSchema, validRecordKey } from "@/lib/account/records";
 import { getAccountServices } from "@/lib/account/server";
 
 export const runtime = "nodejs";
@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 
 const operation = z.discriminatedUnion("action", [
   z.object({ action: z.literal("put"), record: recordSchema }),
+  z.object({ action: z.literal("putMany"), records: z.array(recordSchema).min(1).max(5000) }),
+  z.object({ action: z.literal("delete"), collection: collectionSchema, key: z.string().min(1).max(200) }),
   z.object({ action: z.literal("mergeChat"), records: z.array(recordSchema).max(3000) }),
   z.object({ action: z.literal("import"), records: z.array(recordSchema).min(1).max(5000) }),
 ]);
@@ -30,6 +32,7 @@ export async function GET(request: Request) {
   const collection = collectionSchema.safeParse(query.get("collection"));
   if (!collection.success) return respond({ error: "Invalid collection." }, 400);
   const key = query.get("key");
+  if (key !== null && !validRecordKey(collection.data, key)) return respond({ error: "Invalid record key." }, 400);
   const { db, userId } = access;
   const values = key === null
     ? db.prepare("SELECT payload FROM coaching_record WHERE user_id = ? AND collection = ? ORDER BY record_key").all(userId, collection.data)
@@ -57,12 +60,19 @@ export async function POST(request: Request) {
   const parsed = operation.safeParse(json);
   if (!parsed.success) return respond({ error: "Invalid data operation." }, 400);
   const { action } = parsed.data;
+  const { db, userId } = access;
+  if (parsed.data.action === "delete") {
+    const { collection, key } = parsed.data;
+    if (!validRecordKey(collection, key)) return respond({ error: "Invalid record key." }, 400);
+    db.prepare("DELETE FROM coaching_record WHERE user_id = ? AND collection = ? AND record_key = ?")
+      .run(userId, collection, key);
+    return respond({ ok: true });
+  }
   const records = (action === "put" ? [parsed.data.record] : parsed.data.records).map(parseRecord);
   if (records.some((record) => !record || (action === "mergeChat" && record.collection !== "chat"))) {
     return respond({ error: "A record could not be saved." }, 400);
   }
 
-  const { db, userId } = access;
   db.exec("BEGIN IMMEDIATE");
   try {
     if (action === "import" && db.prepare("SELECT 1 FROM coaching_record WHERE user_id = ? LIMIT 1").get(userId)) {

@@ -7,6 +7,13 @@ export type ChannelPref = "in_app" | "text_style" | "email_outline";
 export type CoachId = "river" | "jax" | "sol" | "nova";
 export type AppearanceMode = "system" | "light" | "dark";
 
+export type SharedProfileFact = {
+  id: string;
+  category: "ability" | "constraint" | "schedule";
+  statement: string;
+  confirmedAt: string;
+};
+
 export type UserProfile = {
   goalText: string;
   intakeBrief?: IntakeBrief;
@@ -15,6 +22,7 @@ export type UserProfile = {
   targetDescription?: string;
   activityLevel?: string;
   constraints?: string;
+  sharedFacts?: SharedProfileFact[];
   tone: EngagementTone;
   cadence: EngagementCadence;
   motivation: MotivationStyle;
@@ -78,6 +86,22 @@ export type CoachConversation = {
   createdAt: string;
   updatedAt: string;
   archivedAt?: string;
+};
+
+export type CoachMemoryEntry = {
+  id: string;
+  key: string;
+  value: string;
+  evidence: string;
+  learnedAt: string;
+};
+
+export type CoachRelationship = {
+  coachId: CoachId;
+  learnedPreferences: CoachMemoryEntry[];
+  rejectedPatterns: string[];
+  declinedSwitchSuggestion: boolean;
+  updatedAt: string;
 };
 
 export type ProgressSnapshot = {

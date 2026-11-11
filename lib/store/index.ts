@@ -6,3 +6,6 @@ export { listChat, appendChat, replaceChat } from "./chat";
 export { listProgress, addProgress } from "./progress";
 export { listHealth, saveHealth } from "./health";
 export { listMessages, addMessage } from "./messages";
+export { listCoachConversations, getCoachConversation, saveCoachConversation, deleteCoachConversation } from "./coach-conversations";
+export { emptyCoachRelationship, getCoachRelationship, saveCoachRelationship } from "./coach-relationships";
+export { migrateLegacyChat } from "./coach-chat-migration";
