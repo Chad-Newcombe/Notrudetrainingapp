@@ -64,14 +64,14 @@ export default function ProgressPage() {
   }
 
   return (
-    <main className="page-enter flex flex-col gap-10 px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+    <main className="flex flex-col gap-9 px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <div>
         <p className="meta-label">Progress</p>
-        <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
-          Your trail so far
+        <h1 className="mt-2 text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">
+          Your progress
         </h1>
-        <p className="mt-2 text-base text-[var(--muted)]">
-          On this device — history without the guilt trip.
+        <p className="mt-2 text-base text-[var(--app-muted)]">
+          A clear view of what you’ve done, without turning it into a verdict.
         </p>
       </div>
 
@@ -83,7 +83,7 @@ export default function ProgressPage() {
       ) : null}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
+        <h2 className="text-base font-semibold text-[var(--app-text)]">
           Reflection
         </h2>
         <Button
@@ -95,27 +95,27 @@ export default function ProgressPage() {
           {reflectionLoading ? "Writing…" : "Write a short reflection"}
         </Button>
         {reflectionText ? (
-          <p className="panel px-4 py-3 text-base leading-relaxed text-[var(--ink)]">
+          <p className="rounded-[var(--radius-panel)] bg-[var(--app-raised)] px-4 py-3 text-base leading-relaxed text-[var(--app-text)]">
             {reflectionText}
           </p>
         ) : null}
         {reflectionError ? (
-          <p className="text-sm text-[var(--muted)]">{reflectionError}</p>
+          <p className="text-sm text-[var(--app-muted)]">{reflectionError}</p>
         ) : null}
         {pastReflections.length > 0 ? (
           <ul className="mt-1 flex flex-col gap-2">
             {pastReflections.slice(0, 3).map((r) => (
               <li
                 key={r.id}
-                className="panel px-4 py-3 text-sm leading-relaxed text-[var(--muted)]"
+                className="border-t border-[var(--app-line)] py-3 text-sm leading-relaxed text-[var(--app-muted)] first:border-0"
               >
-                <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
+                <p className="text-xs font-medium text-[var(--app-muted)]">
                   {new Date(r.createdAt).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                   })}
                 </p>
-                <p className="mt-1 text-[var(--ink)]">{r.note}</p>
+                <p className="mt-1 text-[var(--app-text)]">{r.note}</p>
               </li>
             ))}
           </ul>

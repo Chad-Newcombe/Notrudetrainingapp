@@ -4,16 +4,17 @@ type Props = {
 
 export function StreakBadge({ streak }: Props) {
   return (
-    <div>
-      <p className="meta-label">Showing up</p>
-      <p className="mt-2 font-display text-[2.75rem] font-semibold leading-none tracking-[-0.05em] text-[var(--ink)]">
-        {streak}
-      </p>
-      <p className="mt-2 text-base text-[var(--muted)]">
+    <section className="rounded-[var(--radius-panel)] bg-[var(--app-raised)] p-5">
+      <p className="text-sm font-semibold text-[var(--app-muted)]">Current streak</p>
+      <div className="mt-3 flex items-end gap-2">
+        <p className="text-[3rem] font-bold leading-none tracking-[-0.055em] text-[var(--app-text)]">{streak}</p>
+        <p className="pb-1 text-sm font-semibold text-[var(--app-muted)]">day{streak === 1 ? "" : "s"}</p>
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-[var(--app-muted)]">
         {streak === 0
           ? "Ready when you are — a streak is just a counter, not a verdict."
           : `${streak} day${streak === 1 ? "" : "s"} of showing up. Nice.`}
       </p>
-    </div>
+    </section>
   );
 }

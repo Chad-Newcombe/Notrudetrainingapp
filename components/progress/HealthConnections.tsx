@@ -71,23 +71,23 @@ export function HealthConnections() {
   return (
     <section className="flex flex-col gap-3" aria-labelledby="health-connections-title">
       <div>
-        <h2 id="health-connections-title" className="font-display text-2xl font-bold text-[var(--ink)]">Health connections</h2>
-        <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">
+        <h2 id="health-connections-title" className="text-xl font-bold text-[var(--app-text)]">Health connections</h2>
+        <p className="mt-1 text-sm leading-relaxed text-[var(--app-muted)]">
           Bring completed activities into your coaching context. Connections are optional.
         </p>
       </div>
-      {message ? <p className="panel px-4 py-3 text-sm text-[var(--ink)]" role="status">{message}</p> : null}
-      <ul className="flex flex-col gap-3">
+      {message ? <p className="rounded-[var(--radius-control)] bg-[var(--app-raised-strong)] px-4 py-3 text-sm text-[var(--app-text)]" role="status">{message}</p> : null}
+      <ul className="overflow-hidden rounded-[var(--radius-panel)] bg-[var(--app-raised)] px-4">
         {sources.map((source) => {
           const connection = connectionFor(source.id);
           const isStrava = source.id === "strava";
           const isConnected = isStrava ? status?.connected === true : false;
           return (
-            <li key={source.id} className="panel flex flex-col gap-3 px-4 py-4">
+            <li key={source.id} className="flex flex-col gap-3 border-b border-[var(--app-line)] py-4 last:border-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-display text-xl font-bold text-[var(--ink)]">{source.label}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{source.availabilityNote}</p>
+                  <p className="font-semibold text-[var(--app-text)]">{source.label}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--app-muted)]">{source.availabilityNote}</p>
                 </div>
                 <span className={`health-status ${isConnected ? "health-status-connected" : ""}`}>
                   {isConnected ? "Connected" : source.mode === "oauth" ? "Available" : "Requires app"}
@@ -95,7 +95,7 @@ export function HealthConnections() {
               </div>
 
               {isConnected && connection?.sampleSummary ? (
-                <p className="border-l-2 border-[var(--voltage)] pl-3 text-sm text-[var(--ink)]">{connection.sampleSummary}</p>
+                <p className="border-l-2 border-[var(--app-accent)] pl-3 text-sm text-[var(--app-text)]">{connection.sampleSummary}</p>
               ) : null}
 
               {isStrava ? (
