@@ -34,3 +34,14 @@ export function summarizeStravaActivities(activities: StravaActivity[]): string 
   );
   return `${activities.length} recent activities · ${minutes} min moving`;
 }
+
+export function shouldRefreshStravaToken(
+  expiresAtSeconds: number,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): boolean {
+  return expiresAtSeconds - nowSeconds <= 300;
+}
+
+export function isStravaStateValid(expiresAtMs: number, nowMs = Date.now()): boolean {
+  return expiresAtMs > nowMs;
+}

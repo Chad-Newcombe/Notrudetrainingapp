@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stravaAuthorizationUrl, summarizeStravaActivities } from "@/lib/health/strava";
+import { isStravaStateValid, shouldRefreshStravaToken, stravaAuthorizationUrl, summarizeStravaActivities } from "@/lib/health/strava";
 
 describe("Strava boundary helpers", () => {
   it("builds a web OAuth URL with state and read-only activity scope", () => {
@@ -29,5 +29,15 @@ describe("Strava boundary helpers", () => {
 
   it("explains an empty Strava history without inventing activity", () => {
     expect(summarizeStravaActivities([])).toBe("Connected · no recent activities found");
+  });
+
+  it("refreshes an access token before it enters the five-minute expiry window", () => {
+    expect(shouldRefreshStravaToken(10_300, 10_000)).toBe(true);
+    expect(shouldRefreshStravaToken(10_301, 10_000)).toBe(false);
+  });
+
+  it("accepts only unexpired single-use authorization state", () => {
+    expect(isStravaStateValid(20_001, 20_000)).toBe(true);
+    expect(isStravaStateValid(20_000, 20_000)).toBe(false);
   });
 });

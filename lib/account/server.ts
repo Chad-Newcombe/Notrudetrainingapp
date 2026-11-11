@@ -30,6 +30,21 @@ async function prepare(secret: string, url: string) {
       record_key TEXT NOT NULL,
       payload TEXT NOT NULL,
       PRIMARY KEY (user_id, collection, record_key)
+    );
+    CREATE TABLE IF NOT EXISTS health_oauth_state (
+      state TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS health_oauth_token (
+      user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL,
+      access_token TEXT NOT NULL,
+      refresh_token TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      scope TEXT NOT NULL,
+      PRIMARY KEY (user_id, provider)
     )
     `);
     return { auth: betterAuth(options), db, origin };
