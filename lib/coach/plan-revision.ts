@@ -158,12 +158,20 @@ export function enforceLatestTimeConstraint(
   conversation: PlanConversationTurn[],
 ): TrainingPlan {
   const latest = [...conversation].reverse().find((turn) => turn.role === "user")?.content ?? "";
+  const normalized = latest.toLowerCase().replace(/[’]/g, "'").trim();
+  const dayPattern = "(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)";
+  const minutePattern = "(?:\\d{1,3}|five|ten|fifteen|twenty|thirty|forty(?:-five)?|forty five|sixty)\\s*(?:minutes?|mins?)";
+  const durationOnly = [
+    new RegExp(`^(?:please\\s+)?(?:make|set|shorten|cut|reduce|adjust)\\s+(?:the\\s+)?${dayPattern}(?:'s)?(?:\\s+(?:session|workout|training))?\\s+(?:to\\s+|at\\s+)?${minutePattern}[.!]?$`, "i"),
+    new RegExp(`^i\\s+(?:(?:can|have)\\s+only|only\\s+(?:can|have))\\s+(?:do\\s+|train\\s+for\\s+)?${minutePattern}\\s+(?:on\\s+)?${dayPattern}[.!]?$`, "i"),
+  ].some((pattern) => pattern.test(normalized));
+  if (!durationOnly) return proposed;
+
   const timeMatch = latest.match(/\b(\d{1,3}|five|ten|fifteen|twenty|thirty|forty(?:-five)?|forty five|sixty)\s*(?:minutes?|mins?)\b/i);
   const namedDays = DAY_LABELS
     .map((day, index) => ({ index, present: new RegExp(`\\b${day}\\b`, "i").test(latest) }))
     .filter(({ present }) => present);
-  const hasAdditionalChange = /\b(?:move|reschedule|replace|swap|instead\s+of|with|add|remove|drop|skip|run|running|walk|walking|ride|riding|swim|swimming|strength|mobility|easy|easier|moderate|hard|harder|lighter|gentler|intensity)\b/i.test(latest);
-  if (namedDays.length !== 1 || hasAdditionalChange) return proposed;
+  if (namedDays.length !== 1) return proposed;
   const dayIndex = namedDays[0].index;
   const minuteWords: Record<string, number> = {
     five: 5, ten: 10, fifteen: 15, twenty: 20, thirty: 30,

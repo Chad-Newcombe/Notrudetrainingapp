@@ -136,11 +136,23 @@ describe("plan revision", () => {
     const namedIntensity = enforceLatestTimeConstraint(proposed, current, [
       { role: "user", content: "Make Thursday 10 minutes hard." },
     ]);
+    const recovery = enforceLatestTimeConstraint(proposed, current, [
+      { role: "user", content: "Make Thursday a 10-minute recovery session." },
+    ]);
+    const yoga = enforceLatestTimeConstraint(proposed, current, [
+      { role: "user", content: "Make Thursday 10 minutes of yoga." },
+    ]);
+    const namedExistingActivity = enforceLatestTimeConstraint(proposed, current, [
+      { role: "user", content: "Make Thursday's walk 10 minutes." },
+    ]);
 
     expect(compound).toBe(proposed);
     expect(activityChange).toBe(proposed);
     expect(namedActivity).toBe(proposed);
     expect(namedIntensity).toBe(proposed);
+    expect(recovery).toBe(proposed);
+    expect(yoga).toBe(proposed);
+    expect(namedExistingActivity).toBe(proposed);
   });
 
   it("keeps a day the user mentioned when a draft has too many sessions", () => {
