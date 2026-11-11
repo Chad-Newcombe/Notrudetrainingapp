@@ -104,6 +104,21 @@ export type CoachRelationship = {
   updatedAt: string;
 };
 
+// Conversational evidence is private to its coach until a separate user confirmation.
+export type SharedFactCandidate = {
+  coachId: CoachId;
+  category: SharedProfileFact["category"];
+  statement: string;
+  evidence: string;
+};
+
+export type CoachMemoryDelta = {
+  coachId: CoachId;
+  learnedPreferences?: Array<Pick<CoachMemoryEntry, "key" | "value" | "evidence">>;
+  rejectedPatterns?: string[];
+  declinedSwitchSuggestion?: boolean;
+};
+
 export type ProgressSnapshot = {
   id: string;
   type: "weight" | "checkin" | "reflection";
