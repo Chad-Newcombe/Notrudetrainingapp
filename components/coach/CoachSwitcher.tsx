@@ -49,7 +49,7 @@ export function CoachSwitcher({ profile, onChanged }: Props) {
             <button key={coach.id} type="button" disabled={saving !== null}
               onClick={() => void choose(coach.id)}
               aria-pressed={selected}
-              className={`rounded-[var(--radius-panel)] border p-3 text-left disabled:opacity-60 ${selected ? "border-[var(--ink-strong)] bg-[var(--canvas-soft)]" : "border-[var(--line)] bg-[var(--canvas-light)]"}`}>
+              className={`rounded-[var(--radius-control)] border-2 border-[var(--ink-strong)] p-3 text-left shadow-[3px_3px_0_var(--ink-strong)] transition-[transform,box-shadow] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-60 ${selected ? "bg-[var(--voltage)]" : "bg-[var(--canvas-light)]"}`}>
               <span className="block font-semibold text-[var(--ink)]">{coach.name}</span>
               <span className="mt-1 block text-sm text-[var(--muted)]">{coach.vibe}</span>
               <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">{coach.communication}</span>

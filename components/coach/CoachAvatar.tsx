@@ -3,7 +3,7 @@ import type { CoachId } from "@/lib/types";
 
 type Props = {
   coachId: CoachId;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 };
 
@@ -11,6 +11,7 @@ const sizes = {
   sm: 40,
   md: 64,
   lg: 96,
+  xl: 280,
 };
 
 export function CoachAvatar({ coachId, size = "md", className = "" }: Props) {
@@ -18,12 +19,11 @@ export function CoachAvatar({ coachId, size = "md", className = "" }: Props) {
 
   return (
     <Image
-      src={`/coaches/${coachId}.webp`}
+      src={`/coaches/${coachId}-editorial.png`}
       alt=""
       width={px}
       height={px}
-      unoptimized
-      className={`shrink-0 rounded-full bg-[var(--surface)] object-contain ${className}`}
+      className={`shrink-0 object-contain ${className}`}
     />
   );
 }

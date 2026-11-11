@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, Space_Grotesk } from "next/font/google";
+import { Barlow_Condensed, Figtree } from "next/font/google";
 import "./globals.css";
 import { AccountProvider } from "@/components/account/AccountProvider";
 
-const spaceGrotesk = Space_Grotesk({
+const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-barlow-condensed",
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -46,11 +47,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${figtree.variable}`}
+      className={`${barlowCondensed.variable} ${figtree.variable}`}
     >
       <body className="antialiased">
         {previewBuild && (
-          <p className="bg-violet-950 px-3 py-1 text-center font-mono text-xs text-violet-100">
+          <p className="border-b-2 border-black bg-[var(--voltage)] px-3 py-1 text-center font-mono text-xs font-bold text-black">
             Not Rude Training Preview · {previewBuild}
           </p>
         )}

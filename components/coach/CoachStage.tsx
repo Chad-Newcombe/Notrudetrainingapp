@@ -1,12 +1,12 @@
 "use client";
 
-import { CoachModelPreview } from "@/components/coach/CoachModelPreview";
+import { CoachAvatar } from "@/components/coach/CoachAvatar";
 import { getCoach } from "@/lib/coaches/presets";
 import type { CoachId } from "@/lib/types";
 import type { CSSProperties, ReactNode } from "react";
 
 export function CoachStage({
-  coachId, label, title, description, children, replying = false, conversation = false,
+  coachId, label, title, description, children, conversation = false,
 }: {
   coachId: CoachId;
   label: string;
@@ -21,7 +21,7 @@ export function CoachStage({
   return (
     <section className={conversation ? "coach-companion coach-companion-chat" : "coach-companion"} style={palette}>
       <div className="coach-companion-scene">
-        <CoachModelPreview key={coach.id} coach={coach} presentation="companion" replying={replying} />
+        <CoachAvatar key={coach.id} coachId={coach.id} size="xl" className="coach-editorial-portrait" />
       </div>
       <div>
         <p className="meta-label">{label}</p>

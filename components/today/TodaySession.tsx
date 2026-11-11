@@ -41,7 +41,7 @@ export function TodaySession({
     <div className="page-enter flex flex-col gap-7">
       <CoachStage coachId={coach.id} label={`Today · ${session.intensity} effort`}
         title={session.title} description={session.rationale}>
-        {loggedToday && <span className="mt-3 inline-flex rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-900">Workout logged</span>}
+        {loggedToday && <span className="mt-3 inline-flex rounded-full border border-black bg-[var(--voltage)] px-2 py-1 text-xs font-bold text-black">Workout logged</span>}
       </CoachStage>
 
       <CoachBubble coachId={coach.id}>{nudge}</CoachBubble>
@@ -51,7 +51,7 @@ export function TodaySession({
         <ul className="mt-3 flex flex-col gap-3">
           {session.steps.map((step, index) => (
             <li key={index} className="grid grid-cols-[1.75rem_1fr] items-start gap-3 text-[var(--ink)]">
-              <span className="grid size-7 place-items-center rounded-full bg-violet-100 text-xs font-bold text-violet-900">{index + 1}</span>
+              <span className="grid size-7 place-items-center rounded-sm border border-black bg-[var(--voltage)] text-xs font-bold text-black">{index + 1}</span>
               <div><span className="font-display font-semibold tracking-tight">
                 {step.name}
               </span>

@@ -110,10 +110,12 @@ export function HealthConnections() {
                   </div>
                 ) : !user ? (
                   <Button href="/account?health=strava" variant="ghost" className="w-full">Sign in to connect</Button>
-                ) : status && !status.configured ? (
+                ) : status === null ? (
+                  <Button variant="ghost" className="w-full" disabled>Checking availability…</Button>
+                ) : !status.configured ? (
                   <Button variant="ghost" className="w-full" disabled>Not configured</Button>
                 ) : (
-                  <Button href="/api/health/strava/connect" variant="ghost" className="w-full">Connect Strava</Button>
+                  <Button href="/api/health/strava/connect" prefetch={false} variant="ghost" className="w-full">Connect Strava</Button>
                 )
               ) : (
                 <Button variant="ghost" className="w-full" disabled>{source.actionLabel}</Button>

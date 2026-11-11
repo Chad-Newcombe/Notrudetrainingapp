@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { CoachAvatar } from "@/components/coach/CoachAvatar";
-import { CoachModelPreview } from "@/components/coach/CoachModelPreview";
 import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
 import { ChoiceCard } from "@/components/ui/ChoiceCard";
@@ -126,7 +125,6 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
 
   useEffect(() => () => reviewRequest.current?.abort(), []);
   const [saving, setSaving] = useState(false);
-  const [showModel, setShowModel] = useState(false);
 
   const goalValid = draft.goalText.trim().length > 0;
   const coach = draft.coachId ? getCoach(draft.coachId) : null;
@@ -311,19 +309,6 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
                 );
               })}
             </div>
-            {coach ? (
-              <div className="space-y-3">
-                <Button
-                  variant="ghost"
-                  className="w-full"
-                  aria-expanded={showModel}
-                  onClick={() => setShowModel((open) => !open)}
-                >
-                  {showModel ? "Hide 3D preview" : `View ${coach.name} in 3D`}
-                </Button>
-                {showModel ? <CoachModelPreview key={coach.id} coach={coach} /> : null}
-              </div>
-            ) : null}
           </>
         )}
 

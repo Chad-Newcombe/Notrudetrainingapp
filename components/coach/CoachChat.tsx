@@ -310,12 +310,12 @@ function CoachChatInner({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={busy}
-          className="min-w-0 flex-1 rounded-[var(--radius-pill)] border border-[var(--line)] bg-[var(--canvas-light)] px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink-strong)] disabled:opacity-60"
+          className="tactile-input min-w-0 flex-1 px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="shrink-0 rounded-[var(--radius-pill)] bg-[var(--voltage)] px-5 py-3 text-base font-semibold text-[var(--on-voltage)] disabled:opacity-50"
+          className="shrink-0 rounded-[var(--radius-control)] border-2 border-black bg-[var(--voltage)] px-5 py-3 text-base font-bold text-black shadow-[3px_3px_0_#111] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:shadow-none"
         >
           Send
         </button>

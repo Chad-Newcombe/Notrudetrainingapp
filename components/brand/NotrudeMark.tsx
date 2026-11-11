@@ -6,15 +6,16 @@ type NotrudeMarkProps = {
 export function NotrudeMark({ size = "hero", className = "" }: NotrudeMarkProps) {
   const sizeClass =
     size === "hero"
-      ? "text-[clamp(3.5rem,12vw,5.5rem)] font-semibold tracking-[-0.045em] leading-[0.95]"
-      : "text-lg font-semibold tracking-[-0.03em]";
+      ? "text-[clamp(4rem,15vw,6.3rem)] font-extrabold uppercase tracking-[-0.045em] leading-[0.78]"
+      : "text-xl font-extrabold uppercase tracking-[-0.025em] leading-none";
 
   return (
     <p
       className={`font-display text-[var(--ink)] ${sizeClass} ${className}`.trim()}
       aria-label="Not Rude Training"
     >
-      Not Rude Training
+      <span className="block">Not Rude</span>
+      <span className="block text-[var(--voltage)]">Training</span>
     </p>
   );
 }
