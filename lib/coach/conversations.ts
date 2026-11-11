@@ -27,6 +27,10 @@ export function withConversationMessages(
   messages: ChatMessage[],
   now: string,
 ): CoachConversation {
+  if (conversation.status === "archived") {
+    throw new Error("Cannot modify messages on an archived conversation");
+  }
+
   return {
     ...conversation,
     messages: [...messages],
@@ -39,6 +43,10 @@ export function archiveConversation(
   archive: ConversationArchive,
   now: string,
 ): CoachConversation {
+  if (conversation.status === "archived") {
+    throw new Error("Cannot archive an already archived conversation");
+  }
+
   return {
     ...conversation,
     status: "archived",

@@ -63,6 +63,15 @@ describe("coach conversation transitions", () => {
     expect(original.messages).toEqual([message]);
   });
 
+  it("rejects message changes to archived conversations", () => {
+    const archived = conversation({ status: "archived", archivedAt: later, title: "Original title" });
+    const snapshot = structuredClone(archived);
+
+    expect(() => withConversationMessages(archived, [], "2026-11-12T12:00:00.000Z"))
+      .toThrow("Cannot modify messages on an archived conversation");
+    expect(archived).toEqual(snapshot);
+  });
+
   it("archives a conversation with the supplied archive metadata and time", () => {
     const archive = { title: "Building a steady routine", summary: "Agreed on two short sessions each week.", resultLabels: ["plan_updated"] };
     const archived = archiveConversation(conversation(), archive, later);
@@ -79,6 +88,24 @@ describe("coach conversation transitions", () => {
     const archived = archiveConversation(conversation(), { resultLabels: [] }, later);
     expect(archived.title).toBeUndefined();
     expect(archived.summary).toBeUndefined();
+  });
+
+  it("rejects re-archiving and preserves existing transcript and metadata", () => {
+    const archived = conversation({
+      status: "archived",
+      archivedAt: later,
+      title: "Original title",
+      summary: "Original summary",
+      resultLabels: ["plan_updated"],
+    });
+    const snapshot = structuredClone(archived);
+
+    expect(() => archiveConversation(
+      archived,
+      { title: "Replacement title", summary: "Replacement summary", resultLabels: ["profile_updated"] },
+      "2026-11-12T12:00:00.000Z",
+    )).toThrow("Cannot archive an already archived conversation");
+    expect(archived).toEqual(snapshot);
   });
 
   it("filters to the requested coach and sorts newest first", () => {
