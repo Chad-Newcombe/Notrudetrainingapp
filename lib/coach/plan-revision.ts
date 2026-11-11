@@ -21,7 +21,8 @@ export function classifyPlanIntent(text: string): PlanIntent {
   const action = /\b(?:make|move|reschedule|replace|swap|add|remove|drop|skip|shorten|cut|reduce|increase|change|update|adjust|set|switch)\b/;
   const concrete = day.test(value) || duration.test(value) || intensity.test(value)
     || sessionCount.test(value) || replacement.test(value) || /\brest day\b/.test(value);
-  const contextual = planContext.test(value) || day.test(value) || duration.test(value);
+  const contextual = planContext.test(value) || duration.test(value)
+    || intensity.test(value) || sessionCount.test(value);
   const explicitConstraint = /\b(?:i\s+(?:can|have)\s+only|i\s+only\s+(?:can|have))\b/.test(value)
     && duration.test(value) && contextual;
   const unavailable = /\b(?:i\s+)?(?:can(?:no|')t|cannot|won't|unavailable)\b/.test(value)
@@ -161,7 +162,7 @@ export function enforceLatestTimeConstraint(
   const namedDays = DAY_LABELS
     .map((day, index) => ({ index, present: new RegExp(`\\b${day}\\b`, "i").test(latest) }))
     .filter(({ present }) => present);
-  const hasAdditionalChange = /\b(?:move|reschedule|replace|swap|instead\s+of|with|add|remove|drop|skip)\b/i.test(latest);
+  const hasAdditionalChange = /\b(?:move|reschedule|replace|swap|instead\s+of|with|add|remove|drop|skip|run|running|walk|walking|ride|riding|swim|swimming|strength|mobility|easy|easier|moderate|hard|harder|lighter|gentler|intensity)\b/i.test(latest);
   if (namedDays.length !== 1 || hasAdditionalChange) return proposed;
   const dayIndex = namedDays[0].index;
   const minuteWords: Record<string, number> = {

@@ -55,6 +55,8 @@ describe("plan revision", () => {
     "I might need a change.",
     "Change my password.",
     "What do you think about Thursday?",
+    "I want Tuesday off from work.",
+    "Change Tuesday's dinner.",
   ])("keeps discussion from mutating the plan: %s", (text) => {
     expect(classifyPlanIntent(text)).toBe("discussion");
   });
@@ -128,9 +130,17 @@ describe("plan revision", () => {
     const activityChange = enforceLatestTimeConstraint(proposed, current, [
       { role: "user", content: "Make Thursday a 10-minute walk instead of strength." },
     ]);
+    const namedActivity = enforceLatestTimeConstraint(proposed, current, [
+      { role: "user", content: "Make Thursday a 10-minute run." },
+    ]);
+    const namedIntensity = enforceLatestTimeConstraint(proposed, current, [
+      { role: "user", content: "Make Thursday 10 minutes hard." },
+    ]);
 
     expect(compound).toBe(proposed);
     expect(activityChange).toBe(proposed);
+    expect(namedActivity).toBe(proposed);
+    expect(namedIntensity).toBe(proposed);
   });
 
   it("keeps a day the user mentioned when a draft has too many sessions", () => {
