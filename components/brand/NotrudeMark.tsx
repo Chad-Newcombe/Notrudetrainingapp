@@ -12,9 +12,9 @@ export function NotrudeMark({ size = "hero", className = "" }: NotrudeMarkProps)
   return (
     <p
       className={`font-display text-[var(--ink)] ${sizeClass} ${className}`.trim()}
-      aria-label="Notrude"
+      aria-label="Not Rude Training"
     >
-      Notrude
+      Not Rude Training
     </p>
   );
 }

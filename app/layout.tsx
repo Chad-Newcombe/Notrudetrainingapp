@@ -16,7 +16,7 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "Notrude",
+  title: "Not Rude Training",
   description: "Empathetic training that meets you where you are.",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Notrude",
+    title: "Not Rude Training",
   },
 };
 
@@ -51,7 +51,7 @@ export default function RootLayout({
       <body className="antialiased">
         {previewBuild && (
           <p className="bg-violet-950 px-3 py-1 text-center font-mono text-xs text-violet-100">
-            Notrude Preview · {previewBuild}
+            Not Rude Training Preview · {previewBuild}
           </p>
         )}
         <div className="app-shell"><AccountProvider>{children}</AccountProvider></div>

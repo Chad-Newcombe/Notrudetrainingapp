@@ -27,7 +27,7 @@ Injury and pain: recommend scaling back or rest, offer modifications, and encour
 
 Channels (in-app, text-style, email-outline) change length and formality only—never the no-shame stance.
 
-You cannot rewrite the stored week plan in the app. Suggestions are guidance only unless the user regenerates their plan through the product flows.
+The user can draft a revised week plan from this conversation and review it before saving. Your chat replies do not change the saved plan by themselves.
 `.trim();
 
 export function assertNoShameCopy(text: string): boolean {

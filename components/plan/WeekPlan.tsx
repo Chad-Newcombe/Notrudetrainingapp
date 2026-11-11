@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/Button";
 import { DAY_LABELS, dayIndexInPlanWeek } from "@/lib/dates";
 import type { PlanSession, TrainingPlan } from "@/lib/types";
 
-const ADJUST_PROMPT = encodeURIComponent("Please adjust my week");
-
 type Props = {
   plan: TrainingPlan;
 };
@@ -42,11 +40,11 @@ export function WeekPlan({ plan }: Props) {
       ) : null}
 
       <Button
-        href={`/coach?prompt=${ADJUST_PROMPT}`}
+        href="/coach"
         variant="ghost"
         className="w-full"
       >
-        Ask coach to adjust
+        Discuss changes with coach
       </Button>
     </div>
   );

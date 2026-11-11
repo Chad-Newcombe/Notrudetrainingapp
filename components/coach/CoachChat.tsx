@@ -2,11 +2,11 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CoachStage } from "@/components/coach/CoachStage";
-import { QuickChips } from "@/components/coach/QuickChips";
+import { PlanRevision } from "@/components/coach/PlanRevision";
 import { getCoach, DEFAULT_COACH_ID } from "@/lib/coaches/presets";
+import { conversationForPlan } from "@/lib/coach/plan-revision";
 import { createCoachFetch } from "@/lib/coach/fixture-fetch";
 import {
   chatMessageToUi,
@@ -24,11 +24,9 @@ type Props = {
 };
 
 export function CoachChat({ profile, plan, logs }: Props) {
-  const searchParams = useSearchParams();
   const [boot, setBoot] = useState<UIMessage[] | null>(null);
   const [healthSummary, setHealthSummary] = useState<string | undefined>();
   const createdAtById = useRef(new Map<string, string>());
-  const promptSent = useRef(false);
   const coachFetch = useMemo(() => createCoachFetch(), []);
 
   useEffect(() => {
@@ -67,8 +65,6 @@ export function CoachChat({ profile, plan, logs }: Props) {
       healthSummary={healthSummary}
       coachFetch={coachFetch}
       persist={persist}
-      searchParams={searchParams}
-      promptSent={promptSent}
     />
   );
 }
@@ -81,8 +77,6 @@ function CoachChatInner({
   healthSummary,
   coachFetch,
   persist,
-  searchParams,
-  promptSent,
 }: {
   boot: UIMessage[];
   profile: UserProfile;
@@ -91,10 +85,9 @@ function CoachChatInner({
   healthSummary?: string;
   coachFetch: ReturnType<typeof createCoachFetch>;
   persist: (messages: UIMessage[]) => Promise<void>;
-  searchParams: ReturnType<typeof useSearchParams>;
-  promptSent: React.MutableRefObject<boolean>;
 }) {
   const [input, setInput] = useState("");
+  const [activePlan, setActivePlan] = useState(plan);
   const listRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status, error, clearError } = useChat({
@@ -107,7 +100,7 @@ function CoachChatInner({
           ...body,
           messages,
           profile,
-          plan,
+          plan: activePlan,
           logs,
           healthSummary,
         },
@@ -141,6 +134,13 @@ function CoachChatInner({
     }
     return null;
   }, [messages]);
+  const planConversation = useMemo(() => conversationForPlan(messages
+    .filter((message) => message.role === "user" || message.role === "assistant")
+    .map((message) => ({
+      role: message.role as "user" | "assistant",
+      content: uiMessageText(message),
+    }))), [messages]);
+  const lastUserId = [...messages].reverse().find((message) => message.role === "user")?.id;
 
   const retry = useCallback(() => {
     clearError();
@@ -154,15 +154,6 @@ function CoachChatInner({
       behavior: "smooth",
     });
   }, [messages, status]);
-
-  useEffect(() => {
-    const prompt = searchParams.get("prompt");
-    if (!prompt || promptSent.current || busy) return;
-    promptSent.current = true;
-    void sendMessage({ text: prompt });
-    // promptSent is a ref — intentionally omitted from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, sendMessage, busy]);
 
   const submit = useCallback(
     async (text: string) => {
@@ -189,14 +180,9 @@ function CoachChatInner({
         className="panel coach-conversation flex max-h-[min(52dvh,28rem)] min-h-32 flex-col gap-3 overflow-y-auto p-4"
       >
         {messages.length === 0 && (
-          <div className="space-y-1">
-            <p className="text-sm text-[var(--muted)]">
-              Ask anything about your plan, energy, or what to do today.
-            </p>
-            <p className="text-sm text-[var(--ink-muted-light)]">
-              Bonus points for honesty. Zero points for pretending you slept 9 hours.
-            </p>
-          </div>
+          <p className="text-sm text-[var(--muted)]">
+            Start a conversation with {getCoach(profile.coachId).name}.
+          </p>
         )}
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
@@ -224,7 +210,16 @@ function CoachChatInner({
         </div>
       ) : null}
 
-      <QuickChips onPick={(text) => void submit(text)} disabled={busy} />
+      {lastUserId && !busy && (
+        <PlanRevision
+          key={lastUserId}
+          profile={profile}
+          plan={activePlan}
+          logs={logs}
+          conversation={planConversation}
+          onSaved={setActivePlan}
+        />
+      )}
 
       <form
         className="flex gap-2"
@@ -240,7 +235,6 @@ function CoachChatInner({
           id="coach-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="What's on your mind?"
           disabled={busy}
           className="min-w-0 flex-1 rounded-[var(--radius-pill)] border border-[var(--line)] bg-[var(--canvas-light)] px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink-strong)] disabled:opacity-60"
         />

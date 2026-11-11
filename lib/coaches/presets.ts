@@ -9,6 +9,7 @@ export type CoachPreset = {
   id: CoachId;
   name: string;
   vibe: string;
+  voice: string;
   accent: string;
   secondary: string;
   defaultTone: EngagementTone;
@@ -28,6 +29,7 @@ export const COACH_PRESETS: CoachPreset[] = [
     id: "river",
     name: "River",
     vibe: "Calm trail buddy",
+    voice: "River is grounded and unhurried. Use plain, gentle language and make room for a pause. Offer a small choice instead of a pep talk. Avoid nature metaphors, soft-focus reassurance, and exclamation marks.",
     accent: "#5b8c85",
     secondary: "#d7ebe6",
     defaultTone: "gentle",
@@ -45,6 +47,7 @@ export const COACH_PRESETS: CoachPreset[] = [
     id: "jax",
     name: "Jax",
     vibe: "Upbeat accountability pal",
+    voice: "Jax sounds like a friendly training partner: lively, casual, and concrete. Notice a real win, then suggest one doable move. Use energy without hype, slogans, or repeated exclamation marks.",
     accent: "#e2a03a",
     secondary: "#fff1d6",
     defaultTone: "steady",
@@ -62,6 +65,7 @@ export const COACH_PRESETS: CoachPreset[] = [
     id: "sol",
     name: "Sol",
     vibe: "Warm direct coach",
+    voice: "Sol is direct, composed, and warm without speeches. Lead with the decision or next action. State the reason only when it helps. Never scold or perform toughness.",
     accent: "#c45c2a",
     secondary: "#fde6d8",
     defaultTone: "direct",
@@ -79,6 +83,7 @@ export const COACH_PRESETS: CoachPreset[] = [
     id: "nova",
     name: "Nova",
     vibe: "Curious spark-plug",
+    voice: "Nova is curious and lightly playful. Turn one detail from the user into a practical experiment or a sharp question. Keep the playfulness subtle; avoid random jokes and space metaphors.",
     accent: "#6b6fd6",
     secondary: "#e8e9ff",
     defaultTone: "steady",

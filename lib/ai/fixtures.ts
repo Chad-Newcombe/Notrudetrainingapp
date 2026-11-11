@@ -192,20 +192,37 @@ export function fixtureAcknowledgment(profile: UserProfile): string {
 
 export function fixtureCoachReply(userText: string, profile: UserProfile): string {
   const lower = userText.toLowerCase();
-  if (/tired|exhausted|rough day|bad day/.test(lower)) {
-    return "That sounds like a heavy day. Rest or a very easy walk both count. What would feel kind, not punishing, for the next hour?";
-  }
-  if (/pain|hurt|injury|sore/.test(lower)) {
-    return "Thanks for saying that. Ease off intensity, try modifications, and if pain stays sharp or worsens, loop in a clinician. You are not failing by scaling back.";
-  }
-  if (/skipped|missed|didn't/.test(lower)) {
-    return "Missing a session is normal life, not a character flaw. Want to pick one small win for tomorrow that still fits your goal?";
-  }
-  const brief =
-    profile.cadence === "brief"
-      ? "One clear next step beats a long lecture."
-      : "Tell me more about what got in the way, and we will shape the next step together.";
-  return `${brief} I am with you on “${profile.goalText}.” What feels realistic for today?`;
+  const coach = profile.coachId ?? "river";
+  const situation = /pain|hurt|injury|sore/.test(lower) ? "pain"
+    : /tired|exhausted|rough day|bad day/.test(lower) ? "tired"
+      : /skipped|missed|didn't/.test(lower) ? "missed" : "general";
+  const replies: Record<NonNullable<UserProfile["coachId"]>, Record<typeof situation, string>> = {
+    river: {
+      pain: "Ease off today. If the pain is sharp or keeps returning, check with a clinician.",
+      tired: "Sounds like a smaller day. Would five easy minutes feel right?",
+      missed: "You can start again with one small session. What fits tomorrow?",
+      general: "Let’s find one step that fits today. What feels doable?",
+    },
+    jax: {
+      pain: "Let’s back off the intensity. If that pain sticks around or gets worse, check with a clinician.",
+      tired: "Low battery day? Try five easy minutes and call it a win.",
+      missed: "We can pick this back up. What’s one short session you could fit tomorrow?",
+      general: "Let’s make a move you can actually fit in. What have you got today?",
+    },
+    sol: {
+      pain: "Stop the painful movement. If pain persists or worsens, get it checked by a clinician.",
+      tired: "Scale today down to five easy minutes, or rest if you need it.",
+      missed: "Leave the missed session behind. Choose one realistic slot tomorrow.",
+      general: "Pick one realistic action for today. How much time do you have?",
+    },
+    nova: {
+      pain: "Let's change the experiment: skip the painful move. If pain lingers, ask a clinician.",
+      tired: "What if five easy minutes is the whole workout today?",
+      missed: "Fresh start: what tiny version of the plan could fit tomorrow?",
+      general: "What’s the smallest version of this that would still feel worthwhile?",
+    },
+  };
+  return replies[coach][situation];
 }
 
 type ComposeChannel = Extract<ChannelPref, "text_style" | "email_outline">;
