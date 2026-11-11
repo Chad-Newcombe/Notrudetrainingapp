@@ -11,12 +11,15 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 describe("quiz coach theme", () => {
   it("previews the selected coach palette without human portraits or expanded 3D copy", () => {
-    const { container } = render(createElement(QuizWizard, { profile: null, hasPlan: false }));
+    const { container, unmount } = render(createElement(QuizWizard, { profile: null, hasPlan: false }));
 
     fireEvent.click(screen.getByRole("button", { name: /Nova/i }));
 
     expect(announceTheme).toHaveBeenCalledWith({ coachId: "nova", appearance: "system" });
     expect(container.innerHTML).not.toContain("editorial.png");
     expect(screen.queryByText(/3d preview|drag to rotate/i)).not.toBeInTheDocument();
+
+    unmount();
+    expect(announceTheme).toHaveBeenLastCalledWith({ coachId: "river", appearance: "system" });
   });
 });

@@ -123,8 +123,16 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
   const [saveError, setSaveError] = useState(false);
   const reviewRequest = useRef<AbortController | null>(null);
   const reviewedInput = useRef<string | null>(null);
+  const themeCommitted = useRef(false);
+  const savedTheme = useRef({
+    coachId: existing?.coachId ?? "river",
+    appearance: existing?.appearance ?? "system",
+  } as const);
 
-  useEffect(() => () => reviewRequest.current?.abort(), []);
+  useEffect(() => () => {
+    reviewRequest.current?.abort();
+    if (!themeCommitted.current) announceTheme(savedTheme.current);
+  }, []);
   const [saving, setSaving] = useState(false);
 
   const goalValid = draft.goalText.trim().length > 0;
@@ -264,6 +272,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
         if (td) profile.targetDescription = td;
       }
       await saveProfile(profile);
+      themeCommitted.current = true;
       router.push(hasPlan ? "/coach" : "/acknowledgment");
     } catch {
       setSaveError(true);

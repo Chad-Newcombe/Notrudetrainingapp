@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { TodaySession } from "@/components/today/TodaySession";
 import type { PlanSession, TrainingPlan, UserProfile } from "@/lib/types";
 
@@ -37,6 +37,11 @@ const profile: UserProfile = {
 };
 
 describe("TodaySession", () => {
+  afterEach(async () => {
+    cleanup();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  });
+
   it("presents one workout with real metrics, week context, and one coach note", () => {
     render(
       createElement(TodaySession, {
@@ -48,7 +53,10 @@ describe("TodaySession", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1, name: "Steady strength" })).toBeInTheDocument();
-    expect(within(screen.getByLabelText("Week at a glance")).getAllByRole("listitem")).toHaveLength(7);
+    const week = screen.getByLabelText("Week at a glance");
+    expect(within(week).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(week).getByRole("listitem", { name: /Wednesday 11, scheduled, today/i })).toBeInTheDocument();
+    expect(within(week).getByRole("listitem", { name: /Monday 9, rest day/i })).toBeInTheDocument();
     expect(screen.getByText("25 min")).toBeInTheDocument();
     expect(screen.getByText("Moderate")).toBeInTheDocument();
     expect(screen.getByText("2", { selector: "dd" })).toBeInTheDocument();

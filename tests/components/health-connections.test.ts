@@ -46,4 +46,20 @@ describe("HealthConnections", () => {
     expect(await screen.findByRole("link", { name: "Sign in to connect" }))
       .toHaveAttribute("href", "/account?health=strava");
   });
+
+  it("explains how to enable Strava when credentials are missing", async () => {
+    accountUser = { id: "user-1", name: "Ari", email: "ari@example.com" };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      configured: false,
+      signedIn: true,
+      connected: false,
+    }), { headers: { "content-type": "application/json" } })));
+
+    render(createElement(HealthConnections));
+
+    expect(await screen.findByText("Not configured", { selector: ".health-status" })).toBeInTheDocument();
+    expect(screen.getByText(/STRAVA_CLIENT_ID.*STRAVA_CLIENT_SECRET/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Not configured" })).toBeDisabled();
+    expect(screen.queryByRole("link", { name: "Connect Strava" })).not.toBeInTheDocument();
+  });
 });

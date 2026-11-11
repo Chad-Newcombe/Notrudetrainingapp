@@ -82,6 +82,15 @@ export function HealthConnections() {
           const connection = connectionFor(source.id);
           const isStrava = source.id === "strava";
           const isConnected = isStrava ? status?.connected === true : false;
+          const availability = isConnected
+            ? "Connected"
+            : isStrava && status === null
+              ? "Checking"
+              : isStrava && status?.configured === false
+                ? "Not configured"
+                : source.mode === "oauth"
+                  ? "Available"
+                  : "Requires app";
           return (
             <li key={source.id} className="flex flex-col gap-3 border-b border-[var(--app-line)] py-4 last:border-0">
               <div className="flex items-start justify-between gap-3">
@@ -90,9 +99,15 @@ export function HealthConnections() {
                   <p className="mt-1 text-sm leading-relaxed text-[var(--app-muted)]">{source.availabilityNote}</p>
                 </div>
                 <span className={`health-status ${isConnected ? "health-status-connected" : ""}`}>
-                  {isConnected ? "Connected" : source.mode === "oauth" ? "Available" : "Requires app"}
+                  {availability}
                 </span>
               </div>
+
+              {isStrava && status?.configured === false ? (
+                <p className="text-sm leading-relaxed text-[var(--app-muted)]">
+                  Add STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET to the server environment to enable this connection.
+                </p>
+              ) : null}
 
               {isConnected && connection?.sampleSummary ? (
                 <p className="border-l-2 border-[var(--app-accent)] pl-3 text-sm text-[var(--app-text)]">{connection.sampleSummary}</p>

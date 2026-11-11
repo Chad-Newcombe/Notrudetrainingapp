@@ -3,16 +3,18 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { createElement } from "react";
 import { describe, expect, it } from "vitest";
-import { Button } from "@/components/ui/Button";
+import { Button, type ButtonProps } from "@/components/ui/Button";
 
 describe("Button", () => {
   it("uses accessible semantic theme surfaces without an offset shadow", () => {
+    const primaryProps: ButtonProps = { children: "Start workout" };
+    const secondaryProps: ButtonProps = { variant: "ghost", children: "Not now" };
     render(
       createElement(
         "div",
         null,
-        createElement(Button, null, "Start workout"),
-        createElement(Button, { variant: "ghost" }, "Not now"),
+        createElement(Button, primaryProps),
+        createElement(Button, secondaryProps),
       ),
     );
 

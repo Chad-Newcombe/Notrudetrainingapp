@@ -35,9 +35,12 @@ function WeekStrip({ plan, logs }: { plan: TrainingPlan; logs: WorkoutLog[] }) {
         const completed = scheduled ? completedIds.has(scheduled.id) : false;
         const isToday = dayIndex === todayIndex;
         const date = planDayDate(plan.weekStartIso, dayIndex);
+        const status = completed ? "completed" : scheduled ? "scheduled" : "rest day";
+        const accessibleLabel = `${day} ${date.getDate()}, ${status}${isToday ? ", today" : ""}`;
         return (
           <li
             key={day}
+            aria-label={accessibleLabel}
             aria-current={isToday ? "date" : undefined}
             className={`flex min-h-14 flex-col items-center justify-center rounded-xl text-center ${
               isToday ? "bg-[var(--app-accent)] text-[var(--app-on-accent)]" : "text-[var(--app-muted)]"

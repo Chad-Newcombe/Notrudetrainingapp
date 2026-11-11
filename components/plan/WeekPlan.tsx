@@ -16,7 +16,9 @@ function planDayDate(weekStartIso: string, dayIndex: number) {
 }
 
 function logForSession(logs: WorkoutLog[], sessionId: string) {
-  return logs.find((log) => log.sessionId === sessionId);
+  return logs
+    .filter((log) => log.sessionId === sessionId)
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())[0];
 }
 
 export function WeekPlan({ plan, logs }: Props) {
@@ -71,7 +73,6 @@ function ScheduleRow({
   isToday: boolean;
 }) {
   const duration = session ? sessionDurationMin(session) : null;
-  const completed = log?.status === "completed";
 
   return (
     <article className="grid min-h-[5.5rem] grid-cols-[3.25rem_1fr_auto] items-center gap-3 py-3">
@@ -92,8 +93,12 @@ function ScheduleRow({
         )}
       </div>
       <div className="justify-self-end text-right">
-        {completed ? (
+        {log?.status === "completed" ? (
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--app-complete)]"><Check size={14} aria-hidden="true" />Completed</span>
+        ) : log?.status === "partial" ? (
+          <span className="text-xs font-semibold text-[var(--app-accent)]">Partial</span>
+        ) : log?.status === "skipped" ? (
+          <span className="text-xs font-semibold text-[var(--app-muted)]">Skipped</span>
         ) : isToday ? (
           <span className="rounded-full bg-[color-mix(in_srgb,var(--app-accent),transparent_82%)] px-2.5 py-1 text-xs font-semibold text-[var(--app-accent)]">Today</span>
         ) : session ? (

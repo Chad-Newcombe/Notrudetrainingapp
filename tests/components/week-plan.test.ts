@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { WeekPlan } from "@/components/plan/WeekPlan";
 import type { TrainingPlan, WorkoutLog } from "@/lib/types";
 
@@ -35,6 +35,8 @@ const logs: WorkoutLog[] = [
 ];
 
 describe("WeekPlan", () => {
+  afterEach(() => cleanup());
+
   it("renders the stored week as seven schedule rows without inventing more weeks", () => {
     render(createElement(WeekPlan, { plan, logs }));
 
@@ -49,5 +51,34 @@ describe("WeekPlan", () => {
     expect(screen.getByText("45 min scheduled")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /next week|previous week/i })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Discuss changes with coach" })).toHaveAttribute("href", "/coach");
+  });
+
+  it("shows the latest completed, partial, and skipped state for each session", () => {
+    const statusPlan: TrainingPlan = {
+      ...plan,
+      sessions: [
+        ...plan.sessions,
+        {
+          id: "friday",
+          dayIndex: 4,
+          title: "Easy mobility",
+          rationale: "Loosen up.",
+          intensity: "easy",
+          steps: [{ name: "Mobility", detail: "Move slowly", durationMin: 10 }],
+        },
+      ],
+    };
+    const statusLogs: WorkoutLog[] = [
+      { id: "monday-old", sessionId: "monday", status: "skipped", completedAt: "2026-11-09T09:00:00.000Z" },
+      { id: "monday-new", sessionId: "monday", status: "completed", completedAt: "2026-11-09T18:00:00.000Z" },
+      { id: "wednesday-partial", sessionId: "wednesday", status: "partial", completedAt: "2026-11-11T18:00:00.000Z" },
+      { id: "friday-skipped", sessionId: "friday", status: "skipped", completedAt: "2026-11-13T18:00:00.000Z" },
+    ];
+
+    render(createElement(WeekPlan, { plan: statusPlan, logs: statusLogs }));
+
+    expect(screen.getAllByText("Completed")).toHaveLength(1);
+    expect(screen.getByText("Partial")).toBeInTheDocument();
+    expect(screen.getByText("Skipped")).toBeInTheDocument();
   });
 });
