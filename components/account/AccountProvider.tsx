@@ -45,7 +45,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
   if (!state) return (
     <main className="grid min-h-[100dvh] place-content-center gap-3 px-6 text-center">
-      <p role="status">{error || "Opening Notrude…"}</p>
+      <p role="status" className="text-[var(--app-muted)]">{error || "Opening Not Rude Training…"}</p>
       {error && <button className="underline" onClick={() => window.location.reload()}>Try again</button>}
     </main>
   );

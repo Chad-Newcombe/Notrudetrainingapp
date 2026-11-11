@@ -23,18 +23,18 @@ export function IntakeReview({
 }) {
   return (
     <>
-      <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+      <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
         What I’ll take into your coaching
       </h1>
       {pending ? (
         <>
-          <p role="status" className="text-[var(--muted)]">I’m thinking through what you told me.</p>
+          <p role="status" className="text-[var(--app-muted)]">I’m thinking through what you told me.</p>
           <Button variant="ghost" onClick={onQuickReview}>Review without waiting</Button>
         </>
       ) : (
         <>
           <CoachBubble coachId={coachId}>{reply}</CoachBubble>
-          <p className="leading-relaxed text-[var(--muted)]">
+          <p className="leading-relaxed text-[var(--app-muted)]">
             {source === "quick" ? "This is a quick draft. Add anything I missed. " : ""}
             You can edit or clear any note before saving. I’ll use the saved notes for future plans and check-ins.
           </p>

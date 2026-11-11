@@ -19,10 +19,10 @@ export function IntakeConversation({
       <CoachBubble coachId={coachId}>
         {followUp ? intakeFollowUp(coachId, routine) : intakeOpening(coachId, goal)}
       </CoachBubble>
-      <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+      <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
         {followUp ? "What would good coaching feel like?" : "What does a real week look like?"}
       </h1>
-      <p className="leading-relaxed text-[var(--muted)]">
+      <p className="leading-relaxed text-[var(--app-muted)]">
         Answer in your own words or skip anything you’d rather leave open.
       </p>
       {followUp ? (

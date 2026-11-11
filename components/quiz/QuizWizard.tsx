@@ -104,7 +104,7 @@ const initialDraft: Draft = {
 };
 
 const fieldClass =
-  "w-full rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--canvas-light)] px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--ink-strong)]";
+  "min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--app-line)] bg-[var(--app-raised)] px-4 py-3 text-base text-[var(--app-text)] placeholder:text-[var(--app-muted)] focus:outline focus:outline-3 focus:outline-offset-2 focus:outline-[var(--app-focus)]";
 
 export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfile | null; hasPlan: boolean }) {
   const router = useRouter();
@@ -273,7 +273,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[var(--canvas-soft)] px-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
+    <div className="flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="mb-8">
         <ProgressDots total={steps.length} current={stepIndex} />
       </div>
@@ -282,10 +282,10 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
         {step === "coach" && (
           <>
             <div className="space-y-2">
-              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+              <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
                 Who’s coaching you?
               </h1>
-              <p className="leading-relaxed text-[var(--muted)]">
+              <p className="leading-relaxed text-[var(--app-muted)]">
                 Pick a coach — same care, different energy. You can feel the vibe before you commit.
               </p>
             </div>
@@ -302,10 +302,10 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
                     style={{ "--coach-tint": c.secondary, "--coach-accent": c.accent } as CSSProperties}
                   >
                     <CoachAvatar coachId={c.id} size="lg" />
-                    <span className="font-display text-base font-semibold tracking-tight">
+                    <span className="text-base font-semibold text-[var(--app-text)]">
                       {c.name}
                     </span>
-                    <span className="text-xs leading-snug text-[var(--muted)]">
+                    <span className="text-xs leading-snug text-[var(--app-muted)]">
                       {c.vibe}
                     </span>
                   </button>
@@ -319,10 +319,10 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.goal}</CoachBubble>
             <div className="space-y-2">
-              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+              <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
                 What are you working toward?
               </h1>
-              <p className="leading-relaxed text-[var(--muted)]">
+              <p className="leading-relaxed text-[var(--app-muted)]">
                 In your own words—ultra, strength, moving more, anything counts.
               </p>
             </div>
@@ -356,15 +356,15 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.now}</CoachBubble>
             <div className="space-y-2">
-              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+              <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
                 Where are you starting?
               </h1>
-              <p className="leading-relaxed text-[var(--muted)]">
+              <p className="leading-relaxed text-[var(--app-muted)]">
                 Optional context helps me meet you where you are.
               </p>
             </div>
             <label className="block space-y-1.5">
-              <span className="text-sm text-[var(--muted)]">Current weight (lbs)</span>
+              <span className="text-sm text-[var(--app-muted)]">Current weight (lbs)</span>
               <input
                 type="number"
                 inputMode="decimal"
@@ -375,7 +375,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
               />
             </label>
             <label className="block space-y-1.5">
-              <span className="text-sm text-[var(--muted)]">Activity level</span>
+              <span className="text-sm text-[var(--app-muted)]">Activity level</span>
               <select
                 className={fieldClass}
                 value={draft.activityLevel}
@@ -389,7 +389,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
               </select>
             </label>
             <label className="block space-y-1.5">
-              <span className="text-sm text-[var(--muted)]">Constraints or injuries</span>
+              <span className="text-sm text-[var(--app-muted)]">Constraints or injuries</span>
               <textarea
                 className={`${fieldClass} min-h-[80px] resize-y`}
                 placeholder="Optional—knee issues, schedule limits, etc."
@@ -402,11 +402,11 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
             <label className="panel flex cursor-pointer items-start gap-3 p-4">
               <input
                 type="checkbox"
-                className="mt-1 h-4 w-4 accent-[var(--voltage)]"
+                className="mt-1 h-4 w-4 accent-[var(--app-accent)]"
                 checked={draft.trackWeight}
                 onChange={(e) => patch({ trackWeight: e.target.checked })}
               />
-              <span className="text-sm leading-relaxed text-[var(--ink)]">
+              <span className="text-sm leading-relaxed text-[var(--app-text)]">
                 I&apos;d like to track weight over time (optional, no judgment)
               </span>
             </label>
@@ -417,15 +417,15 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.target}</CoachBubble>
             <div className="space-y-2">
-              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+              <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
                 What does better look like?
               </h1>
-              <p className="leading-relaxed text-[var(--muted)]">
+              <p className="leading-relaxed text-[var(--app-muted)]">
                 Optional numbers or words—whatever helps you picture progress.
               </p>
             </div>
             <label className="block space-y-1.5">
-              <span className="text-sm text-[var(--muted)]">Target weight (lbs)</span>
+              <span className="text-sm text-[var(--app-muted)]">Target weight (lbs)</span>
               <input
                 type="number"
                 inputMode="decimal"
@@ -436,7 +436,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
               />
             </label>
             <label className="block space-y-1.5">
-              <span className="text-sm text-[var(--muted)]">Or describe it</span>
+              <span className="text-sm text-[var(--app-muted)]">Or describe it</span>
               <textarea
                 className={`${fieldClass} min-h-[100px] resize-y`}
                 placeholder="e.g. clothes fit easier, more energy on walks"
@@ -452,15 +452,15 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.engagement}</CoachBubble>
             <div className="space-y-2">
-              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+              <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
                 How should I show up?
               </h1>
-              <p className="leading-relaxed text-[var(--muted)]">
+              <p className="leading-relaxed text-[var(--app-muted)]">
                 Defaults follow {coach.name} — tweak anything.
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-[var(--muted)]">Tone</p>
+              <p className="text-sm font-medium text-[var(--app-muted)]">Tone</p>
               <div className="flex flex-col gap-2">
                 {TONE_OPTIONS.map((o) => (
                   <ChoiceCard
@@ -474,7 +474,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-[var(--muted)]">Cadence</p>
+              <p className="text-sm font-medium text-[var(--app-muted)]">Cadence</p>
               <div className="flex flex-col gap-2">
                 {CADENCE_OPTIONS.map((o) => (
                   <ChoiceCard
@@ -488,7 +488,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-[var(--muted)]">Motivation</p>
+              <p className="text-sm font-medium text-[var(--app-muted)]">Motivation</p>
               <div className="flex flex-col gap-2">
                 {MOTIVATION_OPTIONS.map((o) => (
                   <ChoiceCard
@@ -508,10 +508,10 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
           <>
             <CoachBubble coachId={coach.id}>{coach.whyPrompts.channels}</CoachBubble>
             <div className="space-y-2">
-              <h1 className="font-display text-[1.65rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+              <h1 className="text-[1.8rem] font-bold tracking-[-0.04em] text-[var(--app-text)]">
                 How would you like to check in?
               </h1>
-              <p className="leading-relaxed text-[var(--muted)]">
+              <p className="leading-relaxed text-[var(--app-muted)]">
                 Text and email check-ins appear in your Notrude Inbox.
               </p>
             </div>
@@ -594,7 +594,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
             {saving ? "Saving…" : "Save coaching preferences"}
           </Button>
         )}
-        {saveError && <p role="alert" className="text-sm text-[var(--muted)]">Couldn’t save your preferences. Try again.</p>}
+        {saveError && <p role="alert" className="text-sm text-[var(--app-muted)]">Couldn’t save your preferences. Try again.</p>}
         {stepIndex > 0 && (
           <Button variant="ghost" className="w-full" disabled={saving} onClick={goBack}>
             Back

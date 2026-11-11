@@ -84,8 +84,8 @@ export default function AcknowledgmentPage() {
   }
 
   return (
-    <main className="flex min-h-[100dvh] flex-col justify-between bg-[var(--canvas-soft)] px-6 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="page-enter flex flex-1 flex-col justify-center gap-6">
+    <main className="flex min-h-[100dvh] flex-col justify-between bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="flex flex-1 flex-col justify-center gap-6">
         <div className="flex items-start gap-3">
           <CoachAvatar
             coachId={profile?.coachId ?? DEFAULT_COACH_ID}
@@ -95,24 +95,24 @@ export default function AcknowledgmentPage() {
             <p className="meta-label">
               {getCoach(profile?.coachId).name} · Acknowledgment
             </p>
-            <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+            <h1 className="mt-2 text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">
               What I heard
             </h1>
           </div>
         </div>
         {offline ? (
-          <p className="text-sm text-[var(--muted)]">
+          <p className="text-sm text-[var(--app-muted)]">
             Offline — we&apos;ll use saved demo copy when the server can&apos;t
             reach AI.
           </p>
         ) : null}
         {loading ? (
-          <p className="text-[var(--muted)]" aria-live="polite">
+          <p className="text-[var(--app-muted)]" aria-live="polite">
             Taking in your goal…
           </p>
         ) : (
           <p
-            className={`text-lg leading-relaxed text-[var(--ink)] ${
+            className={`rounded-[var(--radius-panel)] bg-[var(--app-raised)] p-5 text-lg leading-relaxed text-[var(--app-text)] ${
               text ? "acknowledgment-fade-in" : ""
             }`}
           >
@@ -122,7 +122,7 @@ export default function AcknowledgmentPage() {
       </div>
       {planLoading ? (
         <p
-          className="mb-2 text-center text-sm text-[var(--muted)]"
+          className="mb-2 text-center text-sm text-[var(--app-muted)]"
           aria-live="polite"
         >
           Building your week — usually just a moment…

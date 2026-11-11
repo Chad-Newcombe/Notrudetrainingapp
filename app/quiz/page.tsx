@@ -20,7 +20,7 @@ export default function QuizPage() {
   }, []);
 
   if (!saved) {
-    return <p className="px-6 py-8 text-[var(--muted)]" role="status">
+    return <p className="min-h-[100dvh] bg-[var(--app-canvas)] px-6 py-8 text-[var(--app-muted)]" role="status">
       {failed ? "Couldn’t load your profile. Refresh to try again." : "Opening your intake…"}
     </p>;
   }

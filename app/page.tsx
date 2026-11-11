@@ -33,15 +33,15 @@ export default function WelcomePage() {
     profile && plan ? "/today" : profile ? "/acknowledgment" : undefined;
 
   return (
-    <main className="theme-dark atmosphere-dark flex min-h-[100dvh] flex-col justify-between px-6 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="page-enter flex flex-1 flex-col justify-center gap-10">
+    <main className="flex min-h-[100dvh] flex-col justify-between bg-[var(--app-canvas)] px-6 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="flex flex-1 flex-col justify-center gap-10">
         <NotrudeMark />
         <CoachStage coachId={profile?.coachId ?? "river"} label="A coach in your corner"
           title="Training that meets you where you are."
           description="Find a rhythm that fits the life you already have." />
       </div>
 
-      <div className="cta-settle flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {ready && continueHref ? (
           <Button href={continueHref} className="w-full">
             Continue
@@ -57,8 +57,8 @@ export default function WelcomePage() {
             >
               Start with a short quiz
             </Button>
-            {!user && <div className="space-y-2 border-t border-[var(--line)] pt-4">
-              <p className="text-center text-sm text-[var(--muted)]">
+            {!user && <div className="space-y-2 border-t border-[var(--app-line)] pt-4">
+              <p className="text-center text-sm text-[var(--app-muted)]">
                 Or hop in with a demo — no quiz required
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
