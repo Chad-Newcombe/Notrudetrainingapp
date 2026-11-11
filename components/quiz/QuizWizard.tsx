@@ -12,6 +12,7 @@ import { INTAKE_ANSWER_LIMIT, intakeProposalSchema, quickIntakeProposal, type In
 import { ProgressDots } from "@/components/ui/ProgressDots";
 import { COACH_PRESETS, getCoach } from "@/lib/coaches/presets";
 import { saveProfile } from "@/lib/store";
+import { announceTheme } from "@/lib/theme";
 import type {
   ChannelPref,
   CoachId,
@@ -145,6 +146,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
       cadence: c.defaultCadence,
       motivation: c.defaultMotivation,
     });
+    announceTheme({ coachId: id, appearance: existing?.appearance ?? "system" });
   }
 
   function toggleChannel(ch: ChannelPref) {
@@ -248,6 +250,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
         channels,
         trackWeight: draft.trackWeight,
         coachId: draft.coachId,
+        appearance: existing?.appearance ?? "system",
         createdAt: existing?.createdAt ?? new Date().toISOString(),
       };
       const cw = draft.currentWeightLbs.trim();

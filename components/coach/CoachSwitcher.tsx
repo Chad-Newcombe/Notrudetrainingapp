@@ -36,7 +36,7 @@ export function CoachSwitcher({ profile, onChanged }: Props) {
 
   return (
     <details className="panel group px-4 py-3">
-      <summary className="cursor-pointer list-none font-semibold text-[var(--ink)]">
+      <summary className="min-h-11 cursor-pointer list-none py-2 font-semibold text-[var(--app-text)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[var(--app-focus)]">
         Change coach
         <span className="ml-2 text-sm font-normal text-[var(--muted)]">
           {COACH_PRESETS.find((coach) => coach.id === current.coachId)?.name}
@@ -49,11 +49,11 @@ export function CoachSwitcher({ profile, onChanged }: Props) {
             <button key={coach.id} type="button" disabled={saving !== null}
               onClick={() => void choose(coach.id)}
               aria-pressed={selected}
-              className={`rounded-[var(--radius-control)] border-2 border-[var(--ink-strong)] p-3 text-left shadow-[3px_3px_0_var(--ink-strong)] transition-[transform,box-shadow] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-60 ${selected ? "bg-[var(--voltage)]" : "bg-[var(--canvas-light)]"}`}>
-              <span className="block font-semibold text-[var(--ink)]">{coach.name}</span>
-              <span className="mt-1 block text-sm text-[var(--muted)]">{coach.vibe}</span>
-              <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">{coach.communication}</span>
-              {selected ? <span className="mt-2 block text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Current coach</span> : null}
+              className={`coach-choice min-h-11 rounded-[var(--radius-control)] p-3 text-left focus-visible:outline focus-visible:outline-3 focus-visible:outline-[var(--app-focus)] disabled:opacity-60 ${selected ? "border-[var(--app-accent)] bg-[color-mix(in_srgb,var(--app-accent),var(--app-raised)_80%)]" : ""}`}>
+              <span className="block font-semibold text-[var(--app-text)]">{coach.name}</span>
+              <span className="mt-1 block text-sm text-[var(--app-muted)]">{coach.vibe}</span>
+              <span className="mt-1 block text-xs leading-relaxed text-[var(--app-muted)]">{coach.communication}</span>
+              {selected ? <span className="mt-2 block text-xs font-semibold text-[var(--app-accent)]">Current coach</span> : null}
             </button>
           );
         })}

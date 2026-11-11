@@ -1,12 +1,12 @@
 "use client";
 
-import { CoachAvatar } from "@/components/coach/CoachAvatar";
+import { CoachModelPreview } from "@/components/coach/CoachModelPreview";
 import { getCoach } from "@/lib/coaches/presets";
 import type { CoachId } from "@/lib/types";
 import type { CSSProperties, ReactNode } from "react";
 
 export function CoachStage({
-  coachId, label, title, description, children, conversation = false,
+  coachId, label, title, description, children, replying = false, conversation = false,
 }: {
   coachId: CoachId;
   label: string;
@@ -21,12 +21,12 @@ export function CoachStage({
   return (
     <section className={conversation ? "coach-companion coach-companion-chat" : "coach-companion"} style={palette}>
       <div className="coach-companion-scene">
-        <CoachAvatar key={coach.id} coachId={coach.id} size="xl" className="coach-editorial-portrait" />
+        <CoachModelPreview key={coach.id} coach={coach} presentation="companion" replying={replying} />
       </div>
       <div>
         <p className="meta-label">{label}</p>
-        <h1 className="font-display mt-2 break-words text-[clamp(1.7rem,7.2vw,2.5rem)] leading-[1.04] font-bold tracking-[-0.045em]">{title}</h1>
-        {description && <p className="mt-2 text-sm text-[var(--muted)]">{description}</p>}
+        <h1 className="mt-2 break-words text-[clamp(1.7rem,7.2vw,2.5rem)] leading-[1.04] font-bold tracking-[-0.045em] text-[var(--app-text)]">{title}</h1>
+        {description && <p className="mt-2 text-sm text-[var(--app-muted)]">{description}</p>}
         {children}
       </div>
     </section>

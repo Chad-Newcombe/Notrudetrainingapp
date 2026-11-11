@@ -19,7 +19,7 @@ export function CoachAvatar({ coachId, size = "md", className = "" }: Props) {
 
   return (
     <Image
-      src={`/coaches/${coachId}-editorial.png`}
+      src={`/coaches/${coachId}.webp`}
       alt=""
       width={px}
       height={px}

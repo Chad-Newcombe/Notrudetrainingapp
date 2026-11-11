@@ -2,6 +2,8 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
+import { Inbox } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CoachStage } from "@/components/coach/CoachStage";
 import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
@@ -29,6 +31,61 @@ type Props = {
   plan: TrainingPlan | null;
   logs: WorkoutLog[];
 };
+
+export function CoachNavigation() {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="meta-label">Coach</p>
+        <p className="mt-1 text-sm text-[var(--app-muted)]">Conversation and plan support</p>
+      </div>
+      <Link
+        href="/inbox"
+        className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-control)] border border-[var(--app-line)] bg-[var(--app-raised)] px-3 text-sm font-semibold text-[var(--app-text)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[var(--app-focus)]"
+      >
+        <Inbox size={17} aria-hidden="true" /> Inbox
+      </Link>
+    </div>
+  );
+}
+
+export function CoachComposer({
+  input,
+  busy,
+  onInput,
+  onSubmit,
+}: {
+  input: string;
+  busy: boolean;
+  onInput: (value: string) => void;
+  onSubmit: (value: string) => void;
+}) {
+  return (
+    <form
+      className="flex gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(input);
+      }}
+    >
+      <label className="sr-only" htmlFor="coach-input">Message coach</label>
+      <input
+        id="coach-input"
+        value={input}
+        onChange={(event) => onInput(event.target.value)}
+        disabled={busy}
+        className="tactile-input min-w-0 flex-1 px-4 py-3 text-base text-[var(--app-text)] placeholder:text-[var(--app-muted)] disabled:opacity-60"
+      />
+      <button
+        type="submit"
+        disabled={busy || !input.trim()}
+        className="min-h-11 shrink-0 rounded-[var(--radius-control)] border border-transparent bg-[var(--app-accent)] px-5 py-3 text-base font-semibold text-[var(--app-on-accent)] transition-transform active:scale-[.985] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus)] disabled:opacity-45"
+      >
+        Send
+      </button>
+    </form>
+  );
+}
 
 export function CoachChat({ profile, plan, logs }: Props) {
   const [boot, setBoot] = useState<UIMessage[] | null>(null);
@@ -243,7 +300,8 @@ function CoachChatInner({
   }, [planTransition]);
 
   return (
-    <div className="page-enter flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
+      <CoachNavigation />
       <CoachStage coachId={activeProfile.coachId ?? DEFAULT_COACH_ID}
         label={`Your coach · ${getCoach(activeProfile.coachId).name}`}
         title="In your corner" description="A place to figure out what fits today."
@@ -295,31 +353,7 @@ function CoachChatInner({
         />
       ) : null}
 
-      <form
-        className="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit(input);
-        }}
-      >
-        <label className="sr-only" htmlFor="coach-input">
-          Message coach
-        </label>
-        <input
-          id="coach-input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={busy}
-          className="tactile-input min-w-0 flex-1 px-4 py-3 text-base text-[var(--ink)] placeholder:text-[var(--muted)] disabled:opacity-60"
-        />
-        <button
-          type="submit"
-          disabled={busy || !input.trim()}
-          className="shrink-0 rounded-[var(--radius-control)] border-2 border-black bg-[var(--voltage)] px-5 py-3 text-base font-bold text-black shadow-[3px_3px_0_#111] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:shadow-none"
-        >
-          Send
-        </button>
-      </form>
+      <CoachComposer input={input} busy={busy} onInput={setInput} onSubmit={(value) => void submit(value)} />
     </div>
   );
 }
@@ -333,8 +367,8 @@ function MessageBubble({ message }: { message: UIMessage }) {
     <div
       className={`max-w-[90%] rounded-[var(--radius-panel)] px-4 py-3 text-base leading-relaxed ${
         isUser
-          ? "ml-auto bg-[var(--canvas-soft)] text-[var(--ink)] border border-[var(--line)]"
-          : "mr-auto bg-[var(--canvas-light)] text-[var(--ink)] border border-[var(--line)]"
+          ? "ml-auto border border-[var(--app-line)] bg-[var(--app-raised-strong)] text-[var(--app-text)]"
+          : "mr-auto border border-[var(--app-line)] bg-[var(--app-raised)] text-[var(--app-text)]"
       }`}
     >
       {text}
