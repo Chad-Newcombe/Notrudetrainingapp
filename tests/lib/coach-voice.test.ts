@@ -35,6 +35,18 @@ describe("coach voices", () => {
     expect(voices[3]).toContain("Nova");
   });
 
+  it("puts explicit user decisions ahead of saved preferences and coach personality", () => {
+    const voice = coachVoiceInstructions(profile);
+    const explicit = voice.indexOf("latest explicit instruction");
+    const preferences = voice.indexOf("saved engagement preferences");
+    const personality = voice.indexOf("coach personality");
+    expect(explicit).toBeGreaterThan(-1);
+    expect(preferences).toBeGreaterThan(explicit);
+    expect(personality).toBeGreaterThan(preferences);
+    expect(voice).toContain("one concise pushback");
+    expect(voice).toContain("adapt to the user's decision");
+  });
+
   it("keeps offline replies short and different for each coach", () => {
     const replies = COACH_PRESETS.map((coach) =>
       fixtureCoachReply("I'm tired today", { ...profile, coachId: coach.id }),

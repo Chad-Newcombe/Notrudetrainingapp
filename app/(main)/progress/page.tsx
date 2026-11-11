@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
 import { HealthConnections } from "@/components/progress/HealthConnections";
 import { HistoryList } from "@/components/progress/HistoryList";
 import { StreakBadge } from "@/components/progress/StreakBadge";
@@ -13,7 +14,7 @@ import { addProgress, listProgress } from "@/lib/store";
 import type { ProgressSnapshot, UserProfile } from "@/lib/types";
 
 export default function ProgressPage() {
-  const { profile, plan, logs } = useNotrudeStore();
+  const { profile, plan, logs, reload } = useNotrudeStore();
   const [snapshots, setSnapshots] = useState<ProgressSnapshot[]>([]);
   const [reflectionText, setReflectionText] = useState<string | null>(null);
   const [reflectionLoading, setReflectionLoading] = useState(false);
@@ -79,6 +80,8 @@ export default function ProgressPage() {
       <Button href="/quiz" variant="ghost" className="w-full">
         Update coaching preferences
       </Button>
+
+      {profile ? <CoachSwitcher profile={profile} onChanged={() => void reload()} /> : null}
 
       <Button href="/account" variant="ghost" className="w-full">Your account</Button>
 

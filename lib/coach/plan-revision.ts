@@ -1,6 +1,89 @@
 import type { TrainingPlan, WorkoutLog } from "@/lib/types";
+import { DAY_LABELS } from "@/lib/dates";
 
 export type PlanConversationTurn = { role: "user" | "assistant"; content: string };
+export type PlanIntent = "explicit" | "discussion";
+export type PlanTransition = {
+  previous: TrainingPlan | null;
+  current: TrainingPlan;
+  changes: string[];
+};
+
+export function classifyPlanIntent(text: string): PlanIntent {
+  const value = text.toLowerCase().replace(/[’]/g, "'").trim();
+  const day = /\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow|weekend)\b/;
+  const duration = /\b(?:\d{1,3}\s*(?:minutes?|mins?|hours?|hrs?)|shorter|longer)\b/;
+  const planContext = /\b(?:plan|week|schedule|sessions?|workouts?|training|recovery|rest day|run|running|walk|walking|swim|swimming|ride|riding|strength|mobility)\b/;
+  const intensity = /\b(?:easier|harder|lighter|gentler|easy|moderate|hard|intensity)\b/;
+  const sessionCount = /\b(?:fewer|more|\d+)\s+(?:sessions?|workouts?|days?)\b/;
+  const replacement = /\bfrom\b.+\bto\b|\bwith\b/;
+  const action = /\b(?:make|move|reschedule|replace|swap|add|remove|drop|skip|shorten|cut|reduce|increase|change|update|adjust|set|switch)\b/;
+  const concrete = day.test(value) || duration.test(value) || intensity.test(value)
+    || sessionCount.test(value) || replacement.test(value) || /\brest day\b/.test(value);
+  const contextual = planContext.test(value) || day.test(value) || duration.test(value);
+  const explicitConstraint = /\b(?:i\s+(?:can|have)\s+only|i\s+only\s+(?:can|have))\b/.test(value)
+    && duration.test(value) && contextual;
+
+  return (explicitConstraint || (action.test(value) && contextual && concrete))
+    ? "explicit"
+    : "discussion";
+}
+
+export function describePlanChanges(
+  previous: TrainingPlan | null,
+  current: TrainingPlan,
+): string[] {
+  const changes: string[] = [];
+  const beforeByDay = new Map(previous?.sessions.map((session) => [session.dayIndex, session]));
+  const afterByDay = new Map(current.sessions.map((session) => [session.dayIndex, session]));
+
+  for (let dayIndex = 0; dayIndex < DAY_LABELS.length; dayIndex += 1) {
+    const before = beforeByDay.get(dayIndex);
+    const after = afterByDay.get(dayIndex);
+    const day = DAY_LABELS[dayIndex];
+    if (before && !after) changes.push(`Removed ${before.title} from ${day}.`);
+    if (!before && after) changes.push(`Added ${after.title} on ${day}.`);
+    if (before && after && (
+      before.title !== after.title
+      || before.intensity !== after.intensity
+      || JSON.stringify(before.steps) !== JSON.stringify(after.steps)
+    )) {
+      const beforeMinutes = before.steps.reduce((sum, step) => sum + (step.durationMin ?? 0), 0);
+      const afterMinutes = after.steps.reduce((sum, step) => sum + (step.durationMin ?? 0), 0);
+      if (before.title !== after.title) {
+        changes.push(`Changed ${day} from ${before.title} to ${after.title}.`);
+      } else if (beforeMinutes !== afterMinutes && afterMinutes > 0) {
+        changes.push(`Changed ${day} to ${afterMinutes} minutes.`);
+      } else if (before.intensity !== after.intensity) {
+        changes.push(`Changed ${day} to ${after.intensity} intensity.`);
+      } else {
+        changes.push(`Updated ${before.title} on ${day}.`);
+      }
+    }
+  }
+
+  return changes.length > 0 ? changes : ["Updated the details in your week."];
+}
+
+export function createPlanTransition(
+  previous: TrainingPlan | null,
+  current: TrainingPlan,
+): PlanTransition {
+  return { previous, current, changes: describePlanChanges(previous, current) };
+}
+
+export async function persistPlanTransition(
+  previous: TrainingPlan | null,
+  current: TrainingPlan,
+  save: (plan: TrainingPlan) => Promise<void>,
+): Promise<PlanTransition> {
+  await save(current);
+  return createPlanTransition(previous, current);
+}
+
+export function undoPlanTransition(transition: PlanTransition): TrainingPlan | null {
+  return transition.previous;
+}
 
 export function conversationForPlan(
   turns: PlanConversationTurn[],
@@ -58,6 +141,65 @@ export function adjustFixturePlanForConversation(
         }],
       };
     }),
+  };
+}
+
+export function enforceLatestTimeConstraint(
+  proposed: TrainingPlan,
+  current: TrainingPlan | null,
+  conversation: PlanConversationTurn[],
+): TrainingPlan {
+  const latest = [...conversation].reverse().find((turn) => turn.role === "user")?.content ?? "";
+  const timeMatch = latest.match(/\b(\d{1,3}|five|ten|fifteen|twenty|thirty|forty(?:-five)?|forty five|sixty)\s*(?:minutes?|mins?)\b/i);
+  const dayIndex = DAY_LABELS.findIndex((day) => new RegExp(`\\b${day}\\b`, "i").test(latest));
+  const minuteWords: Record<string, number> = {
+    five: 5, ten: 10, fifteen: 15, twenty: 20, thirty: 30,
+    forty: 40, "forty-five": 45, "forty five": 45, sixty: 60,
+  };
+  const rawMinutes = timeMatch?.[1]?.toLowerCase();
+  const minutes = rawMinutes ? (minuteWords[rawMinutes] ?? Number(rawMinutes)) : 0;
+  if (dayIndex < 0 || minutes < 5 || minutes > 180) return proposed;
+
+  const totalMinutes = (session: TrainingPlan["sessions"][number]) =>
+    session.steps.reduce((sum, step) => sum + (step.durationMin ?? 0), 0);
+  const exactCandidates = proposed.sessions.filter((session) => totalMinutes(session) === minutes);
+  const proposedOnDay = proposed.sessions.find((session) => session.dayIndex === dayIndex);
+  const currentOnDay = current?.sessions.find((session) => session.dayIndex === dayIndex);
+  const source = currentOnDay
+    ?? (exactCandidates.length === 1 ? exactCandidates[0] : undefined)
+    ?? proposedOnDay;
+  if (!source) return proposed;
+
+  const adjusted = {
+    ...source,
+    dayIndex,
+    intensity: "easy" as const,
+    rationale: `Adjusted to the ${minutes} minutes requested for ${DAY_LABELS[dayIndex]}.`,
+    steps: [{
+      name: source.steps[0]?.name ?? source.title,
+      detail: `Keep this easy for ${minutes} minutes.`,
+      durationMin: minutes,
+    }],
+  };
+  if (current) {
+    return {
+      ...proposed,
+      weekStartIso: current.weekStartIso,
+      sessions: [
+        ...current.sessions.filter((session) => session.dayIndex !== dayIndex),
+        adjusted,
+      ].sort((a, b) => a.dayIndex - b.dayIndex),
+    };
+  }
+
+  const sourceWasProposed = proposed.sessions.some((session) => session.id === source.id);
+  return {
+    ...proposed,
+    sessions: [
+      ...proposed.sessions.filter((session) =>
+        session.dayIndex !== dayIndex && (!sourceWasProposed || session.id !== source.id)),
+      adjusted,
+    ].sort((a, b) => a.dayIndex - b.dayIndex),
   };
 }
 

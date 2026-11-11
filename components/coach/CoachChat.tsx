@@ -4,9 +4,16 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CoachStage } from "@/components/coach/CoachStage";
-import { PlanRevision } from "@/components/coach/PlanRevision";
+import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
+import { PlanUpdateStatus } from "@/components/coach/PlanUpdateStatus";
 import { getCoach, DEFAULT_COACH_ID } from "@/lib/coaches/presets";
-import { conversationForPlan } from "@/lib/coach/plan-revision";
+import {
+  classifyPlanIntent,
+  conversationForPlan,
+  persistPlanTransition,
+  type PlanConversationTurn,
+  type PlanTransition,
+} from "@/lib/coach/plan-revision";
 import { createCoachFetch } from "@/lib/coach/fixture-fetch";
 import {
   chatMessageToUi,
@@ -14,7 +21,7 @@ import {
   uiMessageText,
 } from "@/lib/coach/messages";
 import { buildHealthSummary } from "@/lib/health/summary";
-import { listChat, listHealth, replaceChat } from "@/lib/store";
+import { listChat, listHealth, replaceChat, savePlan } from "@/lib/store";
 import type { TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 type Props = {
@@ -87,8 +94,57 @@ function CoachChatInner({
   persist: (messages: UIMessage[]) => Promise<void>;
 }) {
   const [input, setInput] = useState("");
+  const [activeProfile, setActiveProfile] = useState(profile);
   const [activePlan, setActivePlan] = useState(plan);
+  const activePlanRef = useRef(plan);
+  const profileRef = useRef(activeProfile);
+  const updatingMessageId = useRef<string | null>(null);
+  const handledPlanMessageIds = useRef(new Set<string>());
+  const pendingRevision = useRef<{ id: string; conversation: PlanConversationTurn[] } | null>(null);
+  const [planUpdateState, setPlanUpdateState] = useState<"idle" | "updating" | "saved" | "error" | "undoing">("idle");
+  const [planTransition, setPlanTransition] = useState<PlanTransition | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    profileRef.current = activeProfile;
+  }, [activeProfile]);
+
+  const updatePlanFromConversation = useCallback(async (
+    id: string,
+    conversation: PlanConversationTurn[],
+  ) => {
+    if (handledPlanMessageIds.current.has(id) || updatingMessageId.current === id) return;
+    updatingMessageId.current = id;
+    pendingRevision.current = { id, conversation };
+    setPlanUpdateState("updating");
+    try {
+      const previous = activePlanRef.current;
+      const response = await fetch("/api/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profile: profileRef.current,
+          currentPlan: previous,
+          logs,
+          conversation,
+        }),
+      });
+      if (!response.ok) throw new Error("Plan request failed");
+      const data = (await response.json()) as { plan?: TrainingPlan };
+      if (!data.plan || !Array.isArray(data.plan.sessions)) throw new Error("Invalid plan");
+      const transition = await persistPlanTransition(previous, data.plan, savePlan);
+      activePlanRef.current = data.plan;
+      setActivePlan(data.plan);
+      setPlanTransition(transition);
+      handledPlanMessageIds.current.add(id);
+      pendingRevision.current = null;
+      setPlanUpdateState("saved");
+    } catch {
+      setPlanUpdateState("error");
+    } finally {
+      updatingMessageId.current = null;
+    }
+  }, [logs]);
 
   const { messages, sendMessage, status, error, clearError } = useChat({
     messages: boot,
@@ -99,7 +155,7 @@ function CoachChatInner({
         body: {
           ...body,
           messages,
-          profile,
+          profile: activeProfile,
           plan: activePlan,
           logs,
           healthSummary,
@@ -108,6 +164,17 @@ function CoachChatInner({
     }),
     onFinish: ({ messages }) => {
       void persist(messages).catch(() => { /* The account provider surfaces storage errors. */ });
+      const latestUser = [...messages].reverse().find((message) => message.role === "user");
+      const latestText = latestUser ? uiMessageText(latestUser) : "";
+      if (latestUser && classifyPlanIntent(latestText) === "explicit") {
+        const conversation = conversationForPlan(messages
+          .filter((message) => message.role === "user" || message.role === "assistant")
+          .map((message) => ({
+            role: message.role as "user" | "assistant",
+            content: uiMessageText(message),
+          })));
+        void updatePlanFromConversation(latestUser.id, conversation);
+      }
     },
   });
 
@@ -134,14 +201,6 @@ function CoachChatInner({
     }
     return null;
   }, [messages]);
-  const planConversation = useMemo(() => conversationForPlan(messages
-    .filter((message) => message.role === "user" || message.role === "assistant")
-    .map((message) => ({
-      role: message.role as "user" | "assistant",
-      content: uiMessageText(message),
-    }))), [messages]);
-  const lastUserId = [...messages].reverse().find((message) => message.role === "user")?.id;
-
   const retry = useCallback(() => {
     clearError();
     const text = lastUserText;
@@ -165,12 +224,33 @@ function CoachChatInner({
     [busy, sendMessage],
   );
 
+  const retryPlanUpdate = useCallback(() => {
+    const pending = pendingRevision.current;
+    if (pending) void updatePlanFromConversation(pending.id, pending.conversation);
+  }, [updatePlanFromConversation]);
+
+  const undoPlanUpdate = useCallback(async () => {
+    const previous = planTransition?.previous;
+    if (!previous) return;
+    setPlanUpdateState("undoing");
+    try {
+      await savePlan(previous);
+      activePlanRef.current = previous;
+      setActivePlan(previous);
+      setPlanTransition(null);
+      setPlanUpdateState("idle");
+    } catch {
+      setPlanUpdateState("saved");
+    }
+  }, [planTransition]);
+
   return (
     <div className="page-enter flex flex-col gap-4">
-      <CoachStage coachId={profile.coachId ?? DEFAULT_COACH_ID}
-        label={`Your coach · ${getCoach(profile.coachId).name}`}
+      <CoachStage coachId={activeProfile.coachId ?? DEFAULT_COACH_ID}
+        label={`Your coach · ${getCoach(activeProfile.coachId).name}`}
         title="In your corner" description="A place to figure out what fits today."
         conversation replying={busy} />
+      <CoachSwitcher profile={activeProfile} onChanged={setActiveProfile} />
       {offline && <p className="panel px-3 py-2 text-sm text-[var(--muted)]">
         You’re offline. Reconnect to get a reply.
       </p>}
@@ -179,11 +259,6 @@ function CoachChatInner({
         ref={listRef}
         className="panel coach-conversation flex max-h-[min(52dvh,28rem)] min-h-32 flex-col gap-3 overflow-y-auto p-4"
       >
-        {messages.length === 0 && (
-          <p className="text-sm text-[var(--muted)]">
-            Start a conversation with {getCoach(profile.coachId).name}.
-          </p>
-        )}
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
@@ -210,16 +285,14 @@ function CoachChatInner({
         </div>
       ) : null}
 
-      {lastUserId && !busy && (
-        <PlanRevision
-          key={lastUserId}
-          profile={profile}
-          plan={activePlan}
-          logs={logs}
-          conversation={planConversation}
-          onSaved={setActivePlan}
+      {planUpdateState !== "idle" ? (
+        <PlanUpdateStatus
+          state={planUpdateState}
+          transition={planTransition}
+          onRetry={retryPlanUpdate}
+          onUndo={undoPlanUpdate}
         />
-      )}
+      ) : null}
 
       <form
         className="flex gap-2"

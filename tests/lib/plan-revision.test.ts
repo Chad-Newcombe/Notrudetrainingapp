@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { adjustFixturePlanForConversation, conversationForPlan, limitRevisionSessions, preserveLoggedSessions } from "@/lib/coach/plan-revision";
+import {
+  adjustFixturePlanForConversation,
+  classifyPlanIntent,
+  conversationForPlan,
+  createPlanTransition,
+  describePlanChanges,
+  enforceLatestTimeConstraint,
+  limitRevisionSessions,
+  persistPlanTransition,
+  preserveLoggedSessions,
+  undoPlanTransition,
+} from "@/lib/coach/plan-revision";
 import type { TrainingPlan, WorkoutLog } from "@/lib/types";
 
 const current: TrainingPlan = {
@@ -22,6 +33,27 @@ const proposed: TrainingPlan = {
 };
 
 describe("plan revision", () => {
+  it.each([
+    "Make Thursday ten minutes.",
+    "Move Friday's workout to Saturday.",
+    "Replace running with walking this week.",
+    "Add a rest day to my plan.",
+    "I can only do 15 minutes on Tuesday.",
+    "Make this week's sessions easier.",
+  ])("recognizes an explicit plan instruction: %s", (text) => {
+    expect(classifyPlanIntent(text)).toBe("explicit");
+  });
+
+  it.each([
+    "This week feels hard.",
+    "Can we talk about my plan?",
+    "I might need a change.",
+    "Change my password.",
+    "What do you think about Thursday?",
+  ])("keeps discussion from mutating the plan: %s", (text) => {
+    expect(classifyPlanIntent(text)).toBe("discussion");
+  });
+
   it("keeps the last meaningful conversation turns, including the user's constraints", () => {
     const turns = conversationForPlan([
       { role: "user", content: "Old detail" },
@@ -61,6 +93,29 @@ describe("plan revision", () => {
     expect(result.sessions.every((session) => session.intensity === "easy")).toBe(true);
   });
 
+  it("puts a generated time change on the day the user named", () => {
+    const offByOne: TrainingPlan = {
+      ...proposed,
+      sessions: [
+        proposed.sessions[0],
+        {
+          ...proposed.sessions[1],
+          dayIndex: 4,
+          title: "10-minute easy walk",
+          steps: [{ name: "Walk", detail: "Easy", durationMin: 10 }],
+        },
+      ],
+    };
+
+    const corrected = enforceLatestTimeConstraint(offByOne, current, [
+      { role: "user", content: "Make Thursday ten minutes." },
+    ]);
+
+    expect(corrected.sessions.find((session) => session.dayIndex === 3)?.steps[0].durationMin).toBe(10);
+    expect(corrected.sessions.some((session) => session.dayIndex === 4)).toBe(false);
+    expect(corrected.sessions.find((session) => session.dayIndex === 0)).toEqual(current.sessions[0]);
+  });
+
   it("keeps a day the user mentioned when a draft has too many sessions", () => {
     const crowded = {
       ...current,
@@ -75,5 +130,43 @@ describe("plan revision", () => {
       { id: "log", sessionId: "day-0", status: "completed", completedAt: "2026-11-09T17:00:00.000Z" },
     ]);
     expect(limited.sessions.map((session) => session.dayIndex)).toEqual([0, 1, 2, 5]);
+  });
+
+  it("describes the literal day-level changes in a revised plan", () => {
+    const next: TrainingPlan = {
+      ...proposed,
+      sessions: [
+        { ...proposed.sessions[1], title: "Easy walk", intensity: "easy" },
+        { id: "saturday", dayIndex: 5, title: "Mobility", rationale: "Recover", intensity: "easy", steps: [] },
+      ],
+    };
+
+    expect(describePlanChanges(current, next)).toEqual([
+      "Removed Walk from Monday.",
+      "Changed Thursday from Long walk to Easy walk.",
+      "Added Mobility on Saturday.",
+    ]);
+  });
+
+  it("describes a duration-only change without pretending the workout title changed", () => {
+    const next: TrainingPlan = {
+      ...current,
+      sessions: current.sessions.map((session) => session.dayIndex === 3
+        ? { ...session, steps: [{ name: "Walk", detail: "Easy", durationMin: 10 }] }
+        : session),
+    };
+    expect(describePlanChanges(current, next)).toEqual(["Changed Thursday to 10 minutes."]);
+  });
+
+  it("keeps the previous plan available for an exact undo", () => {
+    const transition = createPlanTransition(current, proposed);
+    expect(transition.previous).toBe(current);
+    expect(transition.current).toBe(proposed);
+    expect(undoPlanTransition(transition)).toBe(current);
+  });
+
+  it("does not report a transition when saving the new plan fails", async () => {
+    const save = async () => { throw new Error("storage failed"); };
+    await expect(persistPlanTransition(current, proposed, save)).rejects.toThrow("storage failed");
   });
 });

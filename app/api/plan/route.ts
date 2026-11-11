@@ -4,7 +4,7 @@ import { fixturePlanForProfile } from "@/lib/ai/fixtures";
 import { getModel, localGenerationOptions } from "@/lib/ai/model";
 import { normalizePlanFromSchema } from "@/lib/ai/normalize-plan";
 import { planSchema } from "@/lib/ai/schemas";
-import { adjustFixturePlanForConversation, conversationForPlan, limitRevisionSessions, preserveLoggedSessions, type PlanConversationTurn } from "@/lib/coach/plan-revision";
+import { adjustFixturePlanForConversation, conversationForPlan, enforceLatestTimeConstraint, limitRevisionSessions, preserveLoggedSessions, type PlanConversationTurn } from "@/lib/coach/plan-revision";
 import type { TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 export async function POST(req: Request) {
@@ -21,7 +21,8 @@ export async function POST(req: Request) {
   const model = getModel();
   if (!model) {
     const draft = adjustFixturePlanForConversation(fixturePlanForProfile(profile), conversation);
-    const plan = limitRevisionSessions(preserveLoggedSessions(draft, currentPlan ?? null, logs), conversation, logs);
+    const constrained = enforceLatestTimeConstraint(draft, currentPlan ?? null, conversation);
+    const plan = limitRevisionSessions(preserveLoggedSessions(constrained, currentPlan ?? null, logs), conversation, logs);
     return Response.json({ plan, source: "fixture" });
   }
 
@@ -34,8 +35,11 @@ export async function POST(req: Request) {
     prompt: JSON.stringify({ profile, notes, conversation, currentPlan, logs: logs.slice(-14) }),
   });
 
+  const constrained = enforceLatestTimeConstraint(
+    normalizePlanFromSchema(result.output, profile), currentPlan ?? null, conversation,
+  );
   const plan = limitRevisionSessions(
-    preserveLoggedSessions(normalizePlanFromSchema(result.output, profile), currentPlan ?? null, logs),
+    preserveLoggedSessions(constrained, currentPlan ?? null, logs),
     conversation,
     logs,
   );
