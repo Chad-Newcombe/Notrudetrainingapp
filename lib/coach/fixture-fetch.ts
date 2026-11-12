@@ -17,9 +17,11 @@ function uiMessageStreamBody(text: string): string {
   );
 }
 
-export function createCoachFetch(): FetchFunction {
-  return async (input, init) => {
+/** `planChange` reports whether the server judged the latest message to be a plan change. */
+export function createCoachFetch(): FetchFunction & { planChange: boolean } {
+  const coachFetch = Object.assign((async (input, init) => {
     const response = await fetch(input, init);
+    coachFetch.planChange = response.headers.get("X-Notrude-Plan-Change") === "1";
     const isFixture = response.headers.get("X-Notrude-Fixture") === "1";
     const contentType = response.headers.get("content-type") ?? "";
 
@@ -37,5 +39,6 @@ export function createCoachFetch(): FetchFunction {
     }
 
     return response;
-  };
+  }) as FetchFunction, { planChange: false });
+  return coachFetch;
 }

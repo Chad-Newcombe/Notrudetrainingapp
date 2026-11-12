@@ -275,7 +275,7 @@ function CoachChatInner({
       if (isAbort || isError) return;
       const latestUser = [...messages].reverse().find((message) => message.role === "user");
       const latestText = latestUser ? uiMessageText(latestUser) : "";
-      if (latestUser && classifyPlanIntent(latestText) === "explicit") {
+      if (latestUser && (coachFetch.planChange || classifyPlanIntent(latestText) === "explicit")) {
         const conversation = conversationForPlan(messages
           .filter((message) => message.role === "user" || message.role === "assistant")
           .map((message) => ({

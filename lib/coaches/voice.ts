@@ -26,12 +26,12 @@ export function coachVoiceInstructions(profile: UserProfile, relationship?: Coac
 }
 
 /** Placed last in the system prompt, where small local models weigh it most. */
-export function coachReplyReminder(profile: UserProfile, userText: string): string {
+export function coachReplyReminder(profile: UserProfile, userText: string, planChange = classifyPlanIntent(userText) === "explicit"): string {
   const coach = getCoach(profile.coachId);
   const pain = /\b(?:pain|painful|hurts?|hurting|injur\w+|sprain\w*|swollen|dizzy|chest)\b/i.test(userText);
   return [
     `Final check before you answer as ${coach.name}: at most two short sentences, no lists or lettered options, no question unless you cannot proceed without the answer, and no invented facts, times, or exercises. Plain text only: no markdown, asterisks, long dashes, or quotation marks for emphasis.`,
-    !pain && classifyPlanIntent(userText) === "explicit" ? "The user's latest message is a plan change and the app is saving it now. This overrides your personality: the change is already made. Reply with only a short confirmation in the form ‘Done.’ followed by exactly the change the user asked for, without adding days or details they did not mention. Do not push back, call it an excuse, ask why, or suggest something else." : "",
+    !pain && planChange ? `The user's latest message asks for a plan change and the app is saving it now. Your first sentence must confirm that change as done, restating only what they asked for. You may add one short sentence in ${coach.name}'s own voice about the new plan. Do not push back, call it an excuse, ask why, or suggest something else.` : "",
     pain ? "The user's latest message mentions pain or a possible injury. This overrides your personality: no jokes and no pushback. Tell them to stop or scale back the painful activity and to see a professional if it persists or worsens." : "",
   ].filter(Boolean).join("\n");
 }
