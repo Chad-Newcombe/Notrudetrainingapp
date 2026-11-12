@@ -13,7 +13,7 @@ export type SessionJournalEntry = {
   evidence?: string[];
 };
 const schema = z.object({
-  coachId: z.enum(["river", "jax", "sol", "nova"]).optional(),
+  coachId: z.enum(["river", "jax", "sol", "nova", "knox", "riff"]).optional(),
   conversation: coachConversationSchema.optional(),
   syncPending: z.boolean(), deleted: z.boolean().optional(), processingPending: z.boolean().optional(),
   evidence: z.array(z.string().min(1).max(300)).max(8).optional(),

@@ -20,7 +20,7 @@ describe("coach voices", () => {
     const voices = COACH_PRESETS.map((coach) =>
       coachVoiceInstructions({ ...profile, coachId: coach.id }),
     );
-    expect(new Set(voices).size).toBe(4);
+    expect(new Set(voices).size).toBe(6);
     for (const voice of voices) {
       expect(voice).toContain("one useful point");
       expect(voice).toContain("two short sentences");
@@ -33,6 +33,8 @@ describe("coach voices", () => {
     expect(voices[1]).toContain("Jax");
     expect(voices[2]).toContain("Sol");
     expect(voices[3]).toContain("Nova");
+    expect(voices[4]).toContain("Knox");
+    expect(voices[5]).toContain("Riff");
   });
 
   it("puts explicit user decisions ahead of saved preferences and coach personality", () => {
@@ -51,7 +53,7 @@ describe("coach voices", () => {
     const replies = COACH_PRESETS.map((coach) =>
       fixtureCoachReply("I'm tired today", { ...profile, coachId: coach.id }),
     );
-    expect(new Set(replies).size).toBe(4);
+    expect(new Set(replies).size).toBe(6);
     for (const reply of replies) {
       expect(reply.length).toBeLessThan(150);
       expect(reply).not.toMatch(/no pressure|you are not failing/i);
@@ -60,8 +62,8 @@ describe("coach voices", () => {
 });
 
 it("defines immutable boundaries and limits relationship adaptation to the selected coach", () => {
-  const cores = ["autonomy-preserving", "momentum-oriented", "discerning", "experiment-oriented"];
-  const forbidden = ["combative", "clinical", "authoritarian", "chaotic"];
+  const cores = ["autonomy-preserving", "momentum-oriented", "discerning", "experiment-oriented", "unimpressed by excuses", "observational"];
+  const forbidden = ["combative", "clinical", "authoritarian", "chaotic", "permissive", "mocking"];
   COACH_PRESETS.forEach((coach, index) => {
     const memory = { coachId: coach.id, learnedPreferences: [{ id: "x", key: "reply_length", value: "short", evidence: "Keep it short", learnedAt: "now" }], rejectedPatterns: [], declinedSwitchSuggestion: true, updatedAt: "now" };
     const voice = coachVoiceInstructions({ ...profile, coachId: coach.id }, memory);
@@ -77,4 +79,17 @@ it("defines immutable boundaries and limits relationship adaptation to the selec
     const other = { ...memory, coachId: coach.id === "river" ? "sol" as const : "river" as const };
     expect(coachVoiceInstructions({ ...profile, coachId: coach.id }, other)).not.toContain("Keep it short");
   });
+});
+
+it("makes Knox refuse excuses without insulting the user, and builds Riff on stand-up craft", () => {
+  const knox = coachVoiceInstructions({ ...profile, coachId: "knox" });
+  expect(knox).toMatch(/do not agree and do not comfort/);
+  expect(knox).toMatch(/pain, injury, illness, or a real emergency/);
+  expect(knox).toMatch(/never insult the person/);
+  const riff = coachVoiceInstructions({ ...profile, coachId: "riff" });
+  expect(riff).toMatch(/setup and punchline/);
+  expect(riff).toMatch(/never quote or imitate a real comedian/);
+  expect(riff).toMatch(/drop the bit/);
+  expect(fixtureCoachReply("My knee hurts", { ...profile, coachId: "knox" })).toMatch(/clinician/);
+  expect(fixtureCoachReply("I can't today, I'm tired", { ...profile, coachId: "knox" })).toMatch(/ten minutes today/);
 });

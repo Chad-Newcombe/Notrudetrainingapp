@@ -12,7 +12,6 @@ import type { UserProfile } from "@/lib/types";
 
 const nav = vi.hoisted(() => ({ push: vi.fn(), id: "" }));
 vi.mock("next/navigation", () => ({ useRouter: () => nav, useParams: () => ({ conversationId: nav.id }) }));
-vi.mock("@/components/coach/CoachModelPreview", () => ({ CoachModelPreview: () => null }));
 const now = "2026-11-11T12:00:00.000Z";
 const profile: UserProfile = { goalText: "Walk regularly", tone: "gentle", cadence: "brief", motivation: "process_focus", channels: ["in_app"], trackWeight: false, coachId: "river", createdAt: now };
 const calls: string[] = [];

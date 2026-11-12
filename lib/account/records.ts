@@ -4,7 +4,7 @@ import { intakeBriefSchema } from "@/lib/intake";
 const id = z.string().min(1).max(200);
 const text = z.string().max(24_000);
 const stamp = z.string().min(1).max(80);
-const coach = z.enum(["river", "jax", "sol", "nova"]);
+const coach = z.enum(["river", "jax", "sol", "nova", "knox", "riff"]);
 const provider = z.enum(["apple_health", "strava", "garmin"]);
 const message = z.object({
   id, role: z.enum(["user", "assistant", "system"]), content: text, createdAt: stamp,

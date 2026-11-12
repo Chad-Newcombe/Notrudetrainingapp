@@ -4,7 +4,7 @@ export type EngagementTone = "gentle" | "steady" | "direct";
 export type EngagementCadence = "brief" | "conversational" | "quiet";
 export type MotivationStyle = "celebrate_wins" | "process_focus" | "accountability";
 export type ChannelPref = "in_app" | "text_style" | "email_outline";
-export type CoachId = "river" | "jax" | "sol" | "nova";
+export type CoachId = "river" | "jax" | "sol" | "nova" | "knox" | "riff";
 export type AppearanceMode = "system" | "light" | "dark";
 
 export type SharedProfileFact = {

@@ -203,10 +203,10 @@ export function fixtureCoachReply(userText: string, profile: UserProfile, relati
     : classifyPlanIntent(userText) === "explicit" ? "plan"
       : /stop reassuring|no reassurance|less reassurance/.test(lower) ? "reassurance"
         : isExplicitStyleRequest(userText) ? "style"
-          : /tired|exhausted|rough day|bad day/.test(lower) ? "tired"
+          : /tired|exhausted|rough day|bad day|can't|not today|don't feel like/.test(lower) ? "tired"
             : /skipped|missed|didn't/.test(lower) ? "missed" : "general";
   const day = userText.match(/\b(?:to|on|for)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i)?.[1];
-  const when = day ? day[0].toUpperCase() + day.slice(1).toLowerCase() : "your requested schedule";
+  const when = day ? day[0].toUpperCase() + day.slice(1).toLowerCase() : "this week";
   const replies = {
     river: {
       pain: "Ease off today. If the pain is sharp or keeps returning, check with a clinician.",
@@ -244,6 +244,24 @@ export function fixtureCoachReply(userText: string, profile: UserProfile, relati
       reassurance: "I'll drop reassurance and focus on practical tests with a clear purpose.",
       style: "I'll make the experiment more decisive and keep it practical, without turning coaching into pressure.",
     },
+    knox: {
+      pain: "Stop: pain is the one reason I accept. If it persists or gets worse, see a clinician.",
+      tired: "Tired isn't injured. Do ten minutes today and tell me the time you start.",
+      missed: "You missed it, so you owe it. Name the day and time you make it up.",
+      general: "Pick today's session and give me a start time. Then do it.",
+      plan: `Locked in for ${when}, and the saved change shows below. Now hold to it.`,
+      reassurance: "No reassurance. You get the task and the deadline.",
+      style: "I'll stay hard on excuses and keep it to the task and the time.",
+    },
+    riff: {
+      pain: "No bit here: stop the painful movement, and see a clinician if it persists or worsens.",
+      tired: "Your couch has excellent lawyers, but they lose to five easy minutes. Do those and call it a win.",
+      missed: "The workout isn't mad, it's just disappointed, like a gym membership. Pick one slot tomorrow and we're even.",
+      general: "Motivation shows up late and takes credit, so start without it. One small session today.",
+      plan: `Rewriting the set list for ${when}. You'll see the saved change below.`,
+      reassurance: "Fine, no reassurance; you get one joke and one practical step.",
+      style: "I'll keep one joke and one real step per reply, and go drier if you want.",
+    },
   };
   return fit && situation === "style" ? `${getCoach(fit.coachId).name} may fit that style better. ${replies[coach].style}` : replies[coach][situation];
 }
@@ -258,14 +276,7 @@ export function fixtureComposedMessage(
   const goal = profile.goalText;
 
   const coachId = profile.coachId ?? "river";
-  const coachName =
-    coachId === "jax"
-      ? "Jax"
-      : coachId === "sol"
-        ? "Sol"
-        : coachId === "nova"
-          ? "Nova"
-          : "River";
+  const coachName = getCoach(coachId).name;
   const deliveredAt = createdAt;
 
   if (channel === "email_outline") {

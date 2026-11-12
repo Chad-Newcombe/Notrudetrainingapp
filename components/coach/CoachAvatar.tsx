@@ -1,29 +1,19 @@
-import Image from "next/image";
+import type { CSSProperties } from "react";
+import { getCoach } from "@/lib/coaches/presets";
 import type { CoachId } from "@/lib/types";
 
 type Props = {
   coachId: CoachId;
   size?: "sm" | "md" | "lg" | "xl";
+  replying?: boolean;
   className?: string;
 };
 
-const sizes = {
-  sm: 40,
-  md: 64,
-  lg: 96,
-  xl: 280,
-};
+const sizes = { sm: 40, md: 64, lg: 96, xl: 128 };
 
-export function CoachAvatar({ coachId, size = "md", className = "" }: Props) {
-  const px = sizes[size];
-
-  return (
-    <Image
-      src={`/coaches/${coachId}.webp`}
-      alt=""
-      width={px}
-      height={px}
-      className={`shrink-0 object-contain ${className}`}
-    />
-  );
+/** The coach's glowing orb. Decorative: the coach's name is always shown next to it. */
+export function CoachAvatar({ coachId, size = "md", replying = false, className = "" }: Props) {
+  const coach = getCoach(coachId);
+  const style = { "--orb": coach.accent, "--orb-light": coach.secondary, "--orb-size": `${sizes[size]}px` } as CSSProperties;
+  return <span aria-hidden="true" className={`coach-orb ${className}`} data-coach={coach.id} data-replying={replying || undefined} style={style} />;
 }

@@ -6,7 +6,7 @@ export const INTAKE_ANSWER_LIMIT = 600;
 const answer = z.string().trim().max(INTAKE_ANSWER_LIMIT);
 
 export const intakeInputSchema = z.object({
-  coachId: z.enum(["river", "jax", "sol", "nova"]),
+  coachId: z.enum(["river", "jax", "sol", "nova", "knox", "riff"]),
   goal: answer.min(1),
   routine: answer,
   support: answer,
@@ -49,6 +49,16 @@ const voices: Record<CoachId, { opening: string; followUp: string; review: strin
     opening: "I’m curious where movement could slot into a day that already feels like yours.",
     followUp: "If the original plan goes out the window, what would make a reset feel easier?",
     review: "Here’s my first take. Let’s tune it until it sounds like something you’d actually use.",
+  },
+  knox: {
+    opening: "Tell me what your week really looks like. I plan around facts.",
+    followUp: "When you want to skip, what should I hold you to?",
+    review: "This is what I’ll hold you to. Fix anything that’s wrong now, not later.",
+  },
+  riff: {
+    opening: "Walk me through your week — the real one, not the one in your calendar app.",
+    followUp: "When the plan falls apart, do you want a joke first or the fix first?",
+    review: "Here’s my first draft. Heckle anything that doesn’t sound like you.",
   },
 };
 

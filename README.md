@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Choose River, Jax, Sol, or Nova at the start of the onboarding quiz, or use a demo profile on Welcome to go straight to Today. Profiles saved before coach selection use River by default.
+Open [http://localhost:3000](http://localhost:3000). Choose one of the six coaches at the start of the onboarding quiz, or use a demo profile on Welcome to go straight to Today. Profiles saved before coach selection use River by default.
 
 In intake, tell your coach what fits your week, how you want support on difficult days, and what progress means to you. Review and edit the resulting coaching notes before saving. When a local model is configured, it interprets your answers. The quick draft uses built-in suggestions and leaves unfamiliar preferences open for you to fill in. The conversation answers are temporary. The app saves your approved notes alongside your explicit profile fields.
 
@@ -34,7 +34,7 @@ To pick up a new push, stop the preview with Ctrl+C, run `git pull --ff-only` fr
 
 If the preview was started on the shared cloud desktop, open the URL inside **Cloud browser**. To open the same URL in your own browser, run the preview on your own computer. If you’ve set up local Ollama, the preview uses the same model settings as the app.
 
-Use a desktop browser with WebGL 2 for interactive coaches. If you see the portrait and a message that 3D is unavailable, the browser either couldn't start its graphics renderer or couldn't load the model. The rest of the app remains available. For an end-to-end test in your own browser, run the preview and Ollama together on your computer.
+For an end-to-end test in your own browser, run the preview and Ollama together on your computer.
 
 ## Run the live coach on your own machine
 
@@ -77,15 +77,13 @@ If you ask a coach for a style outside its range, the app offers one **Switch to
 
 Chats saved before this version are kept as one archived **Legacy conversation** under the coach you had selected. Titles, summaries, and learned notes for archived chats need the local model; without one, built-in summaries are used.
 
-## Coach models
+## Coaches
 
-The coach picker loads the selected coach's 3D preview on demand. Welcome, Today, Coach, and Inbox show the active coach in 3D. The model can be rotated and has idle and reply animations. Reduced motion pauses automatic animation, and a portrait is available if the model fails to load. Message bubbles use lightweight portraits from the same models.
+There are six coaches: River (calm), Jax (upbeat), Sol (direct), Nova (curious), Knox (no-excuses accountability), and Riff (coaches with stand-up-style humour). Knox does not accept a skipped session without pain, injury, illness, or an emergency, and never insults the user. Riff writes original jokes and does not imitate real comedians.
 
-The Blender source in `design/coaches/build_models.py` generates the four GLBs and WebP portraits. Append `-- --models-only` to regenerate just the models.
+Each coach appears as a glowing orb in its own colour and pace. The orbs are plain CSS, so there is no 3D model to load and nothing to drag.
 
-```bash
-blender --background --python-exit-code 1 --python design/coaches/build_models.py
-```
+Any coach can change the week from chat. An explicit request such as “I want a harder plan” or “move my walk to Friday” revises the saved plan, shows what changed, and can be undone. Without a local model, harder and easier requests scale the built-in plan’s intensity and duration.
 
 ## Scripts
 

@@ -11,8 +11,6 @@ import type { CoachConversation, UserProfile } from "@/lib/types";
 
 const navigation = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => navigation }));
-// The 3D renderer requires a GPU; keep the surrounding identity and controls real.
-vi.mock("@/components/coach/CoachModelPreview", () => ({ CoachModelPreview: () => null }));
 
 const now = "2026-11-11T12:00:00.000Z";
 const profile: UserProfile = {

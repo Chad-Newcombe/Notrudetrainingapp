@@ -7,7 +7,7 @@ const MAX_ENTRIES = 12;
 const MAX_PATTERNS = 8;
 const memoryText = z.string().trim().min(1).max(300);
 export const coachMemoryDeltaSchema = z.object({
-  coachId: z.enum(["river", "jax", "sol", "nova"]),
+  coachId: z.enum(["river", "jax", "sol", "nova", "knox", "riff"]),
   learnedPreferences: z.array(z.object({
     key: memoryText.max(80), value: memoryText, evidence: memoryText,
   }).strict()).max(MAX_ENTRIES).optional(),
@@ -27,6 +27,8 @@ const outsideCore: Record<CoachId, RegExp> = {
   jax: /\b(?:clinical|dour|shaming|relentlessly cheerful|motivational.speaker)\b/i,
   sol: /\b(?:harsh|authoritarian|sarcastic|indecisive|performatively tough)\b/i,
   nova: /\b(?:chaotic|childish|vague|endless question|quirky as performance)\b/i,
+  knox: /\b(?:soothing|permissive|insulting|body.shaming|reckless)\b/i,
+  riff: /\b(?:mean|mocking|crude|joke machine|impression)\b/i,
 };
 
 function comparableText(text: string): string {

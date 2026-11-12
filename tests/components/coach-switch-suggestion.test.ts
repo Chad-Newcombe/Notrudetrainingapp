@@ -8,7 +8,6 @@ import { CoachChat } from "@/components/coach/CoachChat";
 import { clearAll, getCoachConversation, getCoachRelationship, getProfile, saveCoachConversation, saveCoachRelationship, saveProfile, getPlan } from "@/lib/store";
 import { setStorageAccount } from "@/lib/store/storage";
 import type { CoachConversation, UserProfile } from "@/lib/types";
-vi.mock("@/components/coach/CoachModelPreview", () => ({ CoachModelPreview: () => null }));
 const nav = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => nav }));
 const profile: UserProfile = { goalText: "Walk", tone: "gentle", cadence: "brief", motivation: "process_focus", channels: ["in_app"], trackWeight: false, coachId: "river", createdAt: "now" };

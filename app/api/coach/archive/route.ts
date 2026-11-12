@@ -8,7 +8,7 @@ import { emptyCoachRelationship } from "@/lib/store/coach-relationships";
 import type { CoachConversation } from "@/lib/types";
 
 const evidenceRequest = z.object({
-  coachId: z.enum(["river", "jax", "sol", "nova"]),
+  coachId: z.enum(["river", "jax", "sol", "nova", "knox", "riff"]),
   evidence: z.array(z.string().trim().min(1).max(300)).min(1).max(8),
 }).strict();
 const outputSchema = z.object({ archive: conversationArchiveSchema, memoryDelta: coachMemoryDeltaSchema }).strict();

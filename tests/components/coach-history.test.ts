@@ -12,7 +12,6 @@ import type { CoachConversation, UserProfile } from "@/lib/types";
 
 const navigation = vi.hoisted(() => ({ push: vi.fn(), id: "archive-one" }));
 vi.mock("next/navigation", () => ({ useRouter: () => navigation, useParams: () => ({ conversationId: navigation.id }) }));
-vi.mock("@/components/coach/CoachModelPreview", () => ({ CoachModelPreview: () => null }));
 const now = "2026-11-11T12:00:00.000Z";
 const profile: UserProfile = {
   goalText: "Walk regularly", tone: "gentle", cadence: "brief", motivation: "process_focus",

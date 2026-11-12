@@ -209,3 +209,19 @@ describe("plan revision", () => {
     await expect(persistPlanTransition(current, proposed, save)).rejects.toThrow("storage failed");
   });
 });
+
+describe("asking a coach for a harder or easier week", () => {
+  const session = (intensity: "easy" | "moderate" | "hard", durationMin: number) => ({ id: intensity, dayIndex: 0, title: "Walk", rationale: "Base", intensity, steps: [{ name: "Walk", detail: "Steady", durationMin }] });
+  const week = { id: "p", weekStartIso: "2026-11-09", generatedFromGoal: "Walk", sessions: [session("easy", 20), session("hard", 40)] };
+  it("treats the request as an explicit plan change", () => {
+    expect(classifyPlanIntent("I want a harder plan")).toBe("explicit");
+    expect(classifyPlanIntent("Make my plan easier")).toBe("explicit");
+  });
+  it("steps intensity and duration up or down in demo mode", () => {
+    const harder = adjustFixturePlanForConversation(week, [{ role: "user", content: "I want a harder plan" }]);
+    expect(harder.sessions.map((item) => [item.intensity, item.steps[0].durationMin])).toEqual([["moderate", 25], ["hard", 50]]);
+    const easier = adjustFixturePlanForConversation(week, [{ role: "user", content: "Make my plan easier" }]);
+    expect(easier.sessions.map((item) => [item.intensity, item.steps[0].durationMin])).toEqual([["easy", 15], ["moderate", 30]]);
+    expect(adjustFixturePlanForConversation(week, [{ role: "user", content: "How was my week" }])).toBe(week);
+  });
+});

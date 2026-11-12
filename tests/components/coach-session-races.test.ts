@@ -15,7 +15,6 @@ import type { CoachConversation, UserProfile } from "@/lib/types";
 
 const nav = vi.hoisted(() => ({ path: "/coach/chat/one", push: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => nav.path, useParams: () => ({ conversationId: "one" }), useRouter: () => nav }));
-vi.mock("@/components/coach/CoachModelPreview", () => ({ CoachModelPreview: () => null }));
 const record: CoachConversation = { id: "one", coachId: "river", status: "active", messages: [
   { id: "u", role: "user", content: "Keep replies short. " + "Long private detail. ".repeat(100), createdAt: "now" },
   { id: "a", role: "assistant", content: "PRIVATE ASSISTANT TRANSCRIPT", createdAt: "now" },

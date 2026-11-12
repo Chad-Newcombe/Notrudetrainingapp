@@ -8,7 +8,6 @@ import { CoachChat } from "@/components/coach/CoachChat";
 import { archiveCoachConversation, clearAll, getCoachConversation, saveCoachConversation, getProfile, savePlan, getPlan } from "@/lib/store";
 import { setStorageAccount } from "@/lib/store/storage";
 import type { CoachConversation, UserProfile, TrainingPlan } from "@/lib/types";
-vi.mock("@/components/coach/CoachModelPreview", () => ({ CoachModelPreview: () => null }));
 const nav = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => nav }));
 const now = "2026-11-12T12:00:00.000Z";

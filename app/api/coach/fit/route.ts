@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getModel, localGenerationOptions } from "@/lib/ai/model";
 import { coachFitSuggestionSchema, fixtureCoachFit, validatedCoachFit } from "@/lib/coaches/fit";
 import { COACH_PRESETS } from "@/lib/coaches/presets";
-const requestSchema = z.object({ coachId: z.enum(["river", "jax", "sol", "nova"]), text: z.string().trim().min(1).max(24_000), declinedSwitchSuggestion: z.boolean().optional() }).strict();
+const requestSchema = z.object({ coachId: z.enum(["river", "jax", "sol", "nova", "knox", "riff"]), text: z.string().trim().min(1).max(24_000), declinedSwitchSuggestion: z.boolean().optional() }).strict();
 const outputSchema = z.object({ suggestion: coachFitSuggestionSchema.nullable() }).strict();
 export async function POST(req: Request) {
   let body: z.infer<typeof requestSchema>;

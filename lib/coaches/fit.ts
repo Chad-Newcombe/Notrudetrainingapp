@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { CoachId } from "@/lib/types";
 
 export const coachFitSuggestionSchema = z.object({
-  coachId: z.enum(["river", "jax", "sol", "nova"]),
+  coachId: z.enum(["river", "jax", "sol", "nova", "knox", "riff"]),
   reason: z.string().trim().min(1).max(220),
 }).strict();
 export type CoachFitSuggestion = z.infer<typeof coachFitSuggestionSchema>;
@@ -17,7 +17,9 @@ function requestedStyle(text: string): CoachId | null {
   if (!delivery) return null;
   if (/\b(?:more energetic|more energy|higher energy|more upbeat)\b/.test(value)) return "jax";
   if (/\b(?:calmer|more calm|gentler coaching|lower.energy coaching)\b/.test(value)) return "river";
-  if (/\b(?:high.pressure|more force|more forceful|firmer accountability|stronger accountability)\b/.test(value)) return "sol";
+  if (/\b(?:more force|more forceful|firmer accountability)\b/.test(value)) return "sol";
+  if (/\b(?:brutal|no excuses|tougher|harsher|harder on me|tough love|high.pressure|stronger accountability)\b/.test(value)) return "knox";
+  if (/\b(?:funnier|more jokes|more humou?r|more comedy|make me laugh)\b/.test(value)) return "riff";
   if (/\b(?:more experimentation|more experimental|more analytical|more experiments)\b/.test(value)) return "nova";
   return null;
 }
@@ -27,6 +29,8 @@ const reasons: Record<CoachId, string> = {
   jax: "Jax brings more energy and a concrete next move.",
   sol: "Sol offers direct recommendations and firmer accountability without pressure or shaming.",
   nova: "Nova turns details into practical experiments.",
+  knox: "Knox holds you to the plan and doesn’t accept excuses.",
+  riff: "Riff coaches with jokes, then gives you the real next step.",
 };
 export function fixtureCoachFit(text: string, current: CoachId, declined = false): CoachFitSuggestion | null {
   const target = requestedStyle(text);
