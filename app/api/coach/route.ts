@@ -6,7 +6,7 @@ import {
 import { lastUserText } from "@/lib/ai/coach-messages";
 import { fixtureCoachReply } from "@/lib/ai/fixtures";
 import { getModel, localGenerationOptions } from "@/lib/ai/model";
-import { coachVoiceInstructions } from "@/lib/coaches/voice";
+import { coachReplyReminder, coachVoiceInstructions } from "@/lib/coaches/voice";
 import type { CoachRelationship, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 type CoachRequestBody = {
@@ -31,6 +31,7 @@ function buildCoachSystem(body: CoachRequestBody): string {
       healthSummary: body.healthSummary ?? null,
       continuationSummary: typeof body.continuationSummary === "string" && body.messages.filter((message) => message.role === "user").length === 1 ? body.continuationSummary.slice(0, 220) : undefined,
     }),
+    coachReplyReminder(body.profile, lastUserText(body.messages)),
   ].join("\n\n");
 }
 

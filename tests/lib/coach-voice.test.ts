@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fixtureCoachReply } from "@/lib/ai/fixtures";
-import { coachVoiceInstructions } from "@/lib/coaches/voice";
+import { coachReplyReminder, coachVoiceInstructions } from "@/lib/coaches/voice";
 import { COACH_PRESETS } from "@/lib/coaches/presets";
 import type { UserProfile } from "@/lib/types";
 
@@ -92,4 +92,13 @@ it("makes Knox refuse excuses without insulting the user, and builds Riff on sta
   expect(riff).toMatch(/drop the bit/);
   expect(fixtureCoachReply("My knee hurts", { ...profile, coachId: "knox" })).toMatch(/clinician/);
   expect(fixtureCoachReply("I can't today, I'm tired", { ...profile, coachId: "knox" })).toMatch(/ten minutes today/);
+});
+
+it("ends the prompt with a format reminder and overrides personality for pain", () => {
+  for (const coach of COACH_PRESETS) {
+    const calm = coachReplyReminder({ ...profile, coachId: coach.id }, "I skipped Tuesday");
+    expect(calm).toContain(coach.name);
+    expect(calm).not.toMatch(/pain/);
+    expect(coachReplyReminder({ ...profile, coachId: coach.id }, "My knee hurts when I run")).toMatch(/no jokes and no pushback/);
+  }
 });

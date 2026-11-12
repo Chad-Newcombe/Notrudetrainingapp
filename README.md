@@ -123,4 +123,4 @@ SQLite is initialized on first use at `.notrude/notrude.sqlite` by default. For 
 
 ## Interface
 
-[Motion](https://github.com/motiondivision/motion) powers the coach entrances and sliding tab indicator, with support for reduced-motion preferences. [Motion Primitives](https://github.com/ibelick/motion-primitives) is a reference for small interactions that fit the existing React and Tailwind stack. Coach portraits and 3D models are Notrude assets.
+[Motion](https://github.com/motiondivision/motion) powers the coach entrances and sliding tab indicator, with support for reduced-motion preferences. [Motion Primitives](https://github.com/ibelick/motion-primitives) is a reference for small interactions that fit the existing React and Tailwind stack. The coach orbs are drawn in CSS.
