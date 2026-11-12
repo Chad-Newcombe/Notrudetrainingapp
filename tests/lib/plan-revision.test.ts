@@ -225,3 +225,13 @@ describe("asking a coach for a harder or easier week", () => {
     expect(adjustFixturePlanForConversation(week, [{ role: "user", content: "How was my week" }])).toBe(week);
   });
 });
+
+it("removes AI formatting from coach replies only", async () => {
+  const { cleanCoachText, uiMessageText } = await import("@/lib/coach/messages");
+  expect(cleanCoachText('Your couch has **excellent** lawyers — but they lose.  \n\n*"Five minutes"* is enough.'))
+    .toBe('Your couch has excellent lawyers, but they lose.\n"Five minutes" is enough.');
+  expect(cleanCoachText("# Plan\n- Walk 10–15 minutes")).toBe("Plan\nWalk 10-15 minutes");
+  const part = [{ type: "text" as const, text: "I *really* mean it — move it" }];
+  expect(uiMessageText({ id: "u", role: "user", parts: part })).toBe("I *really* mean it — move it");
+  expect(uiMessageText({ id: "a", role: "assistant", parts: part })).toBe("I really mean it, move it");
+});

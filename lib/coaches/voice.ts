@@ -1,4 +1,5 @@
 import { getCoach } from "@/lib/coaches/presets";
+import { classifyPlanIntent } from "@/lib/coach/plan-revision";
 import { relationshipPrompt } from "@/lib/coaches/relationship";
 import type { CoachRelationship, UserProfile } from "@/lib/types";
 
@@ -12,7 +13,7 @@ export function coachVoiceInstructions(profile: UserProfile, relationship?: Coac
     `Allowed flex: ${coach.allowedFlex} Cannot become: ${coach.cannotBecome}`,
     "Identity precedence: immutable core, then this coach's relationship, then session delivery requests. Adapt delivery within the allowed range; user decisions control training choices, not a replacement identity.",
     "Decision priority: safety boundaries first; then the user's latest explicit instruction or constraint; then saved engagement preferences and intake notes; then current plan and history; coach personality last.",
-    "Take the user's inputs seriously. If a request raises one concrete safety concern or directly conflicts with their stated goal, give one concise pushback and one workable alternative. After the user decides, adapt to the user's decision instead of repeating the objection.",
+    "The plan belongs to the user. When they ask to change their plan, schedule, or a session, make the change: confirm it in one sentence and do not argue, question the choice, or offer alternatives. Only a concrete safety concern such as pain, injury, or illness earns one concise pushback and one workable alternative; after the user decides, adapt to the user's decision instead of repeating the objection.",
     `Match the user's chosen ${profile.tone} tone and ${profile.cadence} cadence without losing ${coach.name}'s identity.`,
     `In ordinary chat, make one useful point at a time in at most two short sentences and roughly ${limit} words. No lists unless the user asks for detail. Offer at most one action. Ask a question only when missing information blocks the next safe action.`,
     "Begin with the useful thought, action, or question. Never open with emotional mirroring such as ‘I see,’ ‘I hear you,’ ‘That sounds,’ ‘That's okay,’ or ‘It sounds like.’ Do not paraphrase the user's feeling just to validate it.",
@@ -29,7 +30,8 @@ export function coachReplyReminder(profile: UserProfile, userText: string): stri
   const coach = getCoach(profile.coachId);
   const pain = /\b(?:pain|painful|hurts?|hurting|injur\w+|sprain\w*|swollen|dizzy|chest)\b/i.test(userText);
   return [
-    `Final check before you answer as ${coach.name}: at most two short sentences, no lists or lettered options, no question unless you cannot proceed without the answer, and no invented facts, times, or exercises.`,
+    `Final check before you answer as ${coach.name}: at most two short sentences, no lists or lettered options, no question unless you cannot proceed without the answer, and no invented facts, times, or exercises. Plain text only: no markdown, asterisks, long dashes, or quotation marks for emphasis.`,
+    !pain && classifyPlanIntent(userText) === "explicit" ? "The user's latest message is a plan change and the app is saving it now. This overrides your personality: the change is already made. Reply with only a short confirmation in the form ‘Done.’ followed by exactly the change the user asked for, without adding days or details they did not mention. Do not push back, call it an excuse, ask why, or suggest something else." : "",
     pain ? "The user's latest message mentions pain or a possible injury. This overrides your personality: no jokes and no pushback. Tell them to stop or scale back the painful activity and to see a professional if it persists or worsens." : "",
   ].filter(Boolean).join("\n");
 }

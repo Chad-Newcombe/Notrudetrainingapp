@@ -9,11 +9,23 @@ export function chatMessageToUi(m: ChatMessage): UIMessage {
   };
 }
 
+/** Strips the formatting local models add on their own: markdown emphasis, headings, and long dashes. */
+export function cleanCoachText(text: string): string {
+  return text
+    .replace(/[*`]+/g, "")
+    .replace(/^\s*(?:#+|>|[-•])\s+/gm, "")
+    .replace(/(\d)\s*[—–]\s*(?=\d)/g, "$1-")
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{2,}/g, "\n");
+}
+
 export function uiMessageText(message: UIMessage): string {
-  return message.parts
+  const text = message.parts
     .filter((part) => part.type === "text")
     .map((part) => part.text)
     .join("\n");
+  return message.role === "assistant" ? cleanCoachText(text) : text;
 }
 
 export function uiMessagesToChat(
