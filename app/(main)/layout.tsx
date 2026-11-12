@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { CoachSessionLifecycle } from "@/components/coach/CoachSessionLifecycle";
 import { BottomTabs } from "@/components/shell/BottomTabs";
 import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
 import { onboardingRedirect } from "@/lib/navigation/onboarding";
@@ -37,7 +38,7 @@ export default function MainLayout({
 
   return (
     <div className="min-h-[100dvh] bg-[var(--canvas-soft)]">
-      <div className="main-tab-clearance">{children}</div>
+      <div className="main-tab-clearance"><CoachSessionLifecycle>{children}</CoachSessionLifecycle></div>
       <BottomTabs />
     </div>
   );

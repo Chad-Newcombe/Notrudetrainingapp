@@ -46,6 +46,9 @@ export interface NotrudeSchema extends DBSchema {
   };
 }
 
+let dataGeneration = 0;
+export function storageGeneration() { return dataGeneration; }
+
 const DB_NAME = "notrude";
 const DB_VERSION = 2;
 
@@ -97,6 +100,10 @@ const STORE_NAMES = [
 ] as const;
 
 export async function clearAll(): Promise<void> {
+  dataGeneration += 1;
+  if (typeof localStorage !== "undefined") {
+    for (const key of Object.keys(localStorage)) if (key.startsWith("notrude-coach-sessions:")) localStorage.removeItem(key);
+  }
   const db = await getDb();
   const tx = db.transaction(STORE_NAMES, "readwrite");
   await Promise.all(STORE_NAMES.map((name) => tx.objectStore(name).clear()));

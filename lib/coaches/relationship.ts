@@ -6,7 +6,7 @@ import type { CoachId, CoachMemoryDelta, CoachMemoryEntry, CoachRelationship } f
 const MAX_ENTRIES = 12;
 const MAX_PATTERNS = 8;
 const memoryText = z.string().trim().min(1).max(300);
-const deltaSchema = z.object({
+export const coachMemoryDeltaSchema = z.object({
   coachId: z.enum(["river", "jax", "sol", "nova"]),
   learnedPreferences: z.array(z.object({
     key: memoryText.max(80), value: memoryText, evidence: memoryText,
@@ -56,7 +56,7 @@ function assertSafeEntry(entry: Pick<CoachMemoryEntry, "key" | "value" | "eviden
 }
 
 export function applyMemoryDelta(current: CoachRelationship, delta: CoachMemoryDelta, now: string): CoachRelationship {
-  const parsed = deltaSchema.parse(delta);
+  const parsed = coachMemoryDeltaSchema.parse(delta);
   const memory = coachRelationshipSchema.parse(current);
   if (parsed.coachId !== memory.coachId) throw new Error("Cannot apply another coach's memory");
   const entries = new Map<string, CoachMemoryEntry>();

@@ -8,10 +8,11 @@ import type { CoachId, UserProfile } from "@/lib/types";
 
 type Props = {
   profile: UserProfile;
+  beforeChange?: () => Promise<void>;
   onChanged?: (profile: UserProfile) => void;
 };
 
-export function CoachSwitcher({ profile, onChanged }: Props) {
+export function CoachSwitcher({ profile, onChanged, beforeChange }: Props) {
   const [current, setCurrent] = useState(profile);
   const [saving, setSaving] = useState<CoachId | null>(null);
   const [error, setError] = useState("");
@@ -24,6 +25,7 @@ export function CoachSwitcher({ profile, onChanged }: Props) {
     setSaving(coachId);
     setError("");
     try {
+      await beforeChange?.();
       await saveProfile(next);
       setCurrent(next);
       onChanged?.(next);

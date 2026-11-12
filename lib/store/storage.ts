@@ -4,8 +4,16 @@ import { getDb, type NotrudeSchema } from "./db";
 
 let accountId: string | null = null;
 
+export function storageScope(): string {
+  return accountId ? `account:${accountId}` : "guest";
+}
+
 export function setStorageAccount(userId: string | null) {
   accountId = userId;
+}
+
+export class AccountStorageError extends Error {
+  constructor(message: string, readonly status: number) { super(message); }
 }
 
 async function accountRequest<T>(path = "", body?: unknown): Promise<T> {
@@ -17,7 +25,7 @@ async function accountRequest<T>(path = "", body?: unknown): Promise<T> {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Account storage is unavailable.");
+    if (!response.ok) throw new AccountStorageError(result.error || "Account storage is unavailable.", response.status);
     return result as T;
   } catch (error) {
     window.dispatchEvent(new CustomEvent("notrude-account-error", {

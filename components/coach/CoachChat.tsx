@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { Inbox } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CoachStage } from "@/components/coach/CoachStage";
 import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
@@ -23,13 +24,14 @@ import {
   uiMessageText,
 } from "@/lib/coach/messages";
 import { buildHealthSummary } from "@/lib/health/summary";
-import { listChat, listHealth, replaceChat, saveCoachConversation, savePlan } from "@/lib/store";
-import { withConversationMessages } from "@/lib/coach/conversations";
+import { archiveCoachConversation, getCoachConversation, listHealth, savePlan } from "@/lib/store";
+import { storageScope } from "@/lib/store/storage";
+import { persistCoachMessages, registerCoachSession, trackCoachPlanTransition } from "@/lib/store/coach-conversations";
 import type { CoachConversation, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 type Props = {
   profile: UserProfile;
-  conversation?: CoachConversation;
+  conversation: CoachConversation;
   plan: TrainingPlan | null;
   logs: WorkoutLog[];
 };
@@ -91,14 +93,18 @@ export function CoachComposer({
 }
 
 export function CoachChat({ profile, plan, logs, conversation }: Props) {
+  const sessionScope = useRef(storageScope());
   const [boot, setBoot] = useState<UIMessage[] | null>(null);
+  const [continuationSummary, setContinuationSummary] = useState<string | undefined>();
   const [healthSummary, setHealthSummary] = useState<string | undefined>();
   const createdAtById = useRef(new Map<string, string>());
   const coachFetch = useMemo(() => createCoachFetch(), []);
 
   useEffect(() => {
     void (async () => {
-      const [stored, health] = await Promise.all([conversation ? Promise.resolve(conversation.messages) : listChat(), listHealth()]);
+      const [health, prior] = await Promise.all([listHealth(), conversation.continuedFromId ? getCoachConversation(conversation.continuedFromId) : undefined]);
+      const stored = conversation.messages;
+      if (prior?.status === "archived" && prior.coachId === conversation.coachId) setContinuationSummary(prior.summary?.slice(0, 220));
       for (const m of stored) {
         createdAtById.current.set(m.id, m.createdAt);
       }
@@ -108,17 +114,14 @@ export function CoachChat({ profile, plan, logs, conversation }: Props) {
   }, [conversation]);
 
   const persist = useCallback(async (messages: UIMessage[]) => {
+    if (sessionScope.current !== storageScope()) throw new Error("Storage account changed.");
     const chat = uiMessagesToChat(messages, createdAtById.current);
     for (const m of chat) {
       if (!createdAtById.current.has(m.id)) {
         createdAtById.current.set(m.id, m.createdAt);
       }
     }
-    if (conversation) {
-      await saveCoachConversation(withConversationMessages(conversation, chat, new Date().toISOString()));
-    } else {
-      await replaceChat(chat);
-    }
+    await persistCoachMessages(conversation.id, chat);
   }, [conversation]);
 
   if (boot === null) {
@@ -129,6 +132,8 @@ export function CoachChat({ profile, plan, logs, conversation }: Props) {
 
   return (
     <CoachChatInner
+      conversationId={conversation.id}
+      continuationSummary={continuationSummary}
       boot={boot}
       profile={profile}
       plan={plan}
@@ -141,6 +146,8 @@ export function CoachChat({ profile, plan, logs, conversation }: Props) {
 }
 
 function CoachChatInner({
+  conversationId,
+  continuationSummary,
   boot,
   profile,
   plan,
@@ -149,6 +156,8 @@ function CoachChatInner({
   coachFetch,
   persist,
 }: {
+  conversationId: string;
+  continuationSummary?: string;
   boot: UIMessage[];
   profile: UserProfile;
   plan: TrainingPlan | null;
@@ -157,8 +166,12 @@ function CoachChatInner({
   coachFetch: ReturnType<typeof createCoachFetch>;
   persist: (messages: UIMessage[]) => Promise<void>;
 }) {
+  const sessionScope = useRef(storageScope());
+  const router = useRouter();
   const [input, setInput] = useState("");
-  const [activeProfile, setActiveProfile] = useState(profile);
+  const [sessionClosed, setSessionClosed] = useState(false);
+  const closing = useRef(false);
+  const [activeProfile] = useState(profile);
   const activePlanRef = useRef(plan);
   const profileRef = useRef(activeProfile);
   const updatingMessageId = useRef<string | null>(null);
@@ -181,51 +194,61 @@ function CoachChatInner({
     pendingRevision.current = { id, conversation };
     setPlanUpdateState("updating");
     try {
-      const previous = activePlanRef.current;
-      const response = await fetch("/api/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          profile: profileRef.current,
-          currentPlan: previous,
-          logs,
-          conversation,
-        }),
+      await trackCoachPlanTransition(conversationId, "updating", async () => {
+        const previous = activePlanRef.current;
+        const response = await fetch("/api/plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profile: profileRef.current,
+            currentPlan: previous,
+            logs,
+            conversation,
+          }),
+        });
+        if (!response.ok) throw new Error("Plan request failed");
+        const data = (await response.json()) as { plan?: TrainingPlan };
+        if (!data.plan || !Array.isArray(data.plan.sessions)) throw new Error("Invalid plan");
+        const transition = await persistPlanTransition(previous, data.plan, async (next) => {
+          if (sessionScope.current !== storageScope()) throw new Error("Storage account changed.");
+          await savePlan(next);
+        });
+        activePlanRef.current = data.plan;
+        setPlanTransition(transition);
+        handledPlanMessageIds.current.add(id);
+        pendingRevision.current = null;
+        setPlanUpdateState("saved");
       });
-      if (!response.ok) throw new Error("Plan request failed");
-      const data = (await response.json()) as { plan?: TrainingPlan };
-      if (!data.plan || !Array.isArray(data.plan.sessions)) throw new Error("Invalid plan");
-      const transition = await persistPlanTransition(previous, data.plan, savePlan);
-      activePlanRef.current = data.plan;
-      setPlanTransition(transition);
-      handledPlanMessageIds.current.add(id);
-      pendingRevision.current = null;
-      setPlanUpdateState("saved");
     } catch {
       setPlanUpdateState("error");
     } finally {
       updatingMessageId.current = null;
     }
-  }, [logs]);
+  }, [logs, conversationId]);
 
-  const { messages, sendMessage, status, error, clearError } = useChat({
+  const { messages, sendMessage, regenerate, stop, status, error, clearError } = useChat({
     messages: boot,
     transport: new DefaultChatTransport({
       api: "/api/coach",
       fetch: coachFetch,
-      prepareSendMessagesRequest: ({ messages, body }) => ({
-        body: {
-          ...body,
-          messages,
-          profile: profileRef.current,
-          plan: activePlanRef.current,
-          logs,
-          healthSummary,
-        },
-      }),
+      prepareSendMessagesRequest: async ({ messages, body }) => {
+        await persist(messages);
+        return {
+          body: {
+            ...body,
+            messages,
+            profile: profileRef.current,
+            plan: activePlanRef.current,
+            logs,
+            healthSummary,
+            continuationSummary: messages.filter((message) => message.role === "user").length === 1 ? continuationSummary : undefined,
+          },
+        };
+      },
     }),
-    onFinish: ({ messages }) => {
+    onFinish: ({ messages, isAbort, isError }) => {
       void persist(messages).catch(() => { /* The account provider surfaces storage errors. */ });
+      if (isAbort || isError) return;
       const latestUser = [...messages].reverse().find((message) => message.role === "user");
       const latestText = latestUser ? uiMessageText(latestUser) : "";
       if (latestUser && classifyPlanIntent(latestText) === "explicit") {
@@ -239,6 +262,29 @@ function CoachChatInner({
       }
     },
   });
+
+  const snapshot = useRef(messages);
+  snapshot.current = messages;
+  const [storageError, setStorageError] = useState(false);
+  useEffect(() => {
+    void persist(messages).then(() => setStorageError(false)).catch(() => setStorageError(true));
+  }, [messages, persist]);
+  useEffect(() => {
+    const flush = async () => {
+      const saved = persist(snapshot.current);
+      await stop();
+      await saved;
+    };
+    const unregister = registerCoachSession(conversationId, async () => {
+      closing.current = true;
+      setSessionClosed(true);
+      await flush();
+    });
+    return () => {
+      void flush().catch(() => {});
+      unregister();
+    };
+  }, [conversationId, persist, stop]);
 
   const busy = status === "submitted" || status === "streaming"
     || planUpdateState === "updating" || planUpdateState === "undoing";
@@ -257,18 +303,11 @@ function CoachChatInner({
     };
   }, []);
 
-  const lastUserText = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i];
-      if (m.role === "user") return uiMessageText(m);
-    }
-    return null;
-  }, [messages]);
   const retry = useCallback(() => {
+    if (closing.current) return;
     clearError();
-    const text = lastUserText;
-    if (text) void sendMessage({ text });
-  }, [clearError, lastUserText, sendMessage]);
+    void regenerate();
+  }, [clearError, regenerate]);
 
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -280,7 +319,7 @@ function CoachChatInner({
   const submit = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || busy) return;
+      if (!trimmed || busy || closing.current) return;
       setInput("");
       await sendMessage({ text: trimmed });
     },
@@ -288,23 +327,28 @@ function CoachChatInner({
   );
 
   const retryPlanUpdate = useCallback(() => {
+    if (closing.current) return;
     const pending = pendingRevision.current;
     if (pending) void updatePlanFromConversation(pending.id, pending.conversation);
   }, [updatePlanFromConversation]);
 
   const undoPlanUpdate = useCallback(async () => {
+    if (closing.current) return;
     const previous = planTransition?.previous;
     if (!previous) return;
     setPlanUpdateState("undoing");
     try {
-      await savePlan(previous);
+      await trackCoachPlanTransition(conversationId, "undoing", async () => {
+        if (sessionScope.current !== storageScope()) throw new Error("Storage account changed.");
+        await savePlan(previous);
+      });
       activePlanRef.current = previous;
       setPlanTransition(null);
       setPlanUpdateState("idle");
     } catch {
       setPlanUpdateState("undo-error");
     }
-  }, [planTransition]);
+  }, [planTransition, conversationId]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -313,10 +357,8 @@ function CoachChatInner({
         label={`Your coach · ${getCoach(activeProfile.coachId).name}`}
         title="In your corner" description="A place to figure out what fits today."
         conversation replying={busy} />
-      <CoachSwitcher profile={activeProfile} onChanged={(next) => {
-        profileRef.current = next;
-        setActiveProfile(next);
-      }} />
+      <CoachSwitcher profile={activeProfile} beforeChange={() => archiveCoachConversation(conversationId)} onChanged={() => router.push("/coach")} />
+      {storageError && <p role="alert">Couldn’t save your latest messages. Keep this chat open and try again.</p>}
       {offline && <p className="panel px-3 py-2 text-sm text-[var(--muted)]">
         You’re offline. Reconnect to get a reply.
       </p>}
@@ -360,7 +402,7 @@ function CoachChatInner({
         />
       ) : null}
 
-      <CoachComposer input={input} busy={busy} onInput={setInput} onSubmit={(value) => void submit(value)} />
+      <CoachComposer input={input} busy={busy || sessionClosed} onInput={setInput} onSubmit={(value) => void submit(value)} />
     </div>
   );
 }

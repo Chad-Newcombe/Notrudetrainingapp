@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { newCoachConversation } from "@/lib/coach/conversations";
-import { saveCoachConversation } from "@/lib/store";
+import { startCoachConversation } from "@/lib/store/coach-conversations";
 import type { CoachId } from "@/lib/types";
 
 export function StartCoachChat({ coachId, continuedFromId }: {
@@ -21,8 +20,7 @@ export function StartCoachChat({ coachId, continuedFromId }: {
     setBusy(true);
     setError("");
     try {
-      const conversation = newCoachConversation(coachId, new Date().toISOString(), continuedFromId);
-      await saveCoachConversation(conversation);
+      const conversation = await startCoachConversation(coachId, continuedFromId);
       router.push(`/coach/chat/${conversation.id}`);
     } catch {
       starting.current = false;

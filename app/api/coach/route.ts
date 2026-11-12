@@ -16,6 +16,7 @@ type CoachRequestBody = {
   plan?: TrainingPlan | null;
   logs?: WorkoutLog[];
   healthSummary?: string;
+  continuationSummary?: string;
 };
 
 function buildCoachSystem(body: CoachRequestBody): string {
@@ -29,6 +30,7 @@ function buildCoachSystem(body: CoachRequestBody): string {
       plan: body.plan ?? null,
       logs: body.logs?.slice(-7) ?? [],
       healthSummary: body.healthSummary ?? null,
+      continuationSummary: typeof body.continuationSummary === "string" && body.messages.filter((message) => message.role === "user").length === 1 ? body.continuationSummary.slice(0, 220) : undefined,
     }),
   ].join("\n\n");
 }
