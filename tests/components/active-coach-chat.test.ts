@@ -90,6 +90,23 @@ describe("exact active coach persistence", () => {
     expect((await getCoachConversation("one"))?.resultLabels).toEqual(["Plan updated"]);
     expect((await getCoachConversation("one"))?.status).toBe("archived");
   });
+  it("does not recreate a plan when clearAll interrupts archive waiting for that plan", async () => {
+    const previous: TrainingPlan = { id: "old", weekStartIso: "2026-11-09", sessions: [], generatedFromGoal: "Walk" };
+    await savePlan(previous); await saveCoachConversation(record);
+    let resolvePlan!: (response: Response) => void;
+    vi.mocked(fetch).mockImplementation(async (input) => String(input) === "/api/plan" ? new Promise((resolve) => { resolvePlan = resolve; }) : reply());
+    render(createElement(CoachChat, { conversation: record, profile, plan: previous, logs: [] }));
+    await screen.findByRole("textbox"); send("Make my walks shorter.");
+    await waitFor(() => expect(resolvePlan).toBeTypeOf("function"));
+    const closing = archiveCoachConversation("one");
+    await clearAll();
+    resolvePlan(Response.json({ plan: { ...previous, id: "late-plan" } }));
+    await closing.catch(() => {});
+    await screen.findByText("Your plan wasn't changed.");
+    expect(await getPlan()).toBeNull();
+    expect(await getCoachConversation("one")).toBeUndefined();
+    expect(localStorage.getItem("notrude-coach-sessions:guest")).toBeNull();
+  });
   it("does not save an in-flight plan into a newly selected account", async () => {
     const previous: TrainingPlan = { id: "old", weekStartIso: "2026-11-09", sessions: [], generatedFromGoal: "Walk" };
     await savePlan(previous); await saveCoachConversation(record);

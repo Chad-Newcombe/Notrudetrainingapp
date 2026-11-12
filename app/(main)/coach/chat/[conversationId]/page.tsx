@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CoachChat } from "@/components/coach/CoachChat";
 import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
-import { getCoachConversation } from "@/lib/store";
+import { getActiveCoachConversation } from "@/lib/store/coach-conversations";
 import type { CoachConversation } from "@/lib/types";
 
 export default function CoachChatPage() {
@@ -14,7 +14,7 @@ export default function CoachChatPage() {
   const [loaded, setLoaded] = useState<{ id: string; record?: CoachConversation } | null>(null);
   useEffect(() => {
     let current = true;
-    void getCoachConversation(conversationId).then((record) => {
+    void getActiveCoachConversation(conversationId).then((record) => {
       if (current) setLoaded({ id: conversationId, record });
     }).catch(() => { if (current) setLoaded({ id: conversationId }); });
     return () => { current = false; };

@@ -6,15 +6,15 @@ import { reconcileCoachSessions, retryCoachSessionProcessing } from "@/lib/store
 
 export function CoachSessionLifecycle({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
-  const [readyPath, setReadyPath] = useState<string | null>(null);
-  const [error, setError] = useState(false);
+  const [visit, setVisit] = useState({ pathname, ready: false, error: false });
+  // A return to a formerly ready URL is a new visit, even if its close is pending.
+  if (visit.pathname !== pathname) setVisit({ pathname, ready: false, error: false });
   useEffect(() => {
     let current = true;
-    setError(false);
     const id = /^\/coach\/chat\/([^/]+)$/.exec(pathname)?.[1];
     void reconcileCoachSessions(id).then(() => {
-      if (current) setReadyPath(pathname);
-    }).catch(() => { if (current) setError(true); });
+      if (current) setVisit({ pathname, ready: true, error: false });
+    }).catch(() => { if (current) setVisit({ pathname, ready: false, error: true }); });
     return () => { current = false; };
   }, [pathname]);
   useEffect(() => {
@@ -23,7 +23,7 @@ export function CoachSessionLifecycle({ children }: { children?: React.ReactNode
     window.addEventListener("online", retry);
     return () => window.removeEventListener("online", retry);
   }, []);
-  if (error) return <p role="alert">Couldn’t save your conversation. Reopen Coach to try again.</p>;
-  if (readyPath !== pathname) return <p role="status">Saving your conversation…</p>;
+  if (visit.pathname === pathname && visit.error) return <p role="alert">Couldn’t save your conversation. Reopen Coach to try again.</p>;
+  if (visit.pathname !== pathname || !visit.ready) return <p role="status">Saving your conversation…</p>;
   return children;
 }

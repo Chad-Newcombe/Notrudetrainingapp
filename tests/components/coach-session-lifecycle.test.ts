@@ -85,7 +85,7 @@ describe("persistent coach lifecycle", () => {
     expect(body).not.toHaveProperty("conversation");
     expect(body).not.toHaveProperty("messages");
     expect(body.evidence[0]).toHaveLength(300);
-    expect(localStorage.getItem("notrude-coach-sessions:guest")).toContain('"processingPending":false');
+    expect(localStorage.getItem("notrude-coach-sessions:guest")).toBeNull();
   });
   it("clearAll removes pending session recovery data too", async () => {
     await saveCoachConversation(record);

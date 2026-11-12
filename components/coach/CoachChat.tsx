@@ -25,6 +25,7 @@ import {
 } from "@/lib/coach/messages";
 import { buildHealthSummary } from "@/lib/health/summary";
 import { archiveCoachConversation, getCoachConversation, listHealth, savePlan } from "@/lib/store";
+import { storageGeneration } from "@/lib/store/db";
 import { storageScope } from "@/lib/store/storage";
 import { persistCoachMessages, registerCoachSession, trackCoachPlanTransition } from "@/lib/store/coach-conversations";
 import type { CoachConversation, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
@@ -94,6 +95,7 @@ export function CoachComposer({
 
 export function CoachChat({ profile, plan, logs, conversation }: Props) {
   const sessionScope = useRef(storageScope());
+  const sessionGeneration = useRef(storageGeneration());
   const [boot, setBoot] = useState<UIMessage[] | null>(null);
   const [continuationSummary, setContinuationSummary] = useState<string | undefined>();
   const [healthSummary, setHealthSummary] = useState<string | undefined>();
@@ -115,6 +117,7 @@ export function CoachChat({ profile, plan, logs, conversation }: Props) {
 
   const persist = useCallback(async (messages: UIMessage[]) => {
     if (sessionScope.current !== storageScope()) throw new Error("Storage account changed.");
+    if (sessionGeneration.current !== storageGeneration()) throw new Error("Storage was cleared.");
     const chat = uiMessagesToChat(messages, createdAtById.current);
     for (const m of chat) {
       if (!createdAtById.current.has(m.id)) {
@@ -167,6 +170,7 @@ function CoachChatInner({
   persist: (messages: UIMessage[]) => Promise<void>;
 }) {
   const sessionScope = useRef(storageScope());
+  const sessionGeneration = useRef(storageGeneration());
   const router = useRouter();
   const [input, setInput] = useState("");
   const [sessionClosed, setSessionClosed] = useState(false);
@@ -211,6 +215,7 @@ function CoachChatInner({
         if (!data.plan || !Array.isArray(data.plan.sessions)) throw new Error("Invalid plan");
         const transition = await persistPlanTransition(previous, data.plan, async (next) => {
           if (sessionScope.current !== storageScope()) throw new Error("Storage account changed.");
+          if (sessionGeneration.current !== storageGeneration()) throw new Error("Storage was cleared.");
           await savePlan(next);
         });
         activePlanRef.current = data.plan;
@@ -340,6 +345,7 @@ function CoachChatInner({
     try {
       await trackCoachPlanTransition(conversationId, "undoing", async () => {
         if (sessionScope.current !== storageScope()) throw new Error("Storage account changed.");
+        if (sessionGeneration.current !== storageGeneration()) throw new Error("Storage was cleared.");
         await savePlan(previous);
       });
       activePlanRef.current = previous;
