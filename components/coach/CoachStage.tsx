@@ -27,7 +27,7 @@ export function CoachStage({
         <p className="meta-label">{label}</p>
         <h1 className="mt-2 break-words text-[clamp(1.7rem,7.2vw,2.5rem)] leading-[1.04] font-bold tracking-[-0.045em] text-[var(--app-text)]">{title}</h1>
         {description && <p className="mt-2 text-sm text-[var(--app-muted)]">{description}</p>}
-        {children}
+        {children ? <div className="mt-5">{children}</div> : null}
       </div>
     </section>
   );

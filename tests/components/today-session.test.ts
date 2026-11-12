@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TodaySession } from "@/components/today/TodaySession";
 import type { PlanSession, TrainingPlan, UserProfile } from "@/lib/types";
 
@@ -37,8 +37,14 @@ const profile: UserProfile = {
 };
 
 describe("TodaySession", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-11T12:00:00"));
+  });
+
   afterEach(async () => {
     cleanup();
+    vi.useRealTimers();
     await new Promise<void>((resolve) => setImmediate(resolve));
   });
 

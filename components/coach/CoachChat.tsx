@@ -23,11 +23,13 @@ import {
   uiMessageText,
 } from "@/lib/coach/messages";
 import { buildHealthSummary } from "@/lib/health/summary";
-import { listChat, listHealth, replaceChat, savePlan } from "@/lib/store";
-import type { TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
+import { listChat, listHealth, replaceChat, saveCoachConversation, savePlan } from "@/lib/store";
+import { withConversationMessages } from "@/lib/coach/conversations";
+import type { CoachConversation, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 type Props = {
   profile: UserProfile;
+  conversation?: CoachConversation;
   plan: TrainingPlan | null;
   logs: WorkoutLog[];
 };
@@ -71,6 +73,7 @@ export function CoachComposer({
       <label className="sr-only" htmlFor="coach-input">Message coach</label>
       <input
         id="coach-input"
+        autoFocus
         value={input}
         onChange={(event) => onInput(event.target.value)}
         disabled={busy}
@@ -87,7 +90,7 @@ export function CoachComposer({
   );
 }
 
-export function CoachChat({ profile, plan, logs }: Props) {
+export function CoachChat({ profile, plan, logs, conversation }: Props) {
   const [boot, setBoot] = useState<UIMessage[] | null>(null);
   const [healthSummary, setHealthSummary] = useState<string | undefined>();
   const createdAtById = useRef(new Map<string, string>());
@@ -95,14 +98,14 @@ export function CoachChat({ profile, plan, logs }: Props) {
 
   useEffect(() => {
     void (async () => {
-      const [stored, health] = await Promise.all([listChat(), listHealth()]);
+      const [stored, health] = await Promise.all([conversation ? Promise.resolve(conversation.messages) : listChat(), listHealth()]);
       for (const m of stored) {
         createdAtById.current.set(m.id, m.createdAt);
       }
       setHealthSummary(buildHealthSummary(health));
       setBoot(stored.map(chatMessageToUi));
     })().catch(() => { /* The account provider surfaces storage errors. */ });
-  }, []);
+  }, [conversation]);
 
   const persist = useCallback(async (messages: UIMessage[]) => {
     const chat = uiMessagesToChat(messages, createdAtById.current);
@@ -111,8 +114,12 @@ export function CoachChat({ profile, plan, logs }: Props) {
         createdAtById.current.set(m.id, m.createdAt);
       }
     }
-    await replaceChat(chat);
-  }, []);
+    if (conversation) {
+      await saveCoachConversation(withConversationMessages(conversation, chat, new Date().toISOString()));
+    } else {
+      await replaceChat(chat);
+    }
+  }, [conversation]);
 
   if (boot === null) {
     return (
