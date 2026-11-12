@@ -5,7 +5,7 @@ import { WeekPlan } from "@/components/plan/WeekPlan";
 import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
 
 export default function PlanPage() {
-  const { ready, plan } = useNotrudeStore();
+  const { ready, plan, logs } = useNotrudeStore();
 
   if (!ready) {
     return (
@@ -34,7 +34,7 @@ export default function PlanPage() {
 
   return (
     <main className="px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
-      <WeekPlan plan={plan} />
+      <WeekPlan plan={plan} logs={logs} />
     </main>
   );
 }

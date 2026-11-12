@@ -1,12 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, Space_Grotesk } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  display: "swap",
-});
+import { AccountProvider } from "@/components/account/AccountProvider";
+import { AppThemeProvider } from "@/components/theme/AppThemeProvider";
 
 const figtree = Figtree({
   subsets: ["latin"],
@@ -15,7 +11,7 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "Notrude",
+  title: "Not Rude Training",
   description: "Empathetic training that meets you where you are.",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -24,7 +20,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Notrude",
+    title: "Not Rude Training",
   },
 };
 
@@ -40,13 +36,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const previewBuild = process.env.NOTRUDE_PREVIEW_BUILD;
+
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${figtree.variable}`}
+      data-coach="river"
+      data-appearance="system"
+      className={figtree.variable}
     >
       <body className="antialiased">
-        <div className="app-shell">{children}</div>
+        {previewBuild && (
+          <p className="border-b-2 border-black bg-[var(--voltage)] px-3 py-1 text-center font-mono text-xs font-bold text-black">
+            Not Rude Training Preview · {previewBuild}
+          </p>
+        )}
+        <div className="app-shell">
+          <AccountProvider>
+            <AppThemeProvider>{children}</AppThemeProvider>
+          </AccountProvider>
+        </div>
       </body>
     </html>
   );

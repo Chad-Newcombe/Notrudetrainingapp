@@ -15,18 +15,19 @@ type ButtonAsButton = SharedProps &
 type ButtonAsLink = SharedProps &
   Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
     href: string;
+    prefetch?: boolean;
   };
 
 export type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const base =
-  "inline-flex items-center justify-center rounded-[var(--radius-pill)] px-6 py-3.5 text-base font-semibold tracking-tight transition-[filter,background-color,border-color] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--voltage)] disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] border px-6 py-3 text-base font-semibold transition-[transform,background-color,border-color] duration-100 active:scale-[0.985] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus)] disabled:pointer-events-none disabled:opacity-45";
 
 const variants = {
   primary:
-    "bg-[var(--voltage)] text-[var(--on-voltage)] hover:bg-[var(--voltage-hover)] active:brightness-95",
+    "border-transparent bg-[var(--app-accent)] text-[var(--app-on-accent)] hover:bg-[color-mix(in_srgb,var(--app-accent),var(--app-text)_9%)]",
   ghost:
-    "bg-transparent text-[var(--ink)] border border-[var(--line)] hover:bg-[var(--surface)]",
+    "border-[var(--app-line)] bg-[var(--app-raised)] text-[var(--app-text)] hover:bg-[var(--app-raised-strong)]",
 };
 
 export function Button(props: ButtonProps) {

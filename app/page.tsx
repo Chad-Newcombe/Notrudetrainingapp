@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { CoachStage } from "@/components/coach/CoachStage";
+import { useAccount } from "@/components/account/AccountProvider";
 import { NotrudeMark } from "@/components/brand/NotrudeMark";
 import { Button } from "@/components/ui/Button";
 import { type DemoProfileId, seedDemoProfile } from "@/lib/demo/seed";
@@ -9,6 +11,7 @@ import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
 
 export default function WelcomePage() {
   const router = useRouter();
+  const { user } = useAccount();
   const { ready, profile, plan, reload } = useNotrudeStore();
   const [seeding, setSeeding] = useState<DemoProfileId | null>(null);
 
@@ -30,21 +33,15 @@ export default function WelcomePage() {
     profile && plan ? "/today" : profile ? "/acknowledgment" : undefined;
 
   return (
-    <main className="theme-dark atmosphere-dark flex min-h-[100dvh] flex-col justify-between px-6 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="page-enter flex flex-1 flex-col justify-center gap-10">
+    <main className="flex min-h-[100dvh] flex-col justify-between bg-[var(--app-canvas)] px-6 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="flex flex-1 flex-col justify-center gap-10">
         <NotrudeMark />
-        <div className="space-y-4">
-          <h1 className="font-display max-w-[14ch] text-[1.85rem] font-semibold leading-[1.1] tracking-[-0.035em] text-[var(--ink)]">
-            Training that meets you where you are.
-          </h1>
-          <p className="max-w-[34ch] text-base leading-relaxed text-[var(--muted)]">
-            Set a goal on your terms—no shame, no streak pressure—just a plan
-            that adapts when life happens.
-          </p>
-        </div>
+        <CoachStage coachId={profile?.coachId ?? "river"} label="A coach in your corner"
+          title="Training that meets you where you are."
+          description="Find a rhythm that fits the life you already have." />
       </div>
 
-      <div className="cta-settle flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {ready && continueHref ? (
           <Button href={continueHref} className="w-full">
             Continue
@@ -60,8 +57,8 @@ export default function WelcomePage() {
             >
               Start with a short quiz
             </Button>
-            <div className="space-y-2 border-t border-[var(--line)] pt-4">
-              <p className="text-center text-sm text-[var(--muted)]">
+            {!user && <div className="space-y-2 border-t border-[var(--app-line)] pt-4">
+              <p className="text-center text-sm text-[var(--app-muted)]">
                 Or hop in with a demo — no quiz required
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -84,9 +81,12 @@ export default function WelcomePage() {
                     : "Gentle start"}
                 </Button>
               </div>
-            </div>
+            </div>}
           </>
         ) : null}
+        <Button href="/account" variant="ghost" className="w-full">
+          {user ? "Your account" : "Sign in or create an account"}
+        </Button>
       </div>
     </main>
   );

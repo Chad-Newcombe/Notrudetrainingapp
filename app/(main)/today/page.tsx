@@ -27,6 +27,8 @@ export default function TodayPage() {
     <main className="bg-[var(--canvas-soft)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <TodaySession
         session={session}
+        plan={plan}
+        logs={logs}
         profile={profile}
         loggedToday={loggedToday}
         outsidePlanWeek={dayIndex == null}

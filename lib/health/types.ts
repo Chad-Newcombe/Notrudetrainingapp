@@ -7,11 +7,12 @@ export type HealthActivity = {
   at: string;
 };
 
-export interface HealthSource {
+export type HealthProviderMode = "oauth" | "native_required" | "partner_required";
+
+export interface HealthProviderDefinition {
   id: HealthProviderId;
   label: string;
-  availabilityNote?: string;
-  connect(): Promise<{ summary: string; activities: HealthActivity[] }>;
-  disconnect(): Promise<void>;
-  listActivities(): Promise<HealthActivity[]>;
+  mode: HealthProviderMode;
+  availabilityNote: string;
+  actionLabel: string;
 }

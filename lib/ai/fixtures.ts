@@ -1,3 +1,7 @@
+import { fixtureCoachFit, isExplicitStyleRequest } from "@/lib/coaches/fit";
+import { getCoach } from "@/lib/coaches/presets";
+import { classifyPlanIntent } from "@/lib/coach/plan-revision";
+import type { CoachRelationship } from "@/lib/types";
 import { weekStartIso } from "@/lib/dates";
 import { createId } from "@/lib/ids";
 import type {
@@ -173,6 +177,10 @@ export function fixtureReflection(profile: UserProfile): string {
 }
 
 export function fixtureAcknowledgment(profile: UserProfile): string {
+  if (profile.intakeBrief) {
+    return "Your coaching notes are saved. You can revisit them anytime under More.";
+  }
+
   const snippet =
     profile.goalText.length > 80
       ? `${profile.goalText.slice(0, 77)}…`
@@ -186,22 +194,76 @@ export function fixtureAcknowledgment(profile: UserProfile): string {
   return `${tone} Your goal—“${snippet}”—matters, and showing up in any amount counts. Nothing about today needs to be perfect.`;
 }
 
-export function fixtureCoachReply(userText: string, profile: UserProfile): string {
+export function fixtureCoachReply(userText: string, profile: UserProfile, relationship?: CoachRelationship | null): string {
   const lower = userText.toLowerCase();
-  if (/tired|exhausted|rough day|bad day/.test(lower)) {
-    return "That sounds like a heavy day. Rest or a very easy walk both count. What would feel kind, not punishing, for the next hour?";
-  }
-  if (/pain|hurt|injury|sore/.test(lower)) {
-    return "Thanks for saying that. Ease off intensity, try modifications, and if pain stays sharp or worsens, loop in a clinician. You are not failing by scaling back.";
-  }
-  if (/skipped|missed|didn't/.test(lower)) {
-    return "Missing a session is normal life, not a character flaw. Want to pick one small win for tomorrow that still fits your goal?";
-  }
-  const brief =
-    profile.cadence === "brief"
-      ? "One clear next step beats a long lecture."
-      : "Tell me more about what got in the way, and we will shape the next step together.";
-  return `${brief} I am with you on “${profile.goalText}.” What feels realistic for today?`;
+  const coach = profile.coachId ?? "river";
+  const declined = relationship?.coachId === coach && relationship.declinedSwitchSuggestion;
+  const fit = fixtureCoachFit(userText, coach, declined);
+  const situation = /pain|hurt|injury|sore/.test(lower) ? "pain"
+    : classifyPlanIntent(userText) === "explicit" ? "plan"
+      : /stop reassuring|no reassurance|less reassurance/.test(lower) ? "reassurance"
+        : isExplicitStyleRequest(userText) ? "style"
+          : /tired|exhausted|rough day|bad day|can't|not today|don't feel like/.test(lower) ? "tired"
+            : /skipped|missed|didn't/.test(lower) ? "missed" : "general";
+  const day = userText.match(/\b(?:to|on|for)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i)?.[1];
+  const when = day ? day[0].toUpperCase() + day.slice(1).toLowerCase() : "this week";
+  const replies = {
+    river: {
+      pain: "Ease off today. If the pain is sharp or keeps returning, check with a clinician.",
+      tired: "Keep today small: five easy minutes, or rest if that fits better.",
+      missed: "Leave some room for one short session tomorrow. The missed workout can stay behind you.",
+      general: "Start with one manageable step today. Keep the pace comfortable.",
+      plan: `Use ${when} for the change you requested. The plan update will show below once saved.`,
+      reassurance: "I'll keep reassurance out and focus on one manageable action.",
+      style: "I can be firmer and keep the next decision simple, with the choice still yours.",
+    },
+    jax: {
+      pain: "Back off the intensity. If pain sticks around or gets worse, check with a clinician.",
+      tired: "Keep it short today: five easy minutes is enough to get moving.",
+      missed: "Pick the next workable slot and get moving again. One short session is enough to restart.",
+      general: "Put one practical move on today's schedule. Make it small enough to follow through.",
+      plan: `Let's work with ${when}. You'll see the change below when the plan is saved.`,
+      reassurance: "I'll skip the reassurance and get straight to the practical next move.",
+      style: "I'll keep the energy practical and focus on following through, without turning up the pressure.",
+    },
+    sol: {
+      pain: "Stop the painful movement. If pain persists or worsens, get it checked by a clinician.",
+      tired: "Scale today down to five easy minutes, or rest if you need it.",
+      missed: "Leave the missed session behind. Choose one realistic slot tomorrow.",
+      general: "Choose one realistic action for today and give it a time.",
+      plan: `Make the change for ${when}. The saved result will appear below.`,
+      reassurance: "I'll lead with the recommendation and leave out reassurance.",
+      style: "I'll give you a clear recommendation and expect a realistic commitment, without pressure or shaming.",
+    },
+    nova: {
+      pain: "Skip the painful move. If pain lingers, ask a clinician.",
+      tired: "Try a five-minute version today and notice whether it leaves you more settled.",
+      missed: "Test a shorter version at your next available slot. Use how it fits to shape the next session.",
+      general: "Try the smallest useful version today and notice what makes it easier to repeat.",
+      plan: `Try ${when} as requested. The saved update below will make the new arrangement visible.`,
+      reassurance: "I'll drop reassurance and focus on practical tests with a clear purpose.",
+      style: "I'll make the experiment more decisive and keep it practical, without turning coaching into pressure.",
+    },
+    knox: {
+      pain: "Stop: pain is the one reason I accept. If it persists or gets worse, see a clinician.",
+      tired: "Tired isn't injured. Do ten minutes today and tell me the time you start.",
+      missed: "You missed it, so you owe it. Name the day and time you make it up.",
+      general: "Pick today's session and give me a start time. Then do it.",
+      plan: `Locked in for ${when}, and the saved change shows below. Now hold to it.`,
+      reassurance: "No reassurance. You get the task and the deadline.",
+      style: "I'll stay hard on excuses and keep it to the task and the time.",
+    },
+    riff: {
+      pain: "No bit here: stop the painful movement, and see a clinician if it persists or worsens.",
+      tired: "Your couch has excellent lawyers, but they lose to five easy minutes. Do those and call it a win.",
+      missed: "The workout isn't mad, it's just disappointed, like a gym membership. Pick one slot tomorrow and we're even.",
+      general: "Motivation shows up late and takes credit, so start without it. One small session today.",
+      plan: `Rewriting the set list for ${when}. You'll see the saved change below.`,
+      reassurance: "Fine, no reassurance; you get one joke and one practical step.",
+      style: "I'll keep one joke and one real step per reply, and go drier if you want.",
+    },
+  };
+  return fit && situation === "style" ? `${getCoach(fit.coachId).name} may fit that style better. ${replies[coach].style}` : replies[coach][situation];
 }
 
 type ComposeChannel = Extract<ChannelPref, "text_style" | "email_outline">;
@@ -213,32 +275,42 @@ export function fixtureComposedMessage(
   const createdAt = new Date().toISOString();
   const goal = profile.goalText;
 
+  const coachId = profile.coachId ?? "river";
+  const coachName = getCoach(coachId).name;
+  const deliveredAt = createdAt;
+
   if (channel === "email_outline") {
     return {
       id: createId(),
       channel: "email_outline",
-      subject: "Your training week — gentle check-in",
+      subject: `From ${coachName}: your week check-in`,
       body: [
-        "Hi,",
+        "Hey,",
         "",
-        `I put together a week that respects your goal: ${goal}.`,
+        `It’s ${coachName}. I shaped a week around your goal: ${goal}.`,
         "",
         "Highlights:",
         "- Short sessions you can move or shorten without guilt",
         "- Recovery treated as part of progress, not a setback",
         "",
-        "Reply if anything felt too much or too little—we can adjust.",
+        "Reply in the app if anything felt too much or too little — we’ll adjust.",
         "",
-        "— Notrude",
+        `— ${coachName}`,
       ].join("\n"),
       createdAt,
+      fromCoachId: coachId,
+      direction: "coach_to_user",
+      deliveredAt,
     };
   }
 
   return {
     id: createId(),
     channel: "text_style",
-    body: `Quick nudge: one small session today still moves "${goal}" forward. You've got this—no pressure to be perfect.`,
+    body: `${coachName} here — one small session today still moves “${goal}” forward. Keep it manageable.`,
     createdAt,
+    fromCoachId: coachId,
+    direction: "coach_to_user",
+    deliveredAt,
   };
 }

@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { fixturePlanForProfile } from "@/lib/ai/fixtures";
-import type { UserProfile } from "@/lib/types";
 
 const base = {
   tone: "gentle" as const,
   cadence: "brief" as const,
   motivation: "celebrate_wins" as const,
   channels: ["in_app" as const],
+  coachId: "river" as const,
   trackWeight: false,
   createdAt: "2026-11-08T00:00:00.000Z",
 };

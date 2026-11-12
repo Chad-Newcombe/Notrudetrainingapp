@@ -34,10 +34,10 @@ export function HistoryList({ logs, plan }: Props) {
   if (sorted.length === 0) {
     return (
       <section>
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
+        <h2 className="text-base font-semibold text-[var(--app-text)]">
           History
         </h2>
-        <p className="mt-3 text-base text-[var(--muted)]">
+        <p className="mt-3 text-base text-[var(--app-muted)]">
           When you log a session, it will show up here — completed, partial, or
           skipped.
         </p>
@@ -47,36 +47,36 @@ export function HistoryList({ logs, plan }: Props) {
 
   return (
     <section>
-      <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
+      <h2 className="text-base font-semibold text-[var(--app-text)]">
         History
       </h2>
-      <ul className="mt-3 flex flex-col gap-2">
+      <ul className="mt-3 overflow-hidden rounded-[var(--radius-panel)] bg-[var(--app-raised)] px-4">
         {sorted.map((log) => (
           <li
             key={log.id}
-            className="panel px-4 py-3"
+            className="border-b border-[var(--app-line)] py-4 last:border-0"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-[var(--ink)]">
+                <p className="font-semibold text-[var(--app-text)]">
                   {sessionTitle(plan, log.sessionId)}
                 </p>
-                <p className="mt-0.5 text-sm text-[var(--muted)]">
+                <p className="mt-0.5 text-sm text-[var(--app-muted)]">
                   {formatWhen(log.completedAt)}
                 </p>
               </div>
               <span
                 className={`shrink-0 text-sm ${
                   log.status === "skipped"
-                    ? "text-[var(--muted)]"
-                    : "text-[var(--sage)]"
+                    ? "text-[var(--app-muted)]"
+                    : "text-[var(--app-complete)]"
                 }`}
               >
                 {STATUS_LABEL[log.status]}
               </span>
             </div>
             {log.notes ? (
-              <p className="mt-2 text-sm text-[var(--muted)]">{log.notes}</p>
+              <p className="mt-2 text-sm text-[var(--app-muted)]">{log.notes}</p>
             ) : null}
           </li>
         ))}

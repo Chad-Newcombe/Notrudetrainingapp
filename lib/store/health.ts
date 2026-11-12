@@ -1,12 +1,10 @@
 import type { HealthConnection } from "@/lib/types";
-import { getDb } from "./db";
+import { readRecords, writeRecord } from "./storage";
 
 export async function listHealth(): Promise<HealthConnection[]> {
-  const db = await getDb();
-  return db.getAll("health");
+  return readRecords("health");
 }
 
 export async function saveHealth(c: HealthConnection): Promise<void> {
-  const db = await getDb();
-  await db.put("health", c);
+  await writeRecord("health", c.provider, c);
 }

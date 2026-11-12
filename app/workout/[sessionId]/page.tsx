@@ -73,19 +73,19 @@ export default function WorkoutPlayPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center px-6">
-        <p className="text-[var(--muted)]">Loading session…</p>
+      <main className="theme-dark flex min-h-[100dvh] items-center justify-center bg-[var(--app-canvas)] px-6">
+        <p className="text-[var(--app-muted)]">Loading session…</p>
       </main>
     );
   }
 
   if (!session) {
     return (
-      <main className="theme-dark atmosphere-dark px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
-        <h1 className="font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
+      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+        <h1 className="text-xl font-semibold text-[var(--app-text)]">
           Session not found
         </h1>
-        <p className="mt-3 text-[var(--muted)]">
+        <p className="mt-3 text-[var(--app-muted)]">
           It may have been updated in your plan.
         </p>
         <Button href="/today" className="mt-6 w-full">
@@ -97,12 +97,12 @@ export default function WorkoutPlayPage() {
 
   if (skipAck) {
     return (
-      <main className="theme-dark atmosphere-dark flex min-h-[100dvh] flex-col justify-between px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <main className="theme-dark flex min-h-[100dvh] flex-col justify-between bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
         <div className="flex flex-1 flex-col justify-center gap-4">
-          <h1 className="font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+          <h1 className="text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">
             Okay — we can adjust.
           </h1>
-          <p className="text-lg text-[var(--muted)]">
+          <p className="text-lg text-[var(--app-muted)]">
             Want a lighter option in Coach?
           </p>
         </div>
@@ -128,28 +128,28 @@ export default function WorkoutPlayPage() {
   }
 
   return (
-    <main className="theme-dark atmosphere-dark flex min-h-[100dvh] flex-col px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+    <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <p className="meta-label">{progressLabel}</p>
-      <h1 className="mt-2 font-display text-[1.75rem] font-semibold tracking-[-0.035em] text-[var(--ink)]">
+      <h1 className="mt-2 text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">
         {session.title}
       </h1>
 
       {currentStep ? (
-        <article className="panel mt-8 flex flex-1 flex-col p-5">
-          <h2 className="font-display text-xl font-semibold tracking-tight text-[var(--ink)]">
+        <article className="mt-8 flex flex-1 flex-col rounded-[var(--radius-panel)] border border-[var(--app-line)] bg-[var(--app-raised)] p-5">
+          <h2 className="text-xl font-semibold text-[var(--app-text)]">
             {currentStep.name}
           </h2>
-          <p className="mt-3 text-lg leading-relaxed text-[var(--muted)]">
+          <p className="mt-3 text-lg leading-relaxed text-[var(--app-muted)]">
             {currentStep.detail}
           </p>
           {currentStep.durationMin != null && (
-            <p className="mt-4 text-sm text-[var(--muted)]">
+            <p className="mt-4 text-sm text-[var(--app-muted)]">
               About {currentStep.durationMin} min
             </p>
           )}
         </article>
       ) : (
-        <p className="mt-8 text-[var(--muted)]">No steps in this session.</p>
+        <p className="mt-8 text-[var(--app-muted)]">No steps in this session.</p>
       )}
 
       <div className="mt-8 flex flex-col gap-3">

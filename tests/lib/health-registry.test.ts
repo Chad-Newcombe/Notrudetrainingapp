@@ -11,15 +11,18 @@ describe("health registry", () => {
     ]);
   });
 
-  it("strava connect returns activities", async () => {
+  it("marks Strava as the only web OAuth provider", () => {
     const strava = getHealthSource("strava");
-    const result = await strava.connect();
-    expect(result.activities.length).toBeGreaterThan(0);
-    expect(result.summary).toBeTruthy();
+    expect(strava.mode).toBe("oauth");
+    expect(strava.actionLabel).toBe("Connect Strava");
   });
 
-  it("apple health has availability note", () => {
+  it("does not pretend native and partner-only providers can connect on the web", () => {
     const apple = getHealthSource("apple_health");
-    expect(apple.availabilityNote).toMatch(/native iOS/i);
+    const garmin = getHealthSource("garmin");
+    expect(apple.mode).toBe("native_required");
+    expect(apple.availabilityNote).toMatch(/HealthKit.*iOS/i);
+    expect(garmin.mode).toBe("partner_required");
+    expect(garmin.availabilityNote).toMatch(/developer program/i);
   });
 });

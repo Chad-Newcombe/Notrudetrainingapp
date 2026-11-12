@@ -2,8 +2,9 @@ import { generateText, Output } from "ai";
 import { createId } from "@/lib/ids";
 import { EMPATHY_SYSTEM_RULES } from "@/lib/ai/empathy";
 import { fixtureComposedMessage } from "@/lib/ai/fixtures";
-import { getModel, hasAiKey } from "@/lib/ai/model";
+import { getModel, localGenerationOptions } from "@/lib/ai/model";
 import { composedMessageBodySchema } from "@/lib/ai/schemas";
+import { getCoach } from "@/lib/coaches/presets";
 import type { ComposedMessage, UserProfile } from "@/lib/types";
 
 type ComposeChannel = "text_style" | "email_outline";
@@ -16,28 +17,36 @@ export async function POST(req: Request) {
   };
   const { profile, channel, recentSummary } = body;
 
-  if (!hasAiKey()) {
+  const model = getModel();
+  if (!model) {
     return Response.json({ message: fixtureComposedMessage(channel, profile) });
   }
 
+  const coach = getCoach(profile.coachId);
   const formHint =
     channel === "email_outline"
-      ? "Return subject and body for a supportive weekly email outline."
-      : "Return body only for a short text-style nudge (no subject).";
+      ? "Return subject and body for a supportive weekly email FROM the user's coach TO the user (first person as the coach)."
+      : "Return body only for a short text FROM the coach TO the user (no subject).";
 
   const result = await generateText({
-    model: getModel(),
+    model,
+    ...localGenerationOptions(req.signal),
+    maxOutputTokens: 450,
     output: Output.object({ schema: composedMessageBodySchema }),
-    system: `${EMPATHY_SYSTEM_RULES}\n${formHint}`,
+    system: `${EMPATHY_SYSTEM_RULES}\nYou are ${coach.name}. Your default style is ${coach.vibe}. Match the user's chosen tone and cadence. Apply approved supportApproach and progressSignal from the intake brief when relevant. Do not recite the notes.\n${formHint}\nSign as ${coach.name}.`,
     prompt: JSON.stringify({ profile, channel, recentSummary }),
   });
 
+  const now = new Date().toISOString();
   const message: ComposedMessage = {
     id: createId(),
     channel,
     subject: channel === "email_outline" ? result.output.subject : undefined,
     body: result.output.body,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    fromCoachId: coach.id,
+    direction: "coach_to_user",
+    deliveredAt: now,
   };
 
   return Response.json({ message });

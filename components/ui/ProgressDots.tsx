@@ -18,10 +18,10 @@ export function ProgressDots({ total, current }: ProgressDotsProps) {
           key={i}
           className={`h-1 rounded-full transition-all duration-300 ${
             i === current
-              ? "w-7 bg-[var(--ink-strong)]"
+              ? "w-7 bg-[var(--app-accent)]"
               : i < current
-                ? "w-4 bg-[var(--ink-strong)]/35"
-                : "w-4 bg-[var(--hairline)]"
+                ? "w-4 bg-[var(--app-accent)] opacity-45"
+                : "w-4 bg-[var(--app-line)]"
           }`}
         />
       ))}

@@ -3,6 +3,8 @@ import type {
   ComposedMessage,
   HealthConnection,
   ChatMessage,
+  CoachConversation,
+  CoachRelationship,
   ProgressSnapshot,
   TrainingPlan,
   UserProfile,
@@ -12,7 +14,7 @@ import type {
 export interface NotrudeSchema extends DBSchema {
   meta: {
     key: string;
-    value: UserProfile | TrainingPlan;
+    value: UserProfile | TrainingPlan | true;
   };
   logs: {
     key: string;
@@ -34,10 +36,21 @@ export interface NotrudeSchema extends DBSchema {
     key: string;
     value: ComposedMessage;
   };
+  coachConversations: {
+    key: string;
+    value: CoachConversation;
+  };
+  coachRelationships: {
+    key: CoachRelationship["coachId"];
+    value: CoachRelationship;
+  };
 }
 
+let dataGeneration = 0;
+export function storageGeneration() { return dataGeneration; }
+
 const DB_NAME = "notrude";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<NotrudeSchema>> | null = null;
 
@@ -63,6 +76,12 @@ export function getDb(): Promise<IDBPDatabase<NotrudeSchema>> {
         if (!db.objectStoreNames.contains("messages")) {
           db.createObjectStore("messages", { keyPath: "id" });
         }
+        if (!db.objectStoreNames.contains("coachConversations")) {
+          db.createObjectStore("coachConversations", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("coachRelationships")) {
+          db.createObjectStore("coachRelationships", { keyPath: "coachId" });
+        }
       },
     });
   }
@@ -76,9 +95,15 @@ const STORE_NAMES = [
   "progress",
   "health",
   "messages",
+  "coachConversations",
+  "coachRelationships",
 ] as const;
 
 export async function clearAll(): Promise<void> {
+  dataGeneration += 1;
+  if (typeof localStorage !== "undefined") {
+    for (const key of Object.keys(localStorage)) if (key.startsWith("notrude-coach-sessions:")) localStorage.removeItem(key);
+  }
   const db = await getDb();
   const tx = db.transaction(STORE_NAMES, "readwrite");
   await Promise.all(STORE_NAMES.map((name) => tx.objectStore(name).clear()));
