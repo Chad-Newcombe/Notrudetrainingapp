@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CoachStage } from "@/components/coach/CoachStage";
+import { CoachSwitchSuggestion } from "@/components/coach/CoachSwitchSuggestion";
+import { fixtureCoachFit, isExplicitStyleRequest, validatedCoachFit, type CoachFitSuggestion } from "@/lib/coaches/fit";
 import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
 import { PlanUpdateStatus } from "@/components/coach/PlanUpdateStatus";
 import { getCoach, DEFAULT_COACH_ID } from "@/lib/coaches/presets";
@@ -24,7 +26,7 @@ import {
   uiMessageText,
 } from "@/lib/coach/messages";
 import { buildHealthSummary } from "@/lib/health/summary";
-import { archiveCoachConversation, getCoachConversation, listHealth, savePlan } from "@/lib/store";
+import { archiveCoachConversation, getCoachConversation, getCoachRelationship, saveCoachRelationship, listHealth, savePlan } from "@/lib/store";
 import { storageGeneration } from "@/lib/store/db";
 import { storageScope } from "@/lib/store/storage";
 import { persistCoachMessages, registerCoachSession, trackCoachPlanTransition } from "@/lib/store/coach-conversations";
@@ -173,6 +175,7 @@ function CoachChatInner({
   const sessionGeneration = useRef(storageGeneration());
   const router = useRouter();
   const [input, setInput] = useState("");
+  const [fitSuggestion, setFitSuggestion] = useState<CoachFitSuggestion | null>(null);
   const [sessionClosed, setSessionClosed] = useState(false);
   const closing = useRef(false);
   const [activeProfile] = useState(profile);
@@ -238,10 +241,26 @@ function CoachChatInner({
       fetch: coachFetch,
       prepareSendMessagesRequest: async ({ messages, body }) => {
         await persist(messages);
+        const coachId = profileRef.current.coachId;
+        const relationship = await getCoachRelationship(coachId);
+        const latest = [...messages].reverse().find((message) => message.role === "user");
+        const text = latest ? uiMessageText(latest) : "";
+        if (isExplicitStyleRequest(text) && !relationship.declinedSwitchSuggestion) {
+          let suggestion = fixtureCoachFit(text, coachId);
+          try {
+            const response = await fetch("/api/coach/fit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ coachId, text, declinedSwitchSuggestion: relationship.declinedSwitchSuggestion }), signal: AbortSignal.timeout(10_000) });
+            if (!response.ok) throw new Error("Fit unavailable");
+            const result = await response.json();
+            suggestion = result.suggestion === null ? null : validatedCoachFit(result.suggestion, text, coachId) ?? suggestion;
+          } catch { /* The deterministic suggestion remains available offline. */ }
+          if (!closing.current) setFitSuggestion(suggestion);
+        }
+        if (closing.current || sessionScope.current !== storageScope() || sessionGeneration.current !== storageGeneration()) throw new Error("Session changed");
         return {
           body: {
             ...body,
             messages,
+            relationship,
             profile: profileRef.current,
             plan: activePlanRef.current,
             logs,
@@ -272,7 +291,9 @@ function CoachChatInner({
   snapshot.current = messages;
   const [storageError, setStorageError] = useState(false);
   useEffect(() => {
-    void persist(messages).then(() => setStorageError(false)).catch(() => setStorageError(true));
+    let mounted = true;
+    void persist(messages).then(() => mounted && setStorageError(false)).catch(() => mounted && setStorageError(true));
+    return () => { mounted = false; };
   }, [messages, persist]);
   useEffect(() => {
     const flush = async () => {
@@ -321,14 +342,23 @@ function CoachChatInner({
     });
   }, [messages, status]);
 
+  const stayWithCoach = useCallback(async () => {
+    const relationship = await getCoachRelationship(profileRef.current.coachId);
+    if (closing.current || sessionScope.current !== storageScope() || sessionGeneration.current !== storageGeneration()) throw new Error("Session changed");
+    await saveCoachRelationship({ ...relationship, declinedSwitchSuggestion: true, updatedAt: new Date().toISOString() });
+    setFitSuggestion(null);
+  }, []);
+
   const submit = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || busy || closing.current) return;
+      const stay = new RegExp(`^(?:(?:i (?:want|prefer|choose) to|i['’]ll|please|let me)\\s+)?(?:stay with (?:you|${profileRef.current.coachId})|keep (?:you|my coach)|(?:i )?(?:don['’]t|do not) (?:want to )?switch)[.!]?$`, "i");
+      if (fitSuggestion && stay.test(trimmed)) await stayWithCoach();
       setInput("");
       await sendMessage({ text: trimmed });
     },
-    [busy, sendMessage],
+    [busy, sendMessage, fitSuggestion, stayWithCoach],
   );
 
   const retryPlanUpdate = useCallback(() => {
@@ -408,6 +438,8 @@ function CoachChatInner({
         />
       ) : null}
 
+      {fitSuggestion && <CoachSwitchSuggestion suggestion={fitSuggestion} profile={activeProfile} conversationId={conversationId}
+        disabled={status === "submitted" || status === "streaming"} onStay={stayWithCoach} onSwitched={() => router.push("/coach")} />}
       <CoachComposer input={input} busy={busy || sessionClosed} onInput={setInput} onSubmit={(value) => void submit(value)} />
     </div>
   );

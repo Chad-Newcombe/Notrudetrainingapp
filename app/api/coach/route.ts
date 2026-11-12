@@ -3,15 +3,15 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
-import { EMPATHY_SYSTEM_RULES } from "@/lib/ai/empathy";
 import { lastUserText } from "@/lib/ai/coach-messages";
 import { fixtureCoachReply } from "@/lib/ai/fixtures";
 import { getModel, localGenerationOptions } from "@/lib/ai/model";
 import { coachVoiceInstructions } from "@/lib/coaches/voice";
-import type { TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
+import type { CoachRelationship, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 type CoachRequestBody = {
   messages: UIMessage[];
+  relationship?: CoachRelationship;
   profile: UserProfile;
   plan?: TrainingPlan | null;
   logs?: WorkoutLog[];
@@ -21,8 +21,7 @@ type CoachRequestBody = {
 
 function buildCoachSystem(body: CoachRequestBody): string {
   return [
-    EMPATHY_SYSTEM_RULES,
-    coachVoiceInstructions(body.profile),
+    coachVoiceInstructions(body.profile, body.relationship),
     "Use the approved intakeBrief to tailor suggestions, support after disruptions, and how you recognize progress. Use only the relevant notes and turn them into actions or questions. Do not recite the notes or infer missing preferences.",
     "Context (JSON):",
     JSON.stringify({
@@ -41,7 +40,7 @@ export async function POST(req: Request) {
   const model = getModel();
   if (!model) {
     const userText = lastUserText(body.messages);
-    const text = fixtureCoachReply(userText, body.profile);
+    const text = fixtureCoachReply(userText, body.profile, body.relationship);
     return Response.json(
       { text },
       {

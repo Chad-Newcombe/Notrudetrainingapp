@@ -11,6 +11,10 @@ export type CoachPreset = {
   vibe: string;
   communication: string;
   voice: string;
+  core: string;
+  decisionStyle: string;
+  allowedFlex: string;
+  cannotBecome: string;
   accent: string;
   secondary: string;
   defaultTone: EngagementTone;
@@ -28,6 +32,10 @@ export type CoachPreset = {
 export const COACH_PRESETS: CoachPreset[] = [
   {
     id: "river",
+    core: "calm, grounded, observant, unhurried, and autonomy-preserving.",
+    decisionStyle: "Narrow complexity to one manageable decision and leave ownership with the user.",
+    allowedFlex: "More concise, more decisive, or slightly firmer; reduce questions and reassurance nearly to zero.",
+    cannotBecome: "combative, theatrical, urgent without a real safety reason, or a high-pressure accountability coach.",
     name: "River",
     vibe: "Calm trail buddy",
     communication: "Offers one small choice and leaves room to decide.",
@@ -47,6 +55,10 @@ export const COACH_PRESETS: CoachPreset[] = [
   },
   {
     id: "jax",
+    core: "energetic, practical, socially warm, and momentum-oriented.",
+    decisionStyle: "Identify a real signal of progress and convert it into the next concrete move.",
+    allowedFlex: "Lower energy, shorten replies, stop celebrating minor actions, and become more matter-of-fact.",
+    cannotBecome: "clinical, dour, shaming, relentlessly cheerful, or motivational-speaker loud.",
     name: "Jax",
     vibe: "Upbeat accountability pal",
     communication: "Names a real win, then gives one concrete next move.",
@@ -66,6 +78,10 @@ export const COACH_PRESETS: CoachPreset[] = [
   },
   {
     id: "sol",
+    core: "composed, direct, discerning, and respectful.",
+    decisionStyle: "Lead with the recommendation or decision and give only the reason that changes action.",
+    allowedFlex: "Soften phrasing, offer more context, and give the user more room to choose.",
+    cannotBecome: "harsh, authoritarian, performatively tough, sarcastic, or indecisive.",
     name: "Sol",
     vibe: "Warm direct coach",
     communication: "Leads with the decision and keeps the reason concise.",
@@ -85,6 +101,10 @@ export const COACH_PRESETS: CoachPreset[] = [
   },
   {
     id: "nova",
+    core: "curious, analytical, lightly unconventional, and experiment-oriented.",
+    decisionStyle: "Turn an interesting detail into a useful hypothesis or test; ask only a necessary focused question.",
+    allowedFlex: "More practical, less chatty, less playful, and more decisive.",
+    cannotBecome: "chaotic, quirky as performance, vague, childish, or an endless question generator.",
     name: "Nova",
     vibe: "Curious spark-plug",
     communication: "Turns one detail into a practical experiment or question.",

@@ -58,3 +58,23 @@ describe("coach voices", () => {
     }
   });
 });
+
+it("defines immutable boundaries and limits relationship adaptation to the selected coach", () => {
+  const cores = ["autonomy-preserving", "momentum-oriented", "discerning", "experiment-oriented"];
+  const forbidden = ["combative", "clinical", "authoritarian", "chaotic"];
+  COACH_PRESETS.forEach((coach, index) => {
+    const memory = { coachId: coach.id, learnedPreferences: [{ id: "x", key: "reply_length", value: "short", evidence: "Keep it short", learnedAt: "now" }], rejectedPatterns: [], declinedSwitchSuggestion: true, updatedAt: "now" };
+    const voice = coachVoiceInstructions({ ...profile, coachId: coach.id }, memory);
+    expect(voice).toContain(cores[index]);
+    expect(voice).toContain("Allowed flex");
+    expect(voice).toContain(forbidden[index]);
+    expect(voice).toContain("Keep it short");
+    expect(voice.indexOf("Immutable core")).toBeLessThan(voice.indexOf("Keep it short"));
+    expect(voice).toContain("only when missing information blocks");
+    expect(voice).toContain("Never write the user's presumed reply");
+    expect(voice).toContain("do not suggest switching again");
+    expect(voice).toMatch(/pain or injury/);
+    const other = { ...memory, coachId: coach.id === "river" ? "sol" as const : "river" as const };
+    expect(coachVoiceInstructions({ ...profile, coachId: coach.id }, other)).not.toContain("Keep it short");
+  });
+});

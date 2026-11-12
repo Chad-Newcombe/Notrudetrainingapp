@@ -14,3 +14,14 @@ it("omits a selected summary after the first user turn", async () => {
   await POST(new Request("http://localhost/api/coach", { method: "POST", body: JSON.stringify({ profile: { coachId: "river" }, messages: [{ role: "user", parts: [] }, { role: "user", parts: [] }], continuationSummary: "Old selected summary" }) }));
   expect(model.stream.mock.calls[0][0].system).not.toContain("Old selected summary");
 });
+it("supplies only validated selected relationship data without obsolete empathy instructions", async () => {
+  const relationship = { coachId: "river", learnedPreferences: [{ id: "hidden", key: "reply_length", value: "short", evidence: "Keep it brief", learnedAt: "now" }], rejectedPatterns: [], declinedSwitchSuggestion: true, updatedAt: "now" };
+  for (const coachId of ["river", "sol"]) {
+    await POST(new Request("http://localhost/api/coach", { method: "POST", body: JSON.stringify({ profile: { coachId }, relationship, messages: [{ role: "user", parts: [{ type: "text", text: "Help" }] }] }) }));
+    const system = model.stream.mock.calls.at(-1)![0].system;
+    if (coachId === "river") expect(system).toContain("Keep it brief");
+    else expect(system).not.toContain("Keep it brief");
+    expect(system).not.toContain("Acknowledge how they feel");
+    expect(system).not.toContain("review it before saving");
+  }
+});
