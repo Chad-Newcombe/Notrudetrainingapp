@@ -65,6 +65,18 @@ The URL is resolved by the Next.js server. Run Next.js and Ollama together on a 
 
 With no model URL, the app uses built-in demo responses. A configured model never falls back to a paid provider. Ollama has to be running for live coaching.
 
+## Coach conversations and memory
+
+Each coach has its own channel. Coach opens on that coach's landing: **Start a new chat** above its previous chats. A new chat is empty, and the model is not called until you send a message.
+
+Leaving Coach or switching coaches archives a chat that has at least one message and discards an empty one. Archived chats are read-only. **Continue from here** starts a new chat that carries only the archived summary, and **Delete this conversation** removes the transcript after confirmation.
+
+Each coach keeps its own notes about how you like to be coached; these never cross between coaches. **More → What your coaches remember** lists them by coach and lets you remove any item. Removing a note doesn't change a transcript, and deleting a transcript doesn't remove a note. A note about ability, constraints, or schedule can be shared with all coaches from the same screen.
+
+If you ask a coach for a style outside its range, the app offers one **Switch to {coach}** control. Chat text alone never changes your coach.
+
+Chats saved before this version are kept as one archived **Legacy conversation** under the coach you had selected. Titles, summaries, and learned notes for archived chats need the local model; without one, built-in summaries are used.
+
 ## Coach models
 
 The coach picker loads the selected coach's 3D preview on demand. Welcome, Today, Coach, and Inbox show the active coach in 3D. The model can be rotated and has idle and reply animations. Reduced motion pauses automatic animation, and a portrait is available if the model fails to load. Message bubbles use lightweight portraits from the same models.
