@@ -1,11 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { StartCoachChat } from "@/components/coach/StartCoachChat";
 import { getCoach } from "@/lib/coaches/presets";
-import { getCoachConversation } from "@/lib/store";
+import { deleteCoachConversation, getCoachConversation } from "@/lib/store";
 import type { CoachConversation, CoachId } from "@/lib/types";
+
+const quiet = "min-h-11 rounded-[var(--radius-control)] border border-[var(--app-line)] px-4 font-semibold text-[var(--app-text)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[var(--app-focus)] disabled:opacity-60";
+
+function DeleteConversation({ conversationId, coachName }: { conversationId: string; coachName: string }) {
+  const router = useRouter();
+  const [state, setState] = useState<"idle" | "confirm" | "busy" | "error">("idle");
+  async function remove() {
+    setState("busy");
+    try {
+      await deleteCoachConversation(conversationId);
+      router.push("/coach");
+    } catch { setState("error"); }
+  }
+  if (state === "idle") return <button type="button" className={quiet} onClick={() => setState("confirm")}>Delete this conversation</button>;
+  return (
+    <div className="panel flex flex-col gap-3 p-4">
+      <p role={state === "error" ? "alert" : undefined} className="text-sm text-[var(--app-text)]">
+        {state === "error" ? "Couldn’t delete this conversation. Try again." : `This permanently deletes the transcript. What ${coachName} remembers stays until you remove it under More.`}
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" className={quiet} disabled={state === "busy"} onClick={() => void remove()}>Delete permanently</button>
+        <button type="button" className={quiet} disabled={state === "busy"} onClick={() => setState("idle")}>Keep conversation</button>
+      </div>
+    </div>
+  );
+}
 
 export function ArchivedConversation({ conversationId, coachId }: { conversationId: string; coachId: CoachId }) {
   const [loaded, setLoaded] = useState<{ id: string; coachId: CoachId; record?: CoachConversation } | null>(null);
@@ -47,6 +74,7 @@ export function ArchivedConversation({ conversationId, coachId }: { conversation
         ))}
       </div>
       <StartCoachChat key={record.id} coachId={coachId} continuedFromId={record.id} />
+      <DeleteConversation conversationId={record.id} coachName={getCoach(coachId).name} />
     </div>
   );
 }

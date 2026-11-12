@@ -1,5 +1,6 @@
 "use client";
 
+import { CoachMemoryManager } from "@/components/coach/CoachMemoryManager";
 import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
 import { HealthConnections } from "@/components/progress/HealthConnections";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +38,8 @@ export default function MorePage() {
         <h2 id="coach-settings-heading" className="mb-3 text-base font-semibold text-[var(--app-text)]">Coach</h2>
         {profile ? <CoachSwitcher profile={profile} onChanged={() => void reload()} /> : null}
       </section>
+
+      <CoachMemoryManager />
 
       <div className="border-t border-[var(--app-line)] pt-7"><HealthConnections /></div>
     </main>

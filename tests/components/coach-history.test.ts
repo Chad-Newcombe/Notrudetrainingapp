@@ -6,7 +6,7 @@ import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import HistoryPage from "@/app/(main)/coach/history/[conversationId]/page";
 import ChatPage from "@/app/(main)/coach/chat/[conversationId]/page";
-import { appendChat, clearAll, getCoachConversation, listCoachConversations, saveCoachConversation, saveProfile } from "@/lib/store";
+import { appendChat, clearAll, getCoachConversation, getCoachRelationship, listCoachConversations, saveCoachConversation, saveCoachRelationship, saveProfile } from "@/lib/store";
 import { setStorageAccount } from "@/lib/store/storage";
 import type { CoachConversation, UserProfile } from "@/lib/types";
 
@@ -113,4 +113,24 @@ describe("exact active coach route", () => {
       expect(screen.queryByText("Make the walks shorter.")).not.toBeInTheDocument();
     });
   }
+});
+
+describe("deleting an archived chat", () => {
+  const memory = { coachId: "river" as const, learnedPreferences: [{ id: "river:reply_length", key: "reply_length", value: "short", evidence: "Keep it short", learnedAt: now }], rejectedPatterns: [], declinedSwitchSuggestion: false, updatedAt: now };
+  it("removes only that conversation after confirmation and leaves coach memory alone", async () => {
+    await saveCoachConversation(archived);
+    await saveCoachConversation({ ...archived, id: "archive-two" });
+    await saveCoachRelationship(memory);
+    render(createElement(HistoryPage));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete this conversation" }));
+    expect(await getCoachConversation("archive-one")).toEqual(archived);
+    fireEvent.click(screen.getByRole("button", { name: "Keep conversation" }));
+    expect(await getCoachConversation("archive-one")).toEqual(archived);
+    fireEvent.click(screen.getByRole("button", { name: "Delete this conversation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
+    await waitFor(() => expect(navigation.push).toHaveBeenCalledWith("/coach"));
+    expect(await getCoachConversation("archive-one")).toBeUndefined();
+    expect(await getCoachConversation("archive-two")).toBeDefined();
+    expect(await getCoachRelationship("river")).toEqual(memory);
+  });
 });
