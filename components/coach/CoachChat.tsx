@@ -10,6 +10,7 @@ import { CoachStage } from "@/components/coach/CoachStage";
 import { CoachSwitchSuggestion } from "@/components/coach/CoachSwitchSuggestion";
 import { fixtureCoachFit, isExplicitStyleRequest, validatedCoachFit, type CoachFitSuggestion } from "@/lib/coaches/fit";
 import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
+import { applyPlanEdits, summarizePlanEdits, type PlanEdit } from "@/lib/coach/plan-edit";
 import { PlanUpdateStatus } from "@/components/coach/PlanUpdateStatus";
 import { getCoach, DEFAULT_COACH_ID } from "@/lib/coaches/presets";
 import {
@@ -195,6 +196,7 @@ function CoachChatInner({
   const updatePlanFromConversation = useCallback(async (
     id: string,
     conversation: PlanConversationTurn[],
+    edits?: string | null,
   ) => {
     if (handledPlanMessageIds.current.has(id) || updatingMessageId.current === id) return;
     updatingMessageId.current = id;
@@ -203,7 +205,15 @@ function CoachChatInner({
     try {
       await trackCoachPlanTransition(conversationId, "updating", async () => {
         const previous = activePlanRef.current;
-        const response = await fetch("/api/plan", {
+        let edited: TrainingPlan | null = null;
+        let summary: string[] | null = null;
+        try {
+          const parsed = edits ? JSON.parse(edits) as PlanEdit[] : [];
+          const notes: string[] = [];
+          edited = applyPlanEdits(previous, parsed, logs, conversation.findLast((turn) => turn.role === "user")?.content, undefined, notes);
+          if (edited) summary = summarizePlanEdits(previous, edited, parsed, notes);
+        } catch { /* fall back to a full rewrite */ }
+        const response = edited ? Response.json({ plan: edited }) : await fetch("/api/plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -221,6 +231,7 @@ function CoachChatInner({
           if (sessionGeneration.current !== storageGeneration()) throw new Error("Storage was cleared.");
           await savePlan(next);
         });
+        if (summary) transition.changes = summary;
         activePlanRef.current = data.plan;
         setPlanTransition(transition);
         handledPlanMessageIds.current.add(id);
@@ -282,7 +293,7 @@ function CoachChatInner({
             role: message.role as "user" | "assistant",
             content: uiMessageText(message),
           })));
-        void updatePlanFromConversation(latestUser.id, conversation);
+        void updatePlanFromConversation(latestUser.id, conversation, coachFetch.planEdits);
       }
     },
   });

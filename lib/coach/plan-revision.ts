@@ -1,4 +1,4 @@
-import type { TrainingPlan, WorkoutLog } from "@/lib/types";
+import type { PlanSession, TrainingPlan, WorkoutLog } from "@/lib/types";
 import { DAY_LABELS } from "@/lib/dates";
 
 export type PlanConversationTurn = { role: "user" | "assistant"; content: string };
@@ -121,6 +121,18 @@ export function preserveLoggedSessions(
   };
 }
 
+export function shiftSessionEffort(session: PlanSession, shift: 1 | -1): PlanSession {
+  const levels = ["easy", "moderate", "hard"] as const;
+  return {
+    ...session,
+    intensity: levels[Math.min(2, Math.max(0, levels.indexOf(session.intensity) + shift))],
+    rationale: shift > 0 ? "Stepped up because you asked for a harder week." : "Eased off because you asked for a lighter week.",
+    steps: session.steps.map((step) => step.durationMin
+      ? { ...step, durationMin: Math.max(5, Math.round(step.durationMin * (shift > 0 ? 1.25 : 0.8) / 5) * 5) }
+      : step),
+  };
+}
+
 export function adjustFixturePlanForConversation(
   plan: TrainingPlan,
   conversation: PlanConversationTurn[],
@@ -136,18 +148,7 @@ export function adjustFixturePlanForConversation(
     const shift = /\b(?:harder|tougher|more intense|more challenging|step it up)\b/.test(latest) ? 1
       : /\b(?:easier|lighter|gentler|less intense)\b/.test(latest) ? -1 : 0;
     if (!shift) return plan;
-    const levels = ["easy", "moderate", "hard"] as const;
-    return {
-      ...plan,
-      sessions: plan.sessions.map((session) => ({
-        ...session,
-        intensity: levels[Math.min(2, Math.max(0, levels.indexOf(session.intensity) + shift))],
-        rationale: shift > 0 ? "Stepped up because you asked for a harder week." : "Eased off because you asked for a lighter week.",
-        steps: session.steps.map((step) => step.durationMin
-          ? { ...step, durationMin: Math.max(5, Math.round(step.durationMin * (shift > 0 ? 1.25 : 0.8) / 5) * 5) }
-          : step),
-      })),
-    };
+    return { ...plan, sessions: plan.sessions.map((session) => shiftSessionEffort(session, shift)) };
   }
   if (minutes < 5 || minutes > 180) return plan;
 

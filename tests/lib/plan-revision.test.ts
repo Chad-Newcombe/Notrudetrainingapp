@@ -235,3 +235,74 @@ it("removes AI formatting from coach replies only", async () => {
   expect(uiMessageText({ id: "u", role: "user", parts: part })).toBe("I *really* mean it — move it");
   expect(uiMessageText({ id: "a", role: "assistant", parts: part })).toBe("I really mean it, move it");
 });
+
+import { applyPlanEdits, parsePlanEdits, summarizePlanEdits } from "@/lib/coach/plan-edit";
+
+describe("plan edits", () => {
+  const week: TrainingPlan = {
+    id: "w", weekStartIso: "2026-11-09T08:00:00.000Z", generatedFromGoal: "Move more",
+    sessions: [
+      { id: "a", dayIndex: 1, title: "Easy run", rationale: "r", intensity: "easy", steps: [{ name: "Run", detail: "d", durationMin: 30 }] },
+      { id: "b", dayIndex: 3, title: "Long walk", rationale: "r", intensity: "moderate", steps: [{ name: "Walk", detail: "d", durationMin: 40 }] },
+    ],
+  };
+  const at = (plan: TrainingPlan | null, dayIndex: number) => plan?.sessions.find((s) => s.dayIndex === dayIndex);
+
+  it("adds on a free day and leaves every other session untouched", () => {
+    const next = applyPlanEdits(week, [{ op: "add", newActivity: "yoga", toDay: "thursday" }], [], "", 0);
+    expect(at(next, 4)?.title).toBe("Yoga"); // Thursday is taken, so the nearest free day
+    expect(next?.sessions.filter((s) => s.id === "a" || s.id === "b")).toEqual(week.sessions);
+    expect(at(applyPlanEdits(week, [{ op: "add", newActivity: "yoga" }], [], "", 1), 2)?.title).toBe("Yoga");
+  });
+
+  it("removes, moves, swaps, replaces, resizes, and scales by day or activity", () => {
+    expect(applyPlanEdits(week, [{ op: "remove", activity: "running" }], [], "", 0)?.sessions.map((s) => s.id)).toEqual(["b"]);
+    expect(at(applyPlanEdits(week, [{ op: "move", day: "tuesday", toDay: "friday" }], [], "", 0), 4)?.id).toBe("a");
+    const swapped = applyPlanEdits(week, [{ op: "move", day: "tuesday", toDay: "thursday" }], [], "", 0);
+    expect([at(swapped, 3)?.id, at(swapped, 1)?.id]).toEqual(["a", "b"]);
+    const ride = at(applyPlanEdits(week, [{ op: "replace", activity: "run", newActivity: "bike ride" }], [], "", 0), 1);
+    expect([ride?.title, ride?.steps[0].durationMin, ride?.steps[0].name]).toEqual(["Bike ride", 30, "Bike ride"]);
+    expect(at(applyPlanEdits(week, [{ op: "set", day: "thursday", minutes: 20 }], [], "", 0), 3)?.steps[0].durationMin).toBe(20);
+    expect(applyPlanEdits(week, [{ op: "harder" }], [], "", 0)?.sessions.map((s) => s.intensity)).toEqual(["moderate", "hard"]);
+  });
+
+  it("ignores a day the user never said and finds the session named in the message", () => {
+    const moved = applyPlanEdits(week, [{ op: "move", day: "tuesday", toDay: "friday" }], [], "move my walk to Friday", 0);
+    expect([at(moved, 4)?.id, at(moved, 1)?.id]).toEqual(["b", "a"]);
+    expect(at(applyPlanEdits(week, [{ op: "add", day: "thursday", newActivity: "yoga" }], [], "add a yoga day", 1), 2)?.title).toBe("Yoga");
+  });
+
+  it("returns null when an edit cannot be applied exactly, and never edits a logged session", () => {
+    expect(applyPlanEdits(week, [{ op: "rewrite" }], [], "", 0)).toBeNull();
+    expect(applyPlanEdits(week, [{ op: "remove", activity: "swimming" }], [], "", 0)).toBeNull();
+    expect(applyPlanEdits(null, [{ op: "harder" }], [], "", 0)).toBeNull();
+    const logs = [{ id: "l", sessionId: "a", status: "completed", completedAt: "x" }] as WorkoutLog[];
+    expect(applyPlanEdits(week, [{ op: "remove", day: "tuesday" }], logs, "", 0)).toBeNull();
+    expect(applyPlanEdits(week, [{ op: "easier" }], logs, "", 0)?.sessions[0]).toEqual(week.sessions[0]);
+  });
+
+  it("reads common phrasings without a model and leaves chat alone", () => {
+    const run = (text: string) => applyPlanEdits(week, parsePlanEdits(text), [], text, 0);
+    expect(at(run("add a yoga day to my week"), 2)?.title).toBe("Yoga");
+    expect(at(run("Move Tuesday to Friday."), 4)?.id).toBe("a");
+    expect(at(run("move my walk to Friday"), 4)?.id).toBe("b");
+    expect(at(run("swap my run for a bike ride"), 1)?.title).toBe("Bike ride");
+    expect(at(run("I'd rather do a swim instead of the long walk"), 3)?.title).toBe("Swim");
+    expect(run("drop the long walk")?.sessions.map((s) => s.id)).toEqual(["a"]);
+    expect(at(run("make Thursday 20 minutes"), 3)?.steps[0].durationMin).toBe(20);
+    expect(run("this plan is too easy, step it up")?.sessions.map((s) => s.intensity)).toEqual(["moderate", "hard"]);
+    for (const chat of ["I skipped Tuesday", "it was harder than I thought", "what should I eat", "I should add that I'm tired", "be funnier"]) {
+      expect(parsePlanEdits(chat)).toEqual([]);
+    }
+  });
+
+  it("explains a taken day and sums up a whole-week change in one line", () => {
+    const notes: string[] = [];
+    const edits = [{ op: "add" as const, newActivity: "yoga", toDay: "thursday" as const }];
+    const next = applyPlanEdits(week, edits, [], "add yoga on Thursday", 0, notes)!;
+    expect(summarizePlanEdits(week, next, edits, notes)).toEqual(["Added Yoga on Friday.", "Thursday already has Long walk, so Yoga went on Friday."]);
+    const moved = applyPlanEdits(week, [{ op: "move", day: "tuesday", toDay: "thursday" }], [], "", 0)!;
+    expect(summarizePlanEdits(week, moved, [])).toEqual(["Moved Long walk from Thursday to Tuesday.", "Moved Easy run from Tuesday to Thursday."]);
+    expect(summarizePlanEdits(week, week, [{ op: "harder" }])).toEqual(["Every remaining session this week is now a step harder."]);
+  });
+});

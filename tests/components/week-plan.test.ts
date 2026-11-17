@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { WeekPlan } from "@/components/plan/WeekPlan";
 import type { TrainingPlan, WorkoutLog } from "@/lib/types";
 
@@ -35,6 +35,9 @@ const logs: WorkoutLog[] = [
 ];
 
 describe("WeekPlan", () => {
+  // The "Today" marker only shows inside the plan's own week.
+  beforeAll(() => { vi.useFakeTimers({ now: new Date("2026-11-11T12:00:00.000Z"), toFake: ["Date"] }); });
+  afterAll(() => { vi.useRealTimers(); });
   afterEach(() => cleanup());
 
   it("renders the stored week as seven schedule rows without inventing more weeks", () => {

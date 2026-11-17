@@ -18,10 +18,13 @@ function uiMessageStreamBody(text: string): string {
 }
 
 /** `planChange` reports whether the server judged the latest message to be a plan change. */
-export function createCoachFetch(): FetchFunction & { planChange: boolean } {
+export function createCoachFetch(): FetchFunction & { planChange: boolean; planEdits: string | null } {
   const coachFetch = Object.assign((async (input, init) => {
     const response = await fetch(input, init);
-    coachFetch.planChange = response.headers.get("X-Notrude-Plan-Change") === "1";
+    const header = response.headers.get("X-Notrude-Plan-Change");
+    coachFetch.planChange = header !== null;
+    // Anything other than "1" is the list of edits the server already applied for its reply.
+    coachFetch.planEdits = header && header !== "1" ? decodeURIComponent(header) : null;
     const isFixture = response.headers.get("X-Notrude-Fixture") === "1";
     const contentType = response.headers.get("content-type") ?? "";
 
@@ -39,6 +42,6 @@ export function createCoachFetch(): FetchFunction & { planChange: boolean } {
     }
 
     return response;
-  }) as FetchFunction, { planChange: false });
+  }) as FetchFunction, { planChange: false, planEdits: null as string | null });
   return coachFetch;
 }
