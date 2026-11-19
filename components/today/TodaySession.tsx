@@ -1,7 +1,6 @@
 import { Check } from "lucide-react";
 import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
-import { coachNudgeForTone } from "@/lib/coach-nudge";
 import { getCoach } from "@/lib/coaches/presets";
 import { DAY_LABELS, dayIndexInPlanWeek } from "@/lib/dates";
 import { sessionMetrics } from "@/lib/plan/metrics";
@@ -14,6 +13,10 @@ type Props = {
   profile: UserProfile;
   loggedToday?: boolean;
   outsidePlanWeek?: boolean;
+  /** Written by the leading coach; hidden until it arrives. */
+  note?: string | null;
+  onPlanNewWeek?: () => void;
+  planningWeek?: boolean;
 };
 
 function planDayDate(weekStartIso: string, dayIndex: number) {
@@ -72,9 +75,11 @@ export function TodaySession({
   profile,
   loggedToday,
   outsidePlanWeek,
+  note,
+  onPlanNewWeek,
+  planningWeek = false,
 }: Props) {
   const coach = getCoach(profile.coachId);
-  const nudge = coachNudgeForTone(profile.tone);
 
   if (!session) {
     return (
@@ -86,12 +91,17 @@ export function TodaySession({
           </h1>
           <p className="mt-2 text-[var(--app-muted)]">
             {outsidePlanWeek
-              ? "Your saved week is complete. Check in when you’re ready to shape what comes next."
+              ? `Last week is saved. ${coach.name} can plan this week from how it went.`
               : "Recovery is part of the plan. There’s nothing to make up today."}
           </p>
         </header>
         <WeekStrip plan={plan} logs={logs} />
-        <aside aria-label="Coach note"><CoachBubble coachId={coach.id}>{nudge}</CoachBubble></aside>
+        {note ? <aside aria-label="Coach note"><CoachBubble coachId={coach.id}>{note}</CoachBubble></aside> : null}
+        {outsidePlanWeek && onPlanNewWeek ? (
+          <Button className="w-full" disabled={planningWeek} onClick={onPlanNewWeek}>
+            {planningWeek ? `${coach.name} is planning your week…` : `Plan this week with ${coach.name}`}
+          </Button>
+        ) : null}
         <Button href="/coach" variant="ghost" className="w-full">Chat with {coach.name}</Button>
       </div>
     );
@@ -150,7 +160,7 @@ export function TodaySession({
         </Button>
       </article>
 
-      <aside aria-label="Coach note"><CoachBubble coachId={coach.id}>{nudge}</CoachBubble></aside>
+      {note ? <aside aria-label="Coach note"><CoachBubble coachId={coach.id}>{note}</CoachBubble></aside> : null}
     </div>
   );
 }

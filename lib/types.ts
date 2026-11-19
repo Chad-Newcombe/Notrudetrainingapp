@@ -62,6 +62,10 @@ export type WorkoutLog = {
 
 export type SessionFeeling = "easy" | "right" | "hard" | "pain";
 
+/** A coach-written note cached for a day or a week, so the model isn't called on every screen open. */
+export type CoachNote = { key: string; coachId: CoachId; text: string; createdAt: string };
+export type CoachNotes = { daily?: CoachNote; weekly?: CoachNote; checkin?: CoachNote };
+
 export type ChatRole = "user" | "assistant" | "system";
 export type ChatMessage = {
   id: string;

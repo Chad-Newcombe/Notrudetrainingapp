@@ -3,6 +3,7 @@ import type {
   ComposedMessage,
   HealthConnection,
   ChatMessage,
+  CoachNotes,
   CoachConversation,
   CoachRelationship,
   ProgressSnapshot,
@@ -14,7 +15,7 @@ import type {
 export interface NotrudeSchema extends DBSchema {
   meta: {
     key: string;
-    value: UserProfile | TrainingPlan | TrainingPlan[] | true;
+    value: UserProfile | TrainingPlan | TrainingPlan[] | CoachNotes | true;
   };
   logs: {
     key: string;

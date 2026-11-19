@@ -9,3 +9,4 @@ export { listMessages, addMessage } from "./messages";
 export { listCoachConversations, getCoachConversation, saveCoachConversation, deleteCoachConversation, archiveCoachConversation } from "./coach-conversations";
 export { emptyCoachRelationship, getCoachRelationship, saveCoachRelationship } from "./coach-relationships";
 export { migrateLegacyChat } from "./coach-chat-migration";
+export { getCoachNotes, saveCoachNote } from "./coach-notes";

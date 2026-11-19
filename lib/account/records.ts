@@ -58,6 +58,8 @@ const plan = z.object({
     intensity: z.enum(["easy", "moderate", "hard"]),
   })).max(50),
 });
+const coachNote = z.object({ key: id, coachId: coach, text: z.string().max(2_000), createdAt: stamp });
+const coachNotes = z.object({ daily: coachNote.optional(), weekly: coachNote.optional(), checkin: coachNote.optional() });
 const schemas = {
   logs: z.object({
     id, sessionId: id, status: z.enum(["completed", "skipped", "partial"]),
@@ -101,7 +103,7 @@ export function canWriteRecord(current: unknown, record: StoredRecord): boolean 
 
 export function validRecordKey(collection: Collection, key: string): boolean {
   if (!id.safeParse(key).success) return false;
-  if (collection === "meta") return ["profile", "plan", "plan-history", "coach-conversation-migration-v2"].includes(key);
+  if (collection === "meta") return ["profile", "plan", "plan-history", "coach-notes", "coach-conversation-migration-v2"].includes(key);
   if (collection === "coachRelationships") return coach.safeParse(key).success;
   if (collection === "health") return provider.safeParse(key).success;
   return true;
@@ -111,7 +113,7 @@ export function parseRecord(record: StoredRecord) {
   const { collection, key, value } = record;
   if (!collectionSchema.safeParse(collection).success || !validRecordKey(collection, key)) return null;
   if (collection === "meta") {
-    const schema = key === "profile" ? profile : key === "plan" ? plan : key === "plan-history" ? z.array(plan).max(PLAN_HISTORY_LIMIT) : z.literal(true);
+    const schema = key === "profile" ? profile : key === "plan" ? plan : key === "plan-history" ? z.array(plan).max(PLAN_HISTORY_LIMIT) : key === "coach-notes" ? coachNotes : z.literal(true);
     const parsed = schema?.safeParse(value);
     return parsed?.success ? { ...record, value: parsed.data } : null;
   }

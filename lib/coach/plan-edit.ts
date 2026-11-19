@@ -148,8 +148,11 @@ export function summarizePlanEdits(previous: TrainingPlan | null, edited: Traini
     const out: string[] = [];
     if (was.title !== after.title) out.push(`Changed ${day} from ${was.title} to ${after.title}.`);
     if (was.dayIndex !== after.dayIndex) out.push(`Moved ${after.title} from ${DAY_LABELS[was.dayIndex]} to ${day}.`);
-    if (was.title === after.title && minutesOf(was) !== minutesOf(after)) out.push(`${after.title} on ${day} is now ${minutesOf(after)} minutes.`);
-    else if (was.title === after.title && was.intensity !== after.intensity) out.push(`${after.title} on ${day} is now ${after.intensity}.`);
+    const parts = [
+      minutesOf(was) !== minutesOf(after) ? `${minutesOf(after)} minutes` : "",
+      was.intensity !== after.intensity ? after.intensity : "",
+    ].filter(Boolean);
+    if (was.title === after.title && parts.length) out.push(`${after.title} on ${day} is now ${parts.join(" and ")}.`);
     return out;
   });
   const removed = [...before.values()].map((session) => `Removed ${session.title} from ${DAY_LABELS[session.dayIndex]}.`);

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
 import { createId } from "@/lib/ids";
 import { computeStreak } from "@/lib/progress/streaks";
+import { useCoachNote } from "@/lib/hooks/useCoachNote";
+import { CoachBubble } from "@/components/coach/CoachBubble";
 import { addProgress, listProgress } from "@/lib/store";
 import type { ProgressSnapshot, UserProfile } from "@/lib/types";
 
@@ -27,6 +29,7 @@ export default function ProgressPage() {
     void reloadProgress();
   }, [reloadProgress]);
 
+  const weekly = useCoachNote("weekly", profile ? { profile, plan, history, logs } : null);
   const streak = computeStreak(logs, new Date(), plan ? [...history, plan] : history);
 
   const pastReflections = snapshots
@@ -76,6 +79,7 @@ export default function ProgressPage() {
       </div>
 
       <StreakBadge streak={streak} />
+      {weekly && profile ? <aside aria-label="Weekly update"><CoachBubble coachId={profile.coachId ?? "river"}>{weekly}</CoachBubble></aside> : null}
       <HistoryList logs={logs} plan={plan} />
 
       {profile?.trackWeight ? (

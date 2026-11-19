@@ -55,6 +55,7 @@ describe("TodaySession", () => {
         plan,
         logs: [],
         profile,
+        note: "Keep the first ten minutes conversational.",
       }),
     );
 

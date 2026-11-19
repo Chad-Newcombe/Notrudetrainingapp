@@ -3,11 +3,16 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { CoachAvatar } from "@/components/coach/CoachAvatar";
 import { ChoiceCard } from "@/components/ui/ChoiceCard";
+import type { Insight } from "@/lib/coach/insight";
+import { requestInsight, todayIndex } from "@/lib/coach/notes";
+import { applyPlanEdits } from "@/lib/coach/plan-edit";
+import { getCoach } from "@/lib/coaches/presets";
 import { createId } from "@/lib/ids";
 import { onboardingRedirect } from "@/lib/navigation/onboarding";
-import { getPlan, getProfile, upsertLog } from "@/lib/store";
-import type { PlanSession, SessionFeeling, WorkoutLog } from "@/lib/types";
+import { getPlan, getProfile, listLogs, listPlanHistory, savePlan, saveCoachNote, upsertLog } from "@/lib/store";
+import type { PlanSession, SessionFeeling, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 const FEELINGS: { value: SessionFeeling; title: string; description: string }[] = [
   { value: "easy", title: "Easy", description: "I had more in me" },
@@ -29,6 +34,9 @@ export default function WorkoutPlayPage() {
   const [checkIn, setCheckIn] = useState<"completed" | "partial" | null>(null);
   const [minutes, setMinutes] = useState("");
   const [feeling, setFeeling] = useState<SessionFeeling | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [plan, setPlan] = useState<TrainingPlan | null>(null);
+  const [reply, setReply] = useState<{ state: "loading" | "ready" | "error"; insight?: Insight; logs?: WorkoutLog[]; plan?: "kept" | "changed" | "error" } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,6 +54,8 @@ export default function WorkoutPlayPage() {
       }
       const found = plan.sessions.find((s) => s.id === sessionId) ?? null;
       if (!cancelled) {
+        setProfile(profile);
+        setPlan(plan);
         setSession(found);
         setLoading(false);
       }
@@ -108,6 +118,75 @@ export default function WorkoutPlayPage() {
     );
   }
 
+  // The log is saved first, so a coach that is slow or offline never loses the check-in.
+  async function saveCheckIn(status: "completed" | "partial", details: Pick<WorkoutLog, "actualMinutes" | "feeling">) {
+    if (!session || !profile || saving) return;
+    setSaving(true);
+    const log: WorkoutLog = { id: createId(), sessionId: session.id, status, completedAt: new Date().toISOString(), ...details };
+    await upsertLog(log);
+    setReply({ state: "loading" });
+    try {
+      const [logs, history] = await Promise.all([listLogs(), listPlanHistory()]);
+      const insight = await requestInsight("checkin", { profile, plan, history, logs }, log.id);
+      await saveCoachNote("checkin", { key: log.id, coachId: profile.coachId ?? "river", text: insight.message, createdAt: log.completedAt });
+      setReply({ state: "ready", insight, logs });
+    } catch {
+      setReply({ state: "error" });
+    }
+  }
+
+  async function acceptProposal() {
+    const edits = reply?.insight?.proposal?.edits;
+    const edited = edits ? applyPlanEdits(plan, edits, reply?.logs ?? [], "", todayIndex()) : null;
+    if (!edited) return setReply((current) => current && { ...current, plan: "error" });
+    await savePlan(edited);
+    setPlan(edited);
+    setReply((current) => current && { ...current, plan: "changed" });
+  }
+
+  if (reply && session) {
+    const coach = getCoach(profile?.coachId);
+    const proposal = reply.insight?.proposal;
+    return (
+      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+        <p className="meta-label">Saved</p>
+        <h1 className="mt-2 text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">{session.title} logged</h1>
+        <section aria-live="polite" className="mt-8 flex items-start gap-3">
+          <CoachAvatar coachId={coach.id} size="sm" replying={reply.state === "loading"} />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-[var(--app-muted)]">{coach.name}</p>
+            <p className="mt-1 text-lg leading-relaxed text-[var(--app-text)]">
+              {reply.state === "loading" ? `${coach.name} is reading your check-in…`
+                : reply.state === "error" ? `Your check-in is saved. ${coach.name} couldn't reply right now.`
+                  : reply.insight?.message}
+            </p>
+          </div>
+        </section>
+        {proposal ? (
+          <section aria-label="Suggested change" className="mt-6 rounded-[var(--radius-panel)] border border-[var(--app-line)] bg-[var(--app-raised)] p-5">
+            <p className="text-sm font-semibold text-[var(--app-muted)]">Suggested change</p>
+            <p className="mt-1 text-base font-semibold text-[var(--app-text)]">{proposal.summary}</p>
+            {reply.plan === "changed" ? (
+              <p className="mt-4 text-sm font-semibold text-[var(--app-complete)]">Plan updated.</p>
+            ) : reply.plan === "kept" ? (
+              <p className="mt-4 text-sm text-[var(--app-muted)]">Plan kept as it was.</p>
+            ) : (
+              <div className="mt-4 flex gap-3">
+                <Button className="flex-1" onClick={() => void acceptProposal()}>Yes, change it</Button>
+                <Button variant="ghost" className="flex-1" onClick={() => setReply((current) => current && { ...current, plan: "kept" })}>Keep my plan</Button>
+              </div>
+            )}
+            {reply.plan === "error" ? <p className="mt-3 text-sm text-[var(--app-muted)]">That change no longer fits your plan, so nothing was changed.</p> : null}
+          </section>
+        ) : null}
+        <div className="mt-auto flex flex-col gap-3 pt-8">
+          <Button className="w-full" disabled={reply.state === "loading"} onClick={() => router.push("/today")}>Done</Button>
+          <Button href="/coach" variant="ghost" className="w-full">Talk to {coach.name}</Button>
+        </div>
+      </main>
+    );
+  }
+
   function startCheckIn(status: "completed" | "partial") {
     const planned = steps.reduce((sum, step) => sum + (step.durationMin ?? 0), 0);
     setMinutes(planned > 0 ? String(planned) : "");
@@ -149,7 +228,7 @@ export default function WorkoutPlayPage() {
           <Button
             className="w-full"
             disabled={saving || !validMinutes || !feeling}
-            onClick={() => feeling && void saveLog(checkIn, "/today", { actualMinutes: value, feeling })}
+            onClick={() => feeling && void saveCheckIn(checkIn, { actualMinutes: value, feeling })}
           >
             Save
           </Button>

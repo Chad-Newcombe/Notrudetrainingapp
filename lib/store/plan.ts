@@ -19,7 +19,7 @@ export async function listPlanHistory(): Promise<TrainingPlan[]> {
 /** Saving a plan for a new week moves the previous week into history first. */
 export async function savePlan(plan: TrainingPlan): Promise<void> {
   const current = await getPlan();
-  if (current && current.weekStartIso !== plan.weekStartIso) {
+  if (current && current.weekStartIso < plan.weekStartIso) {
     const history = (await listPlanHistory()).filter((week) => week.weekStartIso !== current.weekStartIso);
     const next = [...history, current]
       .sort((a, b) => a.weekStartIso.localeCompare(b.weekStartIso))
