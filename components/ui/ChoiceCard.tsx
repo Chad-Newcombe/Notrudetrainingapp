@@ -18,6 +18,7 @@ export function ChoiceCard({
   return (
     <button
       type="button"
+      aria-pressed={selected}
       onClick={onSelect}
       className={`min-h-11 w-full rounded-[var(--radius-control)] border px-4 py-3.5 text-left transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus)] ${
         selected

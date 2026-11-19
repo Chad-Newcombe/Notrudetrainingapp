@@ -55,7 +55,12 @@ export type WorkoutLog = {
   status: "completed" | "skipped" | "partial";
   notes?: string;
   completedAt: string;
+  /** What the user actually did, asked after a completed or partial session. */
+  actualMinutes?: number;
+  feeling?: SessionFeeling;
 };
+
+export type SessionFeeling = "easy" | "right" | "hard" | "pain";
 
 export type ChatRole = "user" | "assistant" | "system";
 export type ChatMessage = {

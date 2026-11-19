@@ -62,6 +62,8 @@ const schemas = {
   logs: z.object({
     id, sessionId: id, status: z.enum(["completed", "skipped", "partial"]),
     notes: text.optional(), completedAt: stamp,
+    actualMinutes: z.number().int().min(0).max(600).optional(),
+    feeling: z.enum(["easy", "right", "hard", "pain"]).optional(),
   }),
   chat: message,
   coachConversations: coachConversationSchema,
@@ -85,6 +87,8 @@ export type Collection = (typeof collections)[number];
 export const collectionSchema = z.enum(collections);
 export const recordSchema = z.object({ collection: collectionSchema, key: id, value: z.unknown() });
 export type StoredRecord = z.infer<typeof recordSchema>;
+/** About five years of weeks. */
+export const PLAN_HISTORY_LIMIT = 260;
 export const COACH_MIGRATION_KEY = "coach-conversation-migration-v2";
 
 export function canWriteRecord(current: unknown, record: StoredRecord): boolean {
@@ -97,7 +101,7 @@ export function canWriteRecord(current: unknown, record: StoredRecord): boolean 
 
 export function validRecordKey(collection: Collection, key: string): boolean {
   if (!id.safeParse(key).success) return false;
-  if (collection === "meta") return ["profile", "plan", "coach-conversation-migration-v2"].includes(key);
+  if (collection === "meta") return ["profile", "plan", "plan-history", "coach-conversation-migration-v2"].includes(key);
   if (collection === "coachRelationships") return coach.safeParse(key).success;
   if (collection === "health") return provider.safeParse(key).success;
   return true;
@@ -107,7 +111,7 @@ export function parseRecord(record: StoredRecord) {
   const { collection, key, value } = record;
   if (!collectionSchema.safeParse(collection).success || !validRecordKey(collection, key)) return null;
   if (collection === "meta") {
-    const schema = key === "profile" ? profile : key === "plan" ? plan : z.literal(true);
+    const schema = key === "profile" ? profile : key === "plan" ? plan : key === "plan-history" ? z.array(plan).max(PLAN_HISTORY_LIMIT) : z.literal(true);
     const parsed = schema?.safeParse(value);
     return parsed?.success ? { ...record, value: parsed.data } : null;
   }

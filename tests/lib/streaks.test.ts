@@ -67,3 +67,25 @@ describe("computeStreak", () => {
     expect(computeStreak(logs, now)).toBe(0);
   });
 });
+
+describe("computeStreak with plans", () => {
+  // Week of Mon 9 Nov 2026: sessions Mon, Wed, Fri.
+  const week = (start: string, ids: string[]) => ({
+    id: start, weekStartIso: new Date(start + "T00:00:00").toISOString(), generatedFromGoal: "g",
+    sessions: [0, 2, 4].map((dayIndex, i) => ({ id: ids[i], dayIndex, title: "S", rationale: "r", intensity: "easy" as const, steps: [] })),
+  });
+  const done = (sessionId: string, status: WorkoutLog["status"] = "completed"): WorkoutLog => ({ id: sessionId + status, sessionId, status, completedAt: "2026-11-01T00:00:00.000Z" });
+  const plans = [week("2026-11-02", ["a1", "a2", "a3"]), week("2026-11-09", ["b1", "b2", "b3"])];
+
+  it("skips rest days and counts across weeks", () => {
+    const now = new Date("2026-11-12T18:00:00"); // Thursday, a rest day
+    expect(computeStreak([done("a2"), done("a3"), done("b1"), done("b2", "partial")], now, plans)).toBe(4);
+  });
+
+  it("leaves today's session open and breaks on a skipped or missed one", () => {
+    const wed = new Date("2026-11-11T09:00:00");
+    expect(computeStreak([done("a3"), done("b1")], wed, plans)).toBe(2);
+    expect(computeStreak([done("a3"), done("b1", "skipped")], wed, plans)).toBe(0);
+    expect(computeStreak([done("b1")], new Date("2026-11-13T09:00:00"), plans)).toBe(0); // Wednesday missed
+  });
+});

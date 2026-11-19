@@ -3,10 +3,18 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ChoiceCard } from "@/components/ui/ChoiceCard";
 import { createId } from "@/lib/ids";
 import { onboardingRedirect } from "@/lib/navigation/onboarding";
 import { getPlan, getProfile, upsertLog } from "@/lib/store";
-import type { PlanSession, WorkoutLog } from "@/lib/types";
+import type { PlanSession, SessionFeeling, WorkoutLog } from "@/lib/types";
+
+const FEELINGS: { value: SessionFeeling; title: string; description: string }[] = [
+  { value: "easy", title: "Easy", description: "I had more in me" },
+  { value: "right", title: "About right", description: "Worked, but manageable" },
+  { value: "hard", title: "Hard", description: "That took a lot" },
+  { value: "pain", title: "Pain or discomfort", description: "Something hurt or felt off" },
+];
 
 export default function WorkoutPlayPage() {
   const router = useRouter();
@@ -18,6 +26,9 @@ export default function WorkoutPlayPage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [skipAck, setSkipAck] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [checkIn, setCheckIn] = useState<"completed" | "partial" | null>(null);
+  const [minutes, setMinutes] = useState("");
+  const [feeling, setFeeling] = useState<SessionFeeling | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,6 +69,7 @@ export default function WorkoutPlayPage() {
   async function saveLog(
     status: WorkoutLog["status"],
     after: "/today" | "/coach" = "/today",
+    details: Pick<WorkoutLog, "actualMinutes" | "feeling"> = {},
   ) {
     if (!session || saving) return;
     setSaving(true);
@@ -66,6 +78,7 @@ export default function WorkoutPlayPage() {
       sessionId: session.id,
       status,
       completedAt: new Date().toISOString(),
+      ...details,
     };
     await upsertLog(log);
     router.push(after);
@@ -91,6 +104,59 @@ export default function WorkoutPlayPage() {
         <Button href="/today" className="mt-6 w-full">
           Back to Today
         </Button>
+      </main>
+    );
+  }
+
+  function startCheckIn(status: "completed" | "partial") {
+    const planned = steps.reduce((sum, step) => sum + (step.durationMin ?? 0), 0);
+    setMinutes(planned > 0 ? String(planned) : "");
+    setFeeling(null);
+    setCheckIn(status);
+  }
+
+  if (checkIn) {
+    const value = Number(minutes);
+    const validMinutes = minutes.trim() !== "" && Number.isInteger(value) && value >= 0 && value <= 600;
+    return (
+      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+        <h1 className="text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">How did it go?</h1>
+        <p className="mt-2 text-[var(--app-muted)]">Your coach uses this to tune the plan.</p>
+        <label htmlFor="actual-minutes" className="mt-8 text-sm font-semibold text-[var(--app-text)]">Minutes you did</label>
+        <input
+          id="actual-minutes"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={600}
+          value={minutes}
+          onChange={(event) => setMinutes(event.target.value)}
+          className="mt-2 h-12 w-32 rounded-[var(--radius-control)] border border-[var(--app-line)] bg-[var(--app-raised)] px-4 text-lg text-[var(--app-text)] tabular-nums focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-focus)]"
+        />
+        <fieldset className="mt-8 flex flex-col gap-3">
+          <legend className="mb-3 text-sm font-semibold text-[var(--app-text)]">How did it feel?</legend>
+          {FEELINGS.map((option) => (
+            <ChoiceCard
+              key={option.value}
+              title={option.title}
+              description={option.description}
+              selected={feeling === option.value}
+              onSelect={() => setFeeling(option.value)}
+            />
+          ))}
+        </fieldset>
+        <div className="mt-auto flex flex-col gap-3 pt-8">
+          <Button
+            className="w-full"
+            disabled={saving || !validMinutes || !feeling}
+            onClick={() => feeling && void saveLog(checkIn, "/today", { actualMinutes: value, feeling })}
+          >
+            Save
+          </Button>
+          <Button variant="ghost" className="w-full" disabled={saving} onClick={() => setCheckIn(null)}>
+            Back
+          </Button>
+        </div>
       </main>
     );
   }
@@ -158,7 +224,7 @@ export default function WorkoutPlayPage() {
             <Button
               className="w-full"
               disabled={saving}
-              onClick={() => void saveLog("completed")}
+              onClick={() => startCheckIn("completed")}
             >
               Done
             </Button>
@@ -166,7 +232,7 @@ export default function WorkoutPlayPage() {
               variant="ghost"
               className="w-full"
               disabled={saving}
-              onClick={() => void saveLog("partial")}
+              onClick={() => startCheckIn("partial")}
             >
               Partial
             </Button>

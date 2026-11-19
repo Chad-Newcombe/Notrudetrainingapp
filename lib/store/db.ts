@@ -14,7 +14,7 @@ import type {
 export interface NotrudeSchema extends DBSchema {
   meta: {
     key: string;
-    value: UserProfile | TrainingPlan | true;
+    value: UserProfile | TrainingPlan | TrainingPlan[] | true;
   };
   logs: {
     key: string;

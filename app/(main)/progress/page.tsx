@@ -12,7 +12,7 @@ import { addProgress, listProgress } from "@/lib/store";
 import type { ProgressSnapshot, UserProfile } from "@/lib/types";
 
 export default function ProgressPage() {
-  const { profile, plan, logs } = useNotrudeStore();
+  const { profile, plan, logs, history } = useNotrudeStore();
   const [snapshots, setSnapshots] = useState<ProgressSnapshot[]>([]);
   const [reflectionText, setReflectionText] = useState<string | null>(null);
   const [reflectionLoading, setReflectionLoading] = useState(false);
@@ -27,7 +27,7 @@ export default function ProgressPage() {
     void reloadProgress();
   }, [reloadProgress]);
 
-  const streak = computeStreak(logs);
+  const streak = computeStreak(logs, new Date(), plan ? [...history, plan] : history);
 
   const pastReflections = snapshots
     .filter((s) => s.type === "reflection")

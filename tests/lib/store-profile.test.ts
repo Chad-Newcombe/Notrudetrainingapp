@@ -66,3 +66,19 @@ describe("profile store", () => {
     expect(await getProfile()).toEqual(profile);
   });
 });
+
+import { getPlan, listPlanHistory, savePlan } from "@/lib/store";
+
+describe("plan history", () => {
+  beforeEach(async () => { await clearAll(); });
+  const plan = (week: string, title: string) => ({ id: week + title, weekStartIso: week, generatedFromGoal: "g", sessions: [{ id: title, dayIndex: 0, title, rationale: "r", intensity: "easy" as const, steps: [] }] });
+
+  it("keeps the last version of each past week when a new week is saved", async () => {
+    await savePlan(plan("2026-11-02T08:00:00.000Z", "first"));
+    await savePlan(plan("2026-11-02T08:00:00.000Z", "revised"));
+    expect(await listPlanHistory()).toEqual([]);
+    await savePlan(plan("2026-11-09T08:00:00.000Z", "next"));
+    expect((await listPlanHistory()).map((week) => week.sessions[0].title)).toEqual(["revised"]);
+    expect((await getPlan())?.sessions[0].title).toBe("next");
+  });
+});
