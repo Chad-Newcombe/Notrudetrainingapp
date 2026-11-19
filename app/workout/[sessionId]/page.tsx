@@ -56,6 +56,14 @@ export default function WorkoutPlayPage() {
       if (!cancelled) {
         setProfile(profile);
         setPlan(plan);
+        // The home screen's skip and done buttons land here with the matching step already open.
+        const query = new URLSearchParams(window.location.search);
+        if (found && query.has("skip")) setSkipAck(true);
+        if (found && query.has("checkin")) {
+          const planned = found.steps.reduce((sum, step) => sum + (step.durationMin ?? 0), 0);
+          setMinutes(planned > 0 ? String(planned) : "");
+          setCheckIn("completed");
+        }
         setSession(found);
         setLoading(false);
       }

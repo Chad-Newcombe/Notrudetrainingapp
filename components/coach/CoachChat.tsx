@@ -38,6 +38,8 @@ type Props = {
   conversation: CoachConversation;
   plan: TrainingPlan | null;
   logs: WorkoutLog[];
+  /** "glass": only the conversation, for the floating-orb overlay on the home screen. */
+  variant?: "page" | "glass";
 };
 
 export function CoachNavigation() {
@@ -96,7 +98,7 @@ export function CoachComposer({
   );
 }
 
-export function CoachChat({ profile, plan, logs, conversation }: Props) {
+export function CoachChat({ profile, plan, logs, conversation, variant = "page" }: Props) {
   const sessionScope = useRef(storageScope());
   const sessionGeneration = useRef(storageGeneration());
   const [boot, setBoot] = useState<UIMessage[] | null>(null);
@@ -147,6 +149,7 @@ export function CoachChat({ profile, plan, logs, conversation }: Props) {
       healthSummary={healthSummary}
       coachFetch={coachFetch}
       persist={persist}
+      glass={variant === "glass"}
     />
   );
 }
@@ -161,6 +164,7 @@ function CoachChatInner({
   healthSummary,
   coachFetch,
   persist,
+  glass,
 }: {
   conversationId: string;
   continuationSummary?: string;
@@ -170,6 +174,7 @@ function CoachChatInner({
   logs: WorkoutLog[];
   healthSummary?: string;
   coachFetch: ReturnType<typeof createCoachFetch>;
+  glass: boolean;
   persist: (messages: UIMessage[]) => Promise<void>;
 }) {
   const sessionScope = useRef(storageScope());
@@ -399,12 +404,14 @@ function CoachChatInner({
 
   return (
     <div className="flex flex-col gap-4">
-      <CoachNavigation />
-      <CoachStage coachId={activeProfile.coachId ?? DEFAULT_COACH_ID}
-        label={`Your coach · ${getCoach(activeProfile.coachId).name}`}
-        title="In your corner" description="A place to figure out what fits today."
-        conversation replying={busy} />
-      <CoachSwitcher profile={activeProfile} beforeChange={() => archiveCoachConversation(conversationId)} onChanged={() => router.push("/coach")} />
+      {glass ? null : <>
+        <CoachNavigation />
+        <CoachStage coachId={activeProfile.coachId ?? DEFAULT_COACH_ID}
+          label={`Your coach · ${getCoach(activeProfile.coachId).name}`}
+          title="In your corner" description="A place to figure out what fits today."
+          conversation replying={busy} />
+        <CoachSwitcher profile={activeProfile} beforeChange={() => archiveCoachConversation(conversationId)} onChanged={() => router.push("/coach")} />
+      </>}
       {storageError && <p role="alert">Couldn’t save your latest messages. Keep this chat open and try again.</p>}
       {offline && <p className="panel px-3 py-2 text-sm text-[var(--muted)]">
         You’re offline. Reconnect to get a reply.
@@ -412,7 +419,7 @@ function CoachChatInner({
 
       <div
         ref={listRef}
-        className="panel coach-conversation flex max-h-[min(52dvh,28rem)] min-h-32 flex-col gap-3 overflow-y-auto p-4"
+        className={glass ? "coach-conversation !bg-transparent !shadow-none !border-0 flex max-h-[calc(100dvh-24rem)] min-h-24 flex-col gap-3 overflow-y-auto" : "panel coach-conversation flex max-h-[min(52dvh,28rem)] min-h-32 flex-col gap-3 overflow-y-auto p-4"}
       >
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />

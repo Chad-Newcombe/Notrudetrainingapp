@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { CoachSessionLifecycle } from "@/components/coach/CoachSessionLifecycle";
 import { BottomTabs } from "@/components/shell/BottomTabs";
@@ -11,6 +11,8 @@ export default function MainLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const router = useRouter();
+  // Today is the bento home: its floating orb and controls replace the tab bar.
+  const home = usePathname() === "/today";
   const { ready, profile, plan } = useNotrudeStore();
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export default function MainLayout({
 
   return (
     <div className="min-h-[100dvh] bg-[var(--canvas-soft)]">
-      <div className="main-tab-clearance"><CoachSessionLifecycle>{children}</CoachSessionLifecycle></div>
-      <BottomTabs />
+      <div className={home ? undefined : "main-tab-clearance"}><CoachSessionLifecycle>{children}</CoachSessionLifecycle></div>
+      {home ? null : <BottomTabs />}
     </div>
   );
 }

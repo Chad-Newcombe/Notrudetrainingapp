@@ -81,7 +81,7 @@ Chats saved before this version are kept as one archived **Legacy conversation**
 
 There are six coaches: River (calm), Jax (upbeat), Sol (direct), Nova (curious), Knox (no-excuses accountability), and Riff (coaches with stand-up-style humour). Knox does not accept a skipped session without pain, injury, illness, or an emergency, and never insults the user. Riff writes original jokes and does not imitate real comedians.
 
-Each coach appears as a glowing orb in its own colour and pace. The orbs are plain CSS, so there is no 3D model to load and nothing to drag.
+Today is a bento home in the leading coach's colour family: swipe between Today, Week and Progress. The floating orb at the bottom opens the coach chat on frosted glass over the screen, and the buttons beside it skip or check in today's session. Each coach appears as a glowing orb in its own colour and pace. The orbs are plain CSS, so there is no 3D model to load and nothing to drag.
 
 Any coach can change the week from chat. An explicit request such as “I want a harder plan” or “move my walk to Friday” revises the saved plan, shows what changed, and can be undone. With a local model, the model names the edit (add, remove, move, replace, set, harder, easier) and the app applies it, so the rest of the week is untouched and the coach confirms what was saved. Requests that need a whole new week still regenerate the plan. Without a model, the same edits work for common phrasings such as “add a yoga day”, “move Tuesday to Friday”, or “swap my run for a bike ride”. Without a local model, harder and easier requests scale the built-in plan’s intensity and duration.
 
