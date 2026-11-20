@@ -201,9 +201,10 @@ export function BentoHome({ profile, plan, history, logs, dailyNote, weeklyNote,
               </span>
             </Tile>
             {weeklyNote ? (
-              <div className="bento-glass col-span-2 row-span-2 flex items-center gap-3 px-4">
+              <div className="bento-glass col-span-2 row-span-4 flex items-start gap-3 overflow-hidden p-4">
                 <span aria-hidden className="size-7 flex-none rounded-full" style={{ background: orb }} />
-                <p className="text-sm leading-snug text-pretty">{weeklyNote}</p>
+                {/* The grid rows are fixed, so the note is clamped to its tile rather than spilling out. */}
+                <p className="line-clamp-8 text-sm leading-snug text-pretty">{weeklyNote}</p>
               </div>
             ) : null}
           </section>

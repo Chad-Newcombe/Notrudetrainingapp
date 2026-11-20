@@ -1,9 +1,11 @@
 "use client";
 
+import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { CoachSessionLifecycle } from "@/components/coach/CoachSessionLifecycle";
-import { BottomTabs } from "@/components/shell/BottomTabs";
+import { backFallback } from "@/components/shell/EdgeSwipeBack";
 import { useNotrudeStore } from "@/lib/hooks/useNotrudeStore";
 import { onboardingRedirect } from "@/lib/navigation/onboarding";
 
@@ -11,8 +13,9 @@ export default function MainLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const router = useRouter();
-  // Today is the bento home: its floating orb and controls replace the tab bar.
-  const home = usePathname() === "/today";
+  // Today is the bento home and the hub: every other screen goes back to it (or swipe from the left edge).
+  const pathname = usePathname();
+  const home = pathname === "/today";
   const { ready, profile, plan } = useNotrudeStore();
 
   useEffect(() => {
@@ -40,8 +43,10 @@ export default function MainLayout({
 
   return (
     <div className="min-h-[100dvh] bg-[var(--canvas-soft)]">
-      <div className={home ? undefined : "main-tab-clearance"}><CoachSessionLifecycle>{children}</CoachSessionLifecycle></div>
-      {home ? null : <BottomTabs />}
+      {home ? null : (
+        <Link href={backFallback(pathname)} aria-label="Back" className="main-back bento-glass-button"><ChevronLeft size={22} aria-hidden /></Link>
+      )}
+      <div className={home ? undefined : "main-back-clearance"}><CoachSessionLifecycle>{children}</CoachSessionLifecycle></div>
     </div>
   );
 }

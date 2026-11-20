@@ -31,14 +31,14 @@ describe("EdgeSwipeBack", () => {
     expect(router.replace).toHaveBeenCalledWith("/today");
   });
 
-  it("ignores swipes that start away from the edge, vertical scrolls, short drags and tab roots", () => {
+  it("ignores swipes that start away from the edge, vertical scrolls, short drags and the Today hub", () => {
     render(createElement(EdgeSwipeBack, null, "page"));
     swipe([[120, 300], [600, 300]]);
     swipe([[6, 300], [9, 380], [400, 390]]);
     swipe([[6, 300], [30, 300]]);
     vi.advanceTimersByTime(500);
     cleanup();
-    pathname = "/coach";
+    pathname = "/today";
     render(createElement(EdgeSwipeBack, null, "page"));
     swipe([[6, 300], [60, 300], [600, 300]]);
     vi.advanceTimersByTime(500);
@@ -48,6 +48,8 @@ describe("EdgeSwipeBack", () => {
 
   it("knows which screens have a back and where it falls back to", () => {
     expect(canSwipeBack("/today")).toBe(false);
+    expect(canSwipeBack("/more")).toBe(true);
+    expect(backFallback("/more")).toBe("/today");
     expect(canSwipeBack("/coach/chat/abc")).toBe(true);
     expect(backFallback("/coach/chat/abc")).toBe("/coach");
     expect(backFallback("/workout/wed")).toBe("/today");

@@ -9,9 +9,9 @@ const TAB_ROOTS = ["/today", "/plan", "/coach", "/progress", "/more"];
 const EDGE = 24; // px from the left edge where the swipe can start, like iOS
 const SETTLE = "transform 260ms cubic-bezier(.32,.72,0,1)";
 
-/** Tab roots and the start page have nothing to go back to, as in a native tab bar app. */
+/** Today is the hub and the start page has nothing before it; every other screen can go back. */
 export function canSwipeBack(pathname: string) {
-  return pathname !== "/" && !TAB_ROOTS.includes(pathname);
+  return pathname !== "/" && pathname !== "/today";
 }
 
 /** Where back goes when there is no earlier page in this visit: the screen's own tab, else Today. */

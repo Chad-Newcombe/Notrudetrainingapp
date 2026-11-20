@@ -214,7 +214,10 @@ summary { -webkit-tap-highlight-color: transparent; }
   background: var(--app-canvas);
 }
 
-.main-tab-clearance { padding-bottom: calc(5.75rem + env(safe-area-inset-bottom)); }
+/* Screens off the bento home: a round back button where iOS puts it, and room above the home indicator. */
+.main-back { position: fixed; z-index: 40; left: 1rem; top: max(.75rem, env(safe-area-inset-top)); display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px;
+  --bento-glass-bg: color-mix(in srgb, var(--app-raised), transparent 20%); --bento-glass-top: rgba(255,255,255,.12); --bento-glass-line: var(--app-line); --bento-text: var(--app-text); }
+.main-back-clearance { padding-top: 3.25rem; padding-bottom: env(safe-area-inset-bottom); }
 .atmosphere-dark { background: var(--app-canvas); }
 
 .panel {
@@ -381,7 +384,9 @@ html[data-appearance="light"] .bento-root { --bento-canvas: var(--bento-canvas-l
   background-size: 12px 12px, 100% 100%, 100% 100%; }
 .bento-scene { position: relative; transition: transform 620ms cubic-bezier(.32,.72,0,1); }
 .bento-scene[data-open] { transform: scale(1.04); }
-.bento-rail { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; perspective: 1100px; margin-top: 1.1rem; scrollbar-width: none; }
+/* The bento home is a fixed board: no rubber-band pull on the page, and the pages stop at the first and last. */
+html:has(.bento-root) { overscroll-behavior: none; }
+.bento-rail { display: flex; overflow-x: auto; overscroll-behavior: none; scroll-snap-type: x mandatory; perspective: 1100px; margin-top: 1.1rem; scrollbar-width: none; }
 .bento-rail::-webkit-scrollbar { display: none; }
 .bento-page { flex: 0 0 100%; box-sizing: border-box; scroll-snap-align: center; padding: 0 1rem; max-width: 100%; animation: bento-depth linear both; animation-timeline: view(inline); }
 @keyframes bento-depth { 0% { transform: scale(.84) rotateY(22deg); opacity: .3; } 50% { transform: none; opacity: 1; } 100% { transform: scale(.84) rotateY(-22deg); opacity: .3; } }
