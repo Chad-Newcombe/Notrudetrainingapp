@@ -422,3 +422,15 @@ html[data-appearance="light"] .bento-root { --bento-canvas: var(--bento-canvas-l
 
 /* Edge swipe back: the page follows the finger, with a shadow on its leading edge. */
 .edge-back[data-dragging] { box-shadow: -18px 0 36px rgba(0,0,0,.28); will-change: transform; }
+
+/* Loading screen in the installed app: the launch image's cloud and orb, same size and place, coming to life.
+   The square cloud is sized like iOS fills the screen with the square launch image.
+   23.426 = the orb layer (640px) over the 2732px launch image, which iOS scales to fill the screen. */
+.boot { display: none; position: fixed; inset: 0; z-index: 1000; background: #050506 center / max(100vh, 100vw) no-repeat; transition: opacity 320ms cubic-bezier(.32,.72,0,1); }
+html.boot-on .boot { display: block; }
+.boot[data-done] { opacity: 0; pointer-events: none; }
+.boot-mark { position: absolute; left: 50%; top: 50%; width: max(23.426vh, 23.426vw); height: max(23.426vh, 23.426vw); transform: translate(-50%, -50%); }
+.boot-mark > div, .boot-mark svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.boot-ring { animation: orb-swirl 2.4s linear infinite; }
+.boot-orb { animation: orb-breathe 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .boot-ring, .boot-orb { animation: none; } }

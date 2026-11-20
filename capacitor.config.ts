@@ -11,7 +11,12 @@ const config: CapacitorConfig = {
   // Bundled fallback, shown only when no server address was set at sync time.
   webDir: "native/www",
   server: url ? { url, cleartext: url.startsWith("http://") } : undefined,
-  ios: { contentInset: "never", backgroundColor: "#121212" },
+  ios: { contentInset: "never", backgroundColor: "#050506" },
+  plugins: {
+    // The launch image stays up until the web loader, which draws the same orb, has painted and hides it.
+    // The cap only matters if the page never loads, so the user isn't stuck on the launch image.
+    SplashScreen: { launchAutoHide: true, launchShowDuration: 8000, launchFadeOutDuration: 150, backgroundColor: "#050506", showSpinner: false },
+  },
 };
 
 export default config;
