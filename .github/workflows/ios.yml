@@ -1,0 +1,62 @@
+name: Notrude iOS
+on:
+  pull_request:
+  # A testflight-* tag uploads from any branch; Run workflow does too once this file is on the default branch.
+  push:
+    tags: ['testflight-*']
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload a signed build to TestFlight
+        type: boolean
+        default: true
+      build_number:
+        description: Build number override (defaults to this workflow's run number)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 35
+    env:
+      UPLOAD: ${{ startsWith(github.ref, 'refs/tags/testflight-') || (github.event_name == 'workflow_dispatch' && inputs.upload) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx vitest run
+      # The app loads the hosted Next.js server; set it as the NOTRUDE_APP_URL repository variable.
+      - name: Point the app at the server
+        env:
+          NOTRUDE_APP_URL: ${{ vars.NOTRUDE_APP_URL }}
+        run: |
+          set -euo pipefail
+          if [[ $UPLOAD == true && $NOTRUDE_APP_URL != https://* ]]; then
+            echo 'Set the NOTRUDE_APP_URL repository variable to the hosted https server before uploading.' >&2
+            exit 1
+          fi
+          npm run ios:sync
+      - name: Build for iOS
+        run: |
+          xcodebuild -version
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+      - name: Sign, export and upload to TestFlight
+        if: env.UPLOAD == 'true'
+        env:
+          BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          API_KEY: ${{ secrets.ASC_API_KEY_P8 }}
+          API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: bash scripts/ios/upload-testflight.sh

@@ -114,7 +114,9 @@ npm run lint      # ESLint
 1. Install full Xcode, then `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
 2. Point the app at a server and sync: `NOTRUDE_APP_URL=https://your-deployment npm run ios:sync`. To try a dev server on a phone on your own network, use `http://<this Mac's LAN address>:3100` and run Next.js with `-H 0.0.0.0`.
 3. `npm run ios:open`, choose your team under Signing & Capabilities, and run on a phone or simulator.
-4. For TestFlight: Product → Archive, then Distribute App → App Store Connect.
+4. For TestFlight from Xcode: Product → Archive, then Distribute App → App Store Connect.
+
+TestFlight without a Mac build: the **Notrude iOS** workflow builds on a GitHub macOS runner and uploads with an App Store Connect API key (Admin role), which lets Xcode sign automatically. Set the repository secrets `APPLE_TEAM_ID`, `ASC_API_KEY_P8` (the .p8 file's text), `ASC_API_KEY_ID` and `ASC_API_ISSUER_ID`, and the repository variable `NOTRUDE_APP_URL` (the hosted https server). Create the app for `com.notrude.training` in App Store Connect once. Then push a tag such as `testflight-1`, or use **Run workflow** once the workflow is on the default branch. Pull requests build without uploading. Server changes reach testers on the next app launch; only native changes need a new build.
 
 The hosted server uses Claude: set `ANTHROPIC_API_KEY` on the server and leave `NOTRUDE_LLM_BASE_URL` unset. The default model is Claude Sonnet 5.5 (`NOTRUDE_CLAUDE_MODEL` overrides it), answering directly at medium effort, with Anthropic's server-side fallback for declined requests. When `NOTRUDE_LLM_BASE_URL` is set, it wins and the local model is used, so development on Ollama is unchanged. Ollama on your Mac can't be reached from a tester's phone. Inside the app, the edge swipe back is on.
 
