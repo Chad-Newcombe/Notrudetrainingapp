@@ -81,9 +81,17 @@ Chats saved before this version are kept as one archived **Legacy conversation**
 
 There are six coaches: River (calm), Jax (upbeat), Sol (direct), Nova (curious), Knox (no-excuses accountability), and Riff (coaches with stand-up-style humour). Knox does not accept a skipped session without pain, injury, illness, or an emergency, and never insults the user. Riff writes original jokes and does not imitate real comedians.
 
-Each coach appears as a glowing orb in its own colour and pace. The orbs are plain CSS, so there is no 3D model to load and nothing to drag.
+Today is a bento home in the leading coach's colour family: swipe between Today, Week and Progress. The floating orb at the bottom opens the coach chat on frosted glass over the screen, and the buttons beside it skip or check in today's session. Each coach appears as a glowing orb in its own colour and pace. The orbs are plain CSS, so there is no 3D model to load and nothing to drag.
 
-Any coach can change the week from chat. An explicit request such as “I want a harder plan” or “move my walk to Friday” revises the saved plan, shows what changed, and can be undone. Without a local model, harder and easier requests scale the built-in plan’s intensity and duration.
+Any coach can change the week from chat. An explicit request such as “I want a harder plan” or “move my walk to Friday” revises the saved plan, shows what changed, and can be undone. With a local model, the model names the edit (add, remove, move, replace, set, harder, easier) and the app applies it, so the rest of the week is untouched and the coach confirms what was saved. Requests that need a whole new week still regenerate the plan. Without a model, the same edits work for common phrasings such as “add a yoga day”, “move Tuesday to Friday”, or “swap my run for a bike ride”. Without a local model, harder and easier requests scale the built-in plan’s intensity and duration.
+
+## Check-ins, history and coach notes
+
+Finishing a session asks for the minutes you did and how it felt (easy, about right, hard, or pain). The coach replies in its own voice. After two easy sessions in a row it can offer to step the next session up, and after a hard or painful one it offers to ease it back; the change only happens if you accept it. The app chooses the change and the coach explains it, so the card always matches what is applied.
+
+Past weeks are kept when a new week is planned. When a week ends, Today offers **Plan this week with {coach}**, which builds the new week from last week's plan and check-ins. The streak counts planned sessions in a row: rest days never break it, only a skipped or missed session does.
+
+The note on Today and the weekly update on Progress are written by the leading coach and saved once per day or week. Without a local model, built-in demo replies are used.
 
 ## Scripts
 

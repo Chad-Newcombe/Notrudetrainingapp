@@ -1,6 +1,6 @@
 export { clearAll } from "./db";
 export { getProfile, saveProfile } from "./profile";
-export { getPlan, savePlan } from "./plan";
+export { getPlan, listPlanHistory, savePlan } from "./plan";
 export { listLogs, upsertLog } from "./logs";
 export { listChat, appendChat, replaceChat } from "./chat";
 export { listProgress, addProgress } from "./progress";
@@ -9,3 +9,4 @@ export { listMessages, addMessage } from "./messages";
 export { listCoachConversations, getCoachConversation, saveCoachConversation, deleteCoachConversation, archiveCoachConversation } from "./coach-conversations";
 export { emptyCoachRelationship, getCoachRelationship, saveCoachRelationship } from "./coach-relationships";
 export { migrateLegacyChat } from "./coach-chat-migration";
+export { getCoachNotes, saveCoachNote } from "./coach-notes";

@@ -102,3 +102,15 @@ it("ends the prompt with a format reminder and overrides personality for pain", 
     expect(coachReplyReminder({ ...profile, coachId: coach.id }, "My knee hurts when I run")).toMatch(/no jokes and no pushback/);
   }
 });
+
+it("tells every coach to apply a plan change without pushback, and keeps pain first", () => {
+  for (const coach of COACH_PRESETS) {
+    const p = { ...profile, coachId: coach.id };
+    expect(coachVoiceInstructions(p)).toMatch(/The plan belongs to the user/);
+    expect(coachReplyReminder(p, "I want a harder plan")).toMatch(/Do not push back/);
+    expect(coachReplyReminder(p, "I'd rather run on Friday instead of Tuesday")).toMatch(/Do not push back/);
+    expect(coachReplyReminder(p, "How was my week")).not.toMatch(/Do not push back/);
+    expect(coachReplyReminder(p, "My knee hurts, move my run to Friday")).not.toMatch(/Do not push back/);
+    expect(coachReplyReminder(p, "hi")).toMatch(/no markdown, asterisks, long dashes/);
+  }
+});

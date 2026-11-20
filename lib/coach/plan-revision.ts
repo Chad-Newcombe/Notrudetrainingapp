@@ -1,4 +1,4 @@
-import type { TrainingPlan, WorkoutLog } from "@/lib/types";
+import type { PlanSession, TrainingPlan, WorkoutLog } from "@/lib/types";
 import { DAY_LABELS } from "@/lib/dates";
 
 export type PlanConversationTurn = { role: "user" | "assistant"; content: string };
@@ -17,8 +17,8 @@ export function classifyPlanIntent(text: string): PlanIntent {
   const planContext = /\b(?:plan|week|schedule|sessions?|workouts?|training|recovery|rest day|run|running|walk|walking|swim|swimming|ride|riding|strength|mobility)\b/;
   const intensity = /\b(?:easier|harder|lighter|gentler|easy|moderate|hard|intensity)\b/;
   const sessionCount = new RegExp(`\\b(?:fewer|more|\\d+|${number})\\s+(?:sessions?|workouts?|days?)\\b`);
-  const replacement = /\bfrom\b.+\bto\b|\bwith\b/;
-  const action = /\b(?:make|move|reschedule|replace|swap|add|remove|drop|skip|shorten|cut|reduce|increase|change|update|adjust|set|switch)\b/;
+  const replacement = /\bfrom\b.+\bto\b|\bwith\b|\binstead of\b/;
+  const action = /\b(?:make|move|reschedule|replace|swap|add|remove|drop|skip|shorten|cut|reduce|increase|change|update|adjust|set|switch|give)\b/;
   const concrete = day.test(value) || duration.test(value) || intensity.test(value)
     || sessionCount.test(value) || replacement.test(value) || /\brest day\b/.test(value);
   const contextual = planContext.test(value) || duration.test(value)
@@ -29,7 +29,7 @@ export function classifyPlanIntent(text: string): PlanIntent {
     && day.test(value) && /\b(?:train|workout|run|walk|ride|swim|make it)\b/.test(value);
   const directExclusion = /\bno\s+(?:running|walking|riding|swimming|strength|workouts?|training)\b/.test(value)
     && /\b(?:this\s+week|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/.test(value);
-  const statedNeed = /\bi\s+(?:need|want)\b/.test(value) && contextual && concrete;
+  const statedNeed = /\bi\s+(?:need|want|prefer)\b|\bi(?:'d| would)\s+(?:like|rather|prefer)\b/.test(value) && contextual && concrete;
 
   return (explicitConstraint || unavailable || directExclusion || statedNeed
     || (action.test(value) && contextual && concrete))
@@ -121,6 +121,18 @@ export function preserveLoggedSessions(
   };
 }
 
+export function shiftSessionEffort(session: PlanSession, shift: 1 | -1): PlanSession {
+  const levels = ["easy", "moderate", "hard"] as const;
+  return {
+    ...session,
+    intensity: levels[Math.min(2, Math.max(0, levels.indexOf(session.intensity) + shift))],
+    rationale: shift > 0 ? "Stepped up because you asked for a harder week." : "Eased off because you asked for a lighter week.",
+    steps: session.steps.map((step) => step.durationMin
+      ? { ...step, durationMin: Math.max(5, Math.round(step.durationMin * (shift > 0 ? 1.25 : 0.8) / 5) * 5) }
+      : step),
+  };
+}
+
 export function adjustFixturePlanForConversation(
   plan: TrainingPlan,
   conversation: PlanConversationTurn[],
@@ -136,18 +148,7 @@ export function adjustFixturePlanForConversation(
     const shift = /\b(?:harder|tougher|more intense|more challenging|step it up)\b/.test(latest) ? 1
       : /\b(?:easier|lighter|gentler|less intense)\b/.test(latest) ? -1 : 0;
     if (!shift) return plan;
-    const levels = ["easy", "moderate", "hard"] as const;
-    return {
-      ...plan,
-      sessions: plan.sessions.map((session) => ({
-        ...session,
-        intensity: levels[Math.min(2, Math.max(0, levels.indexOf(session.intensity) + shift))],
-        rationale: shift > 0 ? "Stepped up because you asked for a harder week." : "Eased off because you asked for a lighter week.",
-        steps: session.steps.map((step) => step.durationMin
-          ? { ...step, durationMin: Math.max(5, Math.round(step.durationMin * (shift > 0 ? 1.25 : 0.8) / 5) * 5) }
-          : step),
-      })),
-    };
+    return { ...plan, sessions: plan.sessions.map((session) => shiftSessionEffort(session, shift)) };
   }
   if (minutes < 5 || minutes > 180) return plan;
 

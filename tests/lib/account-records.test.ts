@@ -100,3 +100,15 @@ describe("conversation replacement policy", () => {
     }
   });
 });
+
+describe("phase 1 records", () => {
+  it("accepts plan history and log check-ins, and rejects bad values", () => {
+    const week = { id: "w", weekStartIso: "2026-11-02T08:00:00.000Z", generatedFromGoal: "g", sessions: [] };
+    expect(parseRecord({ collection: "meta", key: "plan-history", value: [week] })?.value).toEqual([week]);
+    expect(parseRecord({ collection: "meta", key: "plan-history", value: week })).toBeNull();
+    const log = { id: "l", sessionId: "s", status: "completed", completedAt: "2026-11-02T08:00:00.000Z", actualMinutes: 25, feeling: "hard" };
+    expect(parseRecord({ collection: "logs", key: "l", value: log })?.value).toEqual(log);
+    expect(parseRecord({ collection: "logs", key: "l", value: { ...log, feeling: "great" } })).toBeNull();
+    expect(parseRecord({ collection: "logs", key: "l", value: { ...log, actualMinutes: -5 } })).toBeNull();
+  });
+});
