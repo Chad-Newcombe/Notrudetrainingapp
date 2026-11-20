@@ -411,7 +411,7 @@ html:has(.bento-root) { overscroll-behavior: none; }
 .bento-controls { position: fixed; inset: auto 0 max(1.75rem, env(safe-area-inset-bottom)) 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; padding: 0 1.9rem; transition: opacity 300ms; }
 .bento-controls[data-open] { opacity: 0; pointer-events: none; }
 .bento-orb { position: fixed; z-index: 50; left: 50%; bottom: max(1.75rem, env(safe-area-inset-bottom)); width: 76px; height: 76px; margin-left: -38px; border-radius: 999px; transition: transform 640ms cubic-bezier(.32,.72,0,1); }
-.bento-orb[data-open] { transform: translateY(calc(-100dvh + 11rem)) scale(1.55); }
+.bento-orb[data-open] { transform: translateY(calc(-100dvh + 11rem + env(safe-area-inset-top))) scale(1.55); } /* clears the Dynamic Island */
 .keyboard-open .bento-orb { transition: none; } /* its open spot is tied to the screen height, which the keyboard changes */
 .bento-orb-core { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #fff; }
 .bento-orb[data-open] .bento-orb-core { animation: bento-float 4.2s ease-in-out infinite; }
@@ -443,3 +443,12 @@ html.boot-on .boot { display: block; }
 .boot-ring { animation: orb-swirl 2.4s linear infinite; }
 .boot-orb { animation: orb-breathe 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .boot-ring, .boot-orb { animation: none; } }
+
+/* Settings: the bento room (dot grid, coach light from above) with each group on its own raised card. */
+.settings-room { position: relative; isolation: isolate; }
+.settings-room::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--app-text), transparent 91%) 1px, transparent 1.4px), radial-gradient(ellipse 90% 40% at 50% -6%, color-mix(in srgb, var(--app-accent), transparent 70%), transparent 70%);
+  background-size: 12px 12px, 100% 100%; }
+.settings-room > section, .settings-room > div { border: 1px solid var(--app-line); border-radius: 26px; padding: 1.25rem;
+  background: color-mix(in srgb, var(--app-raised), transparent 8%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 40px -24px rgba(0,0,0,.65); }

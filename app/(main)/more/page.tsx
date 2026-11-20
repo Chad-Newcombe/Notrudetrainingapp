@@ -10,8 +10,8 @@ export default function MorePage() {
   const { profile, reload } = useNotrudeStore();
 
   return (
-    <main className="flex flex-col gap-9 px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
-      <header>
+    <main className="settings-room flex flex-col gap-4 px-5 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <header className="mb-2 px-1">
         <p className="meta-label">More</p>
         <h1 className="mt-2 text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">
           Settings and connections
@@ -36,7 +36,7 @@ export default function MorePage() {
       {/* Changing coach lives on the Coach screens; this page keeps only what isn't reachable elsewhere. */}
       <CoachMemoryManager />
 
-      <div className="border-t border-[var(--app-line)] pt-7"><HealthConnections /></div>
+      <div><HealthConnections /></div>
     </main>
   );
 }

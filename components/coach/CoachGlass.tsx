@@ -54,7 +54,7 @@ export function CoachGlass({ open, profile, plan, logs, onClose }: Props) {
       <button ref={closeButton} type="button" onClick={onClose} aria-label={`Close ${coach.name}`} className="bento-glass-button absolute right-4 top-[max(1.25rem,env(safe-area-inset-top))] size-11">
         <X size={18} aria-hidden />
       </button>
-      <div className="mx-auto flex h-full w-full max-w-xl flex-col overflow-y-auto px-4 pb-6 pt-[14rem]">
+      <div className="mx-auto flex h-full w-full max-w-xl flex-col overflow-y-auto px-4 pb-6 pt-[calc(13rem+env(safe-area-inset-top))]">
         <p className="mb-4 text-center text-[var(--app-text)]"><span className="block font-display text-2xl font-bold">{coach.name}</span><span className="text-sm text-[var(--app-muted)]">{coach.vibe}</span></p>
         {failed ? <p role="alert">Couldn’t open a chat with {coach.name}. Try again in a moment.</p>
           : conversation ? <CoachChat key={conversation.id} variant="glass" conversation={conversation} profile={profile} plan={plan} logs={logs} />
