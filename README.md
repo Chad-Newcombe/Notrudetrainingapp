@@ -91,7 +91,7 @@ Finishing a session asks for the minutes you did and how it felt (easy, about ri
 
 Past weeks are kept when a new week is planned. When a week ends, Today offers **Plan this week with {coach}**, which builds the new week from last week's plan and check-ins. The streak counts planned sessions in a row: rest days never break it, only a skipped or missed session does.
 
-The note on Today and the weekly update on Progress are written by the leading coach and saved once per day or week. Without a local model, built-in demo replies are used.
+The note on Today and the weekly update on Progress are written by the leading coach, saved for the day or week, and rewritten when you log or skip a session. Without a local model, built-in demo replies are used.
 
 ## Scripts
 

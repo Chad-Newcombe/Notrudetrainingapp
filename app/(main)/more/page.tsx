@@ -1,7 +1,6 @@
 "use client";
 
 import { CoachMemoryManager } from "@/components/coach/CoachMemoryManager";
-import { CoachSwitcher } from "@/components/coach/CoachSwitcher";
 import { HealthConnections } from "@/components/progress/HealthConnections";
 import { Button } from "@/components/ui/Button";
 import { AppearanceControl } from "@/components/theme/AppearanceControl";
@@ -34,11 +33,7 @@ export default function MorePage() {
 
       {profile ? <AppearanceControl profile={profile} onChanged={() => void reload()} /> : null}
 
-      <section className="border-t border-[var(--app-line)] pt-7" aria-labelledby="coach-settings-heading">
-        <h2 id="coach-settings-heading" className="mb-3 text-base font-semibold text-[var(--app-text)]">Coach</h2>
-        {profile ? <CoachSwitcher profile={profile} onChanged={() => void reload()} /> : null}
-      </section>
-
+      {/* Changing coach lives on the Coach screens; this page keeps only what isn't reachable elsewhere. */}
       <CoachMemoryManager />
 
       <div className="border-t border-[var(--app-line)] pt-7"><HealthConnections /></div>

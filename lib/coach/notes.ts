@@ -24,11 +24,12 @@ export async function requestInsight(kind: InsightKind, input: InsightInput, log
   return (await response.json()) as Insight;
 }
 
-/** The day's or week's note from the leading coach, written once and then cached. */
+/** The day's or week's note from the leading coach, cached until the period, coach, plan or check-ins change. */
 export async function coachNote(kind: "daily" | "weekly", input: InsightInput, now = new Date()): Promise<CoachNote> {
   const coachId = input.profile.coachId ?? "river";
   const period = kind === "daily" ? now.toDateString() : weekStartIso(now).slice(0, 10);
-  const key = `${period}|${coachId}|${input.plan?.id ?? "none"}`;
+  // The log count is in the key so a newly logged or skipped session gets a fresh note, not last week's take.
+  const key = `${period}|${coachId}|${input.plan?.id ?? "none"}|${input.logs.length}`;
   const cached = (await getCoachNotes())[kind];
   if (cached?.key === key) return cached;
   const { message } = await requestInsight(kind, input);

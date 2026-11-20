@@ -112,7 +112,7 @@ export default function WorkoutPlayPage() {
 
   if (!session) {
     return (
-      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] pt-[max(2rem,env(safe-area-inset-top))]">
         <h1 className="text-xl font-semibold text-[var(--app-text)]">
           Session not found
         </h1>
@@ -156,7 +156,7 @@ export default function WorkoutPlayPage() {
     const coach = getCoach(profile?.coachId);
     const proposal = reply.insight?.proposal;
     return (
-      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] pt-[max(2rem,env(safe-area-inset-top))]">
         <p className="meta-label">Saved</p>
         <h1 className="mt-2 text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">{session.title} logged</h1>
         <section aria-live="polite" className="mt-8 flex items-start gap-3">
@@ -206,7 +206,7 @@ export default function WorkoutPlayPage() {
     const value = Number(minutes);
     const validMinutes = minutes.trim() !== "" && Number.isInteger(value) && value >= 0 && value <= 600;
     return (
-      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] pt-[max(2rem,env(safe-area-inset-top))]">
         <h1 className="text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">How did it go?</h1>
         <p className="mt-2 text-[var(--app-muted)]">Your coach uses this to tune the plan.</p>
         <label htmlFor="actual-minutes" className="mt-8 text-sm font-semibold text-[var(--app-text)]">Minutes you did</label>
@@ -250,7 +250,7 @@ export default function WorkoutPlayPage() {
 
   if (skipAck) {
     return (
-      <main className="theme-dark flex min-h-[100dvh] flex-col justify-between bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+      <main className="theme-dark flex min-h-[100dvh] flex-col justify-between bg-[var(--app-canvas)] px-6 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] pt-[max(2rem,env(safe-area-inset-top))]">
         <div className="flex flex-1 flex-col justify-center gap-4">
           <h1 className="text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">
             Okay — we can adjust.
@@ -281,7 +281,7 @@ export default function WorkoutPlayPage() {
   }
 
   return (
-    <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+    <main className="theme-dark flex min-h-[100dvh] flex-col bg-[var(--app-canvas)] px-6 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] pt-[max(2rem,env(safe-area-inset-top))]">
       <p className="meta-label">{progressLabel}</p>
       <h1 className="mt-2 text-[2rem] font-bold tracking-[-0.045em] text-[var(--app-text)]">
         {session.title}
