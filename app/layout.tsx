@@ -1,19 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
 import "./globals.css";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { AccountProvider } from "@/components/account/AccountProvider";
 import { BOOT_SCRIPT, BootSplash } from "@/components/shell/BootSplash";
+import { BOOT_CLOUD, BOOT_ORB, BOOT_RING } from "@/lib/brand/boot-art";
 import { EdgeSwipeBack } from "@/components/shell/EdgeSwipeBack";
 import { AppThemeProvider } from "@/components/theme/AppThemeProvider";
-
-// The loader inlines the same orb layers the launch image was rendered from (scripts/brand/render-icons.mjs).
-const brand = (name: string) => readFileSync(join(process.cwd(), "public/brand", name), "utf8");
-const BOOT_ORB = brand("orb.svg");
-const BOOT_RING = brand("ring.svg");
-// Inlined (about 13 kB) so the cloud paints in the very first frame, as it does in the launch image.
-const BOOT_CLOUD = `data:image/jpeg;base64,${readFileSync(join(process.cwd(), "public/brand/cloud.jpg")).toString("base64")}`;
 
 const figtree = Figtree({
   subsets: ["latin"],

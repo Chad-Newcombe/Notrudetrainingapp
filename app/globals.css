@@ -340,7 +340,9 @@ summary { -webkit-tap-highlight-color: transparent; }
   animation: orb-breathe var(--orb-speed) ease-in-out infinite;
 }
 .coach-orb::before {
-  content: ""; position: absolute; inset: -25%; mix-blend-mode: screen;
+  /* iOS WebKit ignores the rounded overflow clip for a blurred, blended child and shows a square;
+     clipping the swirl itself to the orb's circle (50% of the orb = 33.3% of this 150% box) avoids that. */
+  content: ""; position: absolute; inset: -25%; mix-blend-mode: screen; clip-path: circle(33.333% at 50% 50%);
   background: conic-gradient(from 0deg, transparent 0 10%, color-mix(in srgb, var(--orb-light), transparent 30%) 24%, transparent 42%, color-mix(in srgb, var(--orb), #fff 35%) 62%, transparent 82%);
   filter: blur(calc(var(--orb-size) * .1));
   animation: orb-swirl calc(var(--orb-speed) * 2.5) linear infinite;
@@ -386,11 +388,12 @@ html[data-appearance="light"] .bento-root { --bento-canvas: var(--bento-canvas-l
 .bento-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: 30px; padding: 1rem;
   transform: translate3d(calc(var(--tx, 0) * -3px), calc(var(--ty, 0) * -3px), 0); }
 /* Motion shimmer: a light band that slides across each tile as the phone (or pointer) tilts. */
-.bento-tile::after { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light;
+/* border-radius: inherit because iOS WebKit drops the tile's rounded clip for blended layers, leaving square corners. */
+.bento-tile::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; mix-blend-mode: soft-light;
   background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 48%, rgba(255,255,255,.15) 54%, transparent 70%);
   background-size: 260% 260%; background-position: calc(50% - var(--tx, 0) * 50%) calc(50% - var(--ty, 0) * 50%); }
 .bento-tile > .bento-fill { transform: translate3d(calc(var(--tx, 0) * 3px), calc(var(--ty, 0) * 3px), 0); }
-.bento-sheen { position: absolute; inset: 0 0 52% 0; background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0)); pointer-events: none; }
+.bento-sheen { position: absolute; inset: 0 0 52% 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0)); pointer-events: none; }
 .bento-fill { position: relative; display: flex; flex: 1; flex-direction: column; min-height: 0; color: inherit; }
 .bento-fill:focus-visible, .bento-day:focus-visible, .bento-orb:focus-visible, .bento-glass-button:focus-visible, .bento-done:focus-visible { outline: 3px solid var(--bento-text); outline-offset: 3px; }
 .bento-hero { position: relative; display: flex; flex: 1; align-items: center; justify-content: center; gap: .25rem; }
@@ -404,6 +407,7 @@ html[data-appearance="light"] .bento-root { --bento-canvas: var(--bento-canvas-l
 .bento-controls[data-open] { opacity: 0; pointer-events: none; }
 .bento-orb { position: fixed; z-index: 50; left: 50%; bottom: max(1.75rem, env(safe-area-inset-bottom)); width: 76px; height: 76px; margin-left: -38px; border-radius: 999px; transition: transform 640ms cubic-bezier(.32,.72,0,1); }
 .bento-orb[data-open] { transform: translateY(calc(-100dvh + 11rem)) scale(1.55); }
+.keyboard-open .bento-orb { transition: none; } /* its open spot is tied to the screen height, which the keyboard changes */
 .bento-orb-core { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #fff; }
 .bento-orb[data-open] .bento-orb-core { animation: bento-float 4.2s ease-in-out infinite; }
 .bento-halo { position: absolute; inset: -18px; border-radius: 999px; filter: blur(4px); animation: bento-halo 4.2s ease-in-out infinite; }

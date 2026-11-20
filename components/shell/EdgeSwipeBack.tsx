@@ -1,6 +1,7 @@
 "use client";
 
 import { Capacitor } from "@capacitor/core";
+import { Keyboard } from "@capacitor/keyboard";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 
@@ -42,6 +43,18 @@ export function EdgeSwipeBack({ children }: { children: ReactNode }) {
     const el = page.current;
     if (el) { el.style.transform = ""; el.style.transition = ""; delete el.dataset.dragging; }
   }, [pathname]);
+
+  // The keyboard shrinks the app (capacitor.config.ts) instead of sliding the page up. Fixed elements
+  // re-anchor instantly then; .keyboard-open stops their transitions from animating that jump.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const root = document.documentElement;
+    const handles = [
+      Keyboard.addListener("keyboardWillShow", () => root.classList.add("keyboard-open")),
+      Keyboard.addListener("keyboardDidHide", () => root.classList.remove("keyboard-open")),
+    ];
+    return () => { for (const handle of handles) void handle.then((h) => h.remove()); };
+  }, []);
 
   useEffect(() => {
     if (!installed()) return;
