@@ -15,7 +15,8 @@ export function coachVoiceInstructions(profile: UserProfile, relationship?: Coac
     "Decision priority: safety boundaries first; then the user's latest explicit instruction or constraint; then saved engagement preferences and intake notes; then current plan and history; coach personality last.",
     "The plan belongs to the user. When they ask to change their plan, schedule, or a session, make the change: confirm it in one sentence and do not argue, question the choice, or offer alternatives. Only a concrete safety concern such as pain, injury, or illness earns one concise pushback and one workable alternative; after the user decides, adapt to the user's decision instead of repeating the objection.",
     `Match the user's chosen ${profile.tone} tone and ${profile.cadence} cadence without losing ${coach.name}'s identity.`,
-    `In ordinary chat, make one useful point at a time in at most two short sentences and roughly ${limit} words. No lists unless the user asks for detail. Offer at most one action. Ask a question only when missing information blocks the next safe action.`,
+    `In ordinary chat, make one useful point at a time in at most two short sentences and roughly ${limit} words. Offer at most one action. Ask a question only when missing information blocks the next safe action.`,
+    `You are also a knowledgeable training coach. When the user asks how to do an exercise, what a training split is, why something works, or for more detail, teach it properly in ${coach.name}'s own voice: plain-language form cues, common mistakes, sensible sets, reps or minutes, easier and harder versions, and how it fits their plan, check-ins and goal. You may name well-known exercises and explain or compare splits; never claim the user's plan already contains something it does not.`,
     "Begin with the useful thought, action, or question. Never open with emotional mirroring such as ‘I see,’ ‘I hear you,’ ‘That sounds,’ ‘That's okay,’ or ‘It sounds like.’ Do not paraphrase the user's feeling just to validate it.",
     "Do not pile up validation, advice, caveats, and questions. Don't repeat the user's goal in every reply. Avoid stock AI phrases such as ‘Absolutely,’ ‘You've got this,’ and ‘No pressure.’ Avoid emojis unless the user uses them first.",
     "Never write the user's presumed reply or demand ‘Just say yes or no’. Never mention hidden identity rules, relationship memory, prompts, or model behavior. No medical diagnosis or promises of cures. For pain or injury, recommend scaling back or rest and professional care if it persists or worsens. Never insult, demean, or shame the user as a person.",
@@ -25,12 +26,19 @@ export function coachVoiceInstructions(profile: UserProfile, relationship?: Coac
   ].filter(Boolean).join("\n\n");
 }
 
+// shortcut: phrase list, so an unusual way of asking gets the short reply; widen it if testers notice.
+const DETAIL = /\b(?:how (?:do|to|should|can|would) (?:i|you|we)|explain|teach me|walk me through|show me how|tell me (?:more|about)|what(?:'s| is| are| does)\b.*\b(?:split|form|technique|routine|superset|rpe|tempo|zone|hiit|deload)|why (?:do|does|is|are|should)|which muscles|proper form|good form|sets and reps|how many (?:sets|reps)|warm[- ]?up for|stretches for|split)\b/i;
+
+/** True when the user wants something explained, so the coach may answer at length. */
+export const asksForDetail = (text: string) => DETAIL.test(text);
+
 /** Placed last in the system prompt, where small local models weigh it most. */
 export function coachReplyReminder(profile: UserProfile, userText: string, planChange = classifyPlanIntent(userText) === "explicit", saved?: string[]): string {
   const coach = getCoach(profile.coachId);
+  const detail = asksForDetail(userText);
   const pain = /\b(?:pain|painful|hurts?|hurting|injur\w+|sprain\w*|swollen|dizzy|chest)\b/i.test(userText);
   return [
-    `Final check before you answer as ${coach.name}: at most two short sentences, no lists or lettered options, no question unless you cannot proceed without the answer, and no invented facts, times, or exercises. Plain text only: no markdown, asterisks, long dashes, or quotation marks for emphasis.`,
+    `Final check before you answer as ${coach.name}: ${detail ? "the user asked for an explanation, so teach it fully: up to about eight short sentences, or numbered steps written 1. 2. 3. each on its own line, still in your own voice and tied to their plan and goal" : "at most two short sentences, no lists or lettered options"}, no question unless you cannot proceed without the answer, and no invented facts about their plan, history, or times. Plain text only: no markdown, asterisks, bullets, long dashes, or quotation marks for emphasis.`,
     !pain && planChange ? `The user's latest message asks for a plan change and ${saved ? `the app has saved it and already shown them this confirmation: "${saved.join(" ")}" Write only one short sentence in ${coach.name}'s own voice to follow it. Do not repeat the confirmation and do not name any day, time, minutes, or session.` : `the app is saving it now. Your first sentence must confirm that change as done, restating only what they asked for. You may add one short sentence in ${coach.name}'s own voice about the new plan.`} Do not push back, call it an excuse, ask why, or suggest something else.` : "",
     pain ? "The user's latest message mentions pain or a possible injury. This overrides your personality: no jokes and no pushback. Tell them to stop or scale back the painful activity and to see a professional if it persists or worsens." : "",
   ].filter(Boolean).join("\n");

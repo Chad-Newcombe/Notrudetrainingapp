@@ -3,7 +3,6 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { CoachChat } from "@/components/coach/CoachChat";
-import { mix, type CoachPalette } from "@/lib/coaches/palette";
 import { getCoach } from "@/lib/coaches/presets";
 import { startCoachConversation } from "@/lib/store/coach-conversations";
 import type { CoachConversation, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
@@ -13,12 +12,11 @@ type Props = {
   profile: UserProfile;
   plan: TrainingPlan | null;
   logs: WorkoutLog[];
-  palette: CoachPalette;
   onClose: () => void;
 };
 
 /** The coach chat on frosted glass over the home screen, under the floating orb. */
-export function CoachGlass({ open, profile, plan, logs, palette, onClose }: Props) {
+export function CoachGlass({ open, profile, plan, logs, onClose }: Props) {
   const coach = getCoach(profile.coachId);
   const [conversation, setConversation] = useState<CoachConversation | null>(null);
   const [failed, setFailed] = useState(false);
@@ -51,14 +49,13 @@ export function CoachGlass({ open, profile, plan, logs, palette, onClose }: Prop
       aria-hidden={!open}
       inert={!open || undefined}
       data-open={open || undefined}
-      className="bento-glass-layer theme-dark"
-      style={{ backgroundColor: `${mix(palette.deep, "#000000", 0.45)}8c` }}
+      className="bento-glass-layer"
     >
       <button ref={closeButton} type="button" onClick={onClose} aria-label={`Close ${coach.name}`} className="bento-glass-button absolute right-4 top-[max(1.25rem,env(safe-area-inset-top))] size-11">
         <X size={18} aria-hidden />
       </button>
       <div className="mx-auto flex h-full w-full max-w-xl flex-col overflow-y-auto px-4 pb-6 pt-[14rem]">
-        <p className="mb-4 text-center"><span className="block font-display text-2xl font-bold">{coach.name}</span><span className="text-sm text-white/75">{coach.vibe}</span></p>
+        <p className="mb-4 text-center text-[var(--app-text)]"><span className="block font-display text-2xl font-bold">{coach.name}</span><span className="text-sm text-[var(--app-muted)]">{coach.vibe}</span></p>
         {failed ? <p role="alert">Couldn’t open a chat with {coach.name}. Try again in a moment.</p>
           : conversation ? <CoachChat key={conversation.id} variant="glass" conversation={conversation} profile={profile} plan={plan} logs={logs} />
             : <p role="status">Opening a chat with {coach.name}…</p>}

@@ -361,9 +361,21 @@ summary { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) { .coach-orb, .coach-orb::before { animation: none; } }
 
 /* Bento home: dark dot grid lit by the leading coach, swipe pages that tilt away, and a floating orb. */
-.bento-root { position: relative; min-height: 100dvh; overflow: hidden; color: #fff; transition: background-color 600ms cubic-bezier(.32,.72,0,1); }
+/* Dark is the default; the light version swaps these tokens. Coach tones come in from inline vars. */
+.bento-root { --bento-canvas: var(--bento-canvas-dark); --bento-text: #fff; --bento-dot: rgba(255,255,255,.10); --bento-quiet: rgba(255,255,255,.06); --bento-quiet-text: rgba(255,255,255,.72);
+  --bento-glass-bg: rgba(255,255,255,.1); --bento-glass-line: rgba(255,255,255,.07); --bento-glass-top: rgba(255,255,255,.2); --bento-dot-off: rgba(255,255,255,.35);
+  --bento-done-bg: #fff; --bento-done-fg: #07060b; --bento-veil: var(--bento-veil-dark);
+  position: relative; min-height: 100dvh; overflow: hidden; color: var(--bento-text); background-color: var(--bento-canvas); transition: background-color 600ms cubic-bezier(.32,.72,0,1); }
+html[data-appearance="light"] .bento-root { --bento-canvas: var(--bento-canvas-light); --bento-text: var(--bento-ink); --bento-dot: rgba(0,0,0,.09); --bento-quiet: rgba(255,255,255,.62); --bento-quiet-text: var(--bento-ink-soft);
+  --bento-glass-bg: rgba(255,255,255,.58); --bento-glass-line: rgba(0,0,0,.06); --bento-glass-top: rgba(255,255,255,.9); --bento-dot-off: rgba(0,0,0,.2);
+  --bento-done-bg: var(--bento-ink); --bento-done-fg: #fff; --bento-veil: var(--bento-veil-light); --glow: var(--glow-light); --glow-top: var(--glow-top-light); }
+@media (prefers-color-scheme: light) {
+  html[data-appearance="system"] .bento-root { --bento-canvas: var(--bento-canvas-light); --bento-text: var(--bento-ink); --bento-dot: rgba(0,0,0,.09); --bento-quiet: rgba(255,255,255,.62); --bento-quiet-text: var(--bento-ink-soft);
+    --bento-glass-bg: rgba(255,255,255,.58); --bento-glass-line: rgba(0,0,0,.06); --bento-glass-top: rgba(255,255,255,.9); --bento-dot-off: rgba(0,0,0,.2);
+    --bento-done-bg: var(--bento-ink); --bento-done-fg: #fff; --bento-veil: var(--bento-veil-light); --glow: var(--glow-light); --glow-top: var(--glow-top-light); }
+}
 .bento-root::before { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background-image: radial-gradient(rgba(255,255,255,.10) 1px, transparent 1.4px), radial-gradient(ellipse 120% 60% at 50% 112%, var(--glow), transparent 62%), radial-gradient(ellipse 80% 50% at 10% -10%, var(--glow-top), transparent 60%);
+  background-image: radial-gradient(var(--bento-dot) 1px, transparent 1.4px), radial-gradient(ellipse 120% 60% at 50% 112%, var(--glow), transparent 62%), radial-gradient(ellipse 80% 50% at 10% -10%, var(--glow-top), transparent 60%);
   background-size: 12px 12px, 100% 100%, 100% 100%; }
 .bento-scene { position: relative; transition: transform 620ms cubic-bezier(.32,.72,0,1); }
 .bento-scene[data-open] { transform: scale(1.04); }
@@ -371,17 +383,23 @@ summary { -webkit-tap-highlight-color: transparent; }
 .bento-rail::-webkit-scrollbar { display: none; }
 .bento-page { flex: 0 0 100%; box-sizing: border-box; scroll-snap-align: center; padding: 0 1rem; max-width: 100%; animation: bento-depth linear both; animation-timeline: view(inline); }
 @keyframes bento-depth { 0% { transform: scale(.84) rotateY(22deg); opacity: .3; } 50% { transform: none; opacity: 1; } 100% { transform: scale(.84) rotateY(-22deg); opacity: .3; } }
-.bento-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: 30px; padding: 1rem; }
+.bento-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: 30px; padding: 1rem;
+  transform: translate3d(calc(var(--tx, 0) * -3px), calc(var(--ty, 0) * -3px), 0); }
+/* Motion shimmer: a light band that slides across each tile as the phone (or pointer) tilts. */
+.bento-tile::after { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 48%, rgba(255,255,255,.15) 54%, transparent 70%);
+  background-size: 260% 260%; background-position: calc(50% - var(--tx, 0) * 50%) calc(50% - var(--ty, 0) * 50%); }
+.bento-tile > .bento-fill { transform: translate3d(calc(var(--tx, 0) * 3px), calc(var(--ty, 0) * 3px), 0); }
 .bento-sheen { position: absolute; inset: 0 0 52% 0; background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0)); pointer-events: none; }
 .bento-fill { position: relative; display: flex; flex: 1; flex-direction: column; min-height: 0; color: inherit; }
-.bento-fill:focus-visible, .bento-day:focus-visible, .bento-orb:focus-visible, .bento-glass-button:focus-visible, .bento-done:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.bento-fill:focus-visible, .bento-day:focus-visible, .bento-orb:focus-visible, .bento-glass-button:focus-visible, .bento-done:focus-visible { outline: 3px solid var(--bento-text); outline-offset: 3px; }
 .bento-hero { position: relative; display: flex; flex: 1; align-items: center; justify-content: center; gap: .25rem; }
 .bento-day { position: relative; display: flex; align-items: center; gap: .6rem; height: 3.9rem; flex: none; border-radius: 22px; padding: 0 1.1rem; }
-.bento-glass, .bento-glass-button { background: rgba(255,255,255,.1); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), inset 0 0 0 1px rgba(255,255,255,.07); border-radius: 26px; color: #fff; }
+.bento-glass, .bento-glass-button { background: var(--bento-glass-bg); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); box-shadow: inset 0 1px 0 var(--bento-glass-top), inset 0 0 0 1px var(--bento-glass-line); border-radius: 26px; color: var(--bento-text); }
 .bento-glass-button { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
-.bento-done { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: #fff; color: #07060b; box-shadow: inset 0 -4px 10px rgba(0,0,0,.12), 0 12px 28px -10px rgba(255,255,255,.35); }
-.bento-dot { height: 6px; width: 6px; border-radius: 3px; background: rgba(255,255,255,.35); transition: width 260ms cubic-bezier(.32,.72,0,1), background-color 260ms; }
-.bento-dot[data-on] { width: 22px; background: #fff; }
+.bento-done { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--bento-done-bg); color: var(--bento-done-fg); box-shadow: inset 0 -4px 10px rgba(0,0,0,.12), 0 12px 28px -10px rgba(0,0,0,.35); }
+.bento-dot { height: 6px; width: 6px; border-radius: 3px; background: var(--bento-dot-off); transition: width 260ms cubic-bezier(.32,.72,0,1), background-color 260ms; }
+.bento-dot[data-on] { width: 22px; background: var(--bento-text); }
 .bento-controls { position: fixed; inset: auto 0 max(1.75rem, env(safe-area-inset-bottom)) 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; padding: 0 1.9rem; transition: opacity 300ms; }
 .bento-controls[data-open] { opacity: 0; pointer-events: none; }
 .bento-orb { position: fixed; z-index: 50; left: 50%; bottom: max(1.75rem, env(safe-area-inset-bottom)); width: 76px; height: 76px; margin-left: -38px; border-radius: 999px; transition: transform 640ms cubic-bezier(.32,.72,0,1); }
@@ -392,11 +410,15 @@ summary { -webkit-tap-highlight-color: transparent; }
 .bento-plus { transition: opacity 240ms, transform 240ms; }
 .bento-orb[data-open] .bento-plus { opacity: 0; transform: scale(.6); }
 .bento-orb:active .bento-orb-core { transform: scale(.95); }
-.bento-glass-layer { position: fixed; inset: 0; z-index: 40; backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); opacity: 0; pointer-events: none; transition: opacity 460ms cubic-bezier(.32,.72,0,1); }
+.bento-glass-layer { position: fixed; inset: 0; z-index: 40; background-color: var(--bento-veil); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); opacity: 0; pointer-events: none; transition: opacity 460ms cubic-bezier(.32,.72,0,1); }
 .bento-glass-layer[data-open] { opacity: 1; pointer-events: auto; }
 @keyframes bento-float { 50% { transform: translateY(-7px); } }
 @keyframes bento-halo { 50% { opacity: .95; transform: scale(1.14); } 0%, 100% { opacity: .5; } }
 @media (prefers-reduced-motion: reduce) {
   .bento-page, .bento-halo, .bento-orb[data-open] .bento-orb-core { animation: none; }
+  .bento-tile, .bento-tile > .bento-fill { transform: none; }
   .bento-orb, .bento-scene, .bento-glass-layer { transition-duration: 1ms; }
 }
+
+/* Edge swipe back: the page follows the finger, with a shadow on its leading edge. */
+.edge-back[data-dragging] { box-shadow: -18px 0 36px rgba(0,0,0,.28); will-change: transform; }

@@ -6,14 +6,19 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "ios:sync": "cap sync ios",
+    "ios:open": "cap open ios",
     "preview": "node scripts/preview.mjs",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.143",
     "@ai-sdk/openai-compatible": "^2.0.92",
     "@ai-sdk/react": "^3.0.169",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "ai": "^6.0.325",
     "better-auth": "^1.7.20",
     "idb": "^8.0.3",
@@ -28,6 +33,7 @@
     "ai": "$ai"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.16",
     "@testing-library/dom": "^10.4.2",

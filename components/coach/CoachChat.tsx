@@ -470,7 +470,7 @@ function MessageBubble({ message }: { message: UIMessage }) {
 
   return (
     <div
-      className={`max-w-[90%] rounded-[var(--radius-panel)] px-4 py-3 text-base leading-relaxed ${
+      className={`max-w-[90%] whitespace-pre-line rounded-[var(--radius-panel)] px-4 py-3 text-base leading-relaxed ${
         isUser
           ? "ml-auto border border-[var(--app-line)] bg-[var(--app-raised-strong)] text-[var(--app-text)]"
           : "mr-auto border border-[var(--app-line)] bg-[var(--app-raised)] text-[var(--app-text)]"

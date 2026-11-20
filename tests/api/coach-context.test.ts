@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/coach/route";
 const model = vi.hoisted(() => ({ stream: vi.fn(), convert: vi.fn(async (messages) => messages) }));
-vi.mock("@/lib/ai/model", () => ({ getModel: () => ({}), localGenerationOptions: () => ({}) }));
+vi.mock("@/lib/ai/model", () => ({ getModel: () => ({}), localGenerationOptions: () => ({}), cachedSystem: (stable: string, rest = "") => `${stable}\n\n${rest}` }));
 vi.mock("ai", () => ({ convertToModelMessages: model.convert, streamText: model.stream }));
 beforeEach(() => { model.stream.mockReset().mockReturnValue({ toUIMessageStreamResponse: () => new Response("ok") }); });
 it("uses only a bounded selected summary on the first session turn", async () => {

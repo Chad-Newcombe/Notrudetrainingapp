@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
 import "./globals.css";
 import { AccountProvider } from "@/components/account/AccountProvider";
+import { EdgeSwipeBack } from "@/components/shell/EdgeSwipeBack";
 import { AppThemeProvider } from "@/components/theme/AppThemeProvider";
 
 const figtree = Figtree({
@@ -53,7 +54,7 @@ export default function RootLayout({
         )}
         <div className="app-shell">
           <AccountProvider>
-            <AppThemeProvider>{children}</AppThemeProvider>
+            <AppThemeProvider><EdgeSwipeBack>{children}</EdgeSwipeBack></AppThemeProvider>
           </AccountProvider>
         </div>
       </body>

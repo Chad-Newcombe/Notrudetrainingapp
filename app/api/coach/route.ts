@@ -10,9 +10,9 @@ import { lastUserText } from "@/lib/ai/coach-messages";
 import { applyPlanEdits, parsePlanEdits, PLAN_EDIT_INSTRUCTIONS, planEditPrompt, planEditSchema, summarizePlanEdits, type PlanEdit } from "@/lib/coach/plan-edit";
 import { classifyPlanIntent } from "@/lib/coach/plan-revision";
 import { fixtureCoachReply } from "@/lib/ai/fixtures";
-import { getModel, localGenerationOptions } from "@/lib/ai/model";
+import { cachedSystem, getModel, localGenerationOptions } from "@/lib/ai/model";
 import { getCoach } from "@/lib/coaches/presets";
-import { coachReplyReminder, coachVoiceInstructions } from "@/lib/coaches/voice";
+import { asksForDetail, coachReplyReminder, coachVoiceInstructions } from "@/lib/coaches/voice";
 import type { CoachRelationship, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
 type CoachRequestBody = {
@@ -32,7 +32,7 @@ async function planRequest(model: NonNullable<ReturnType<typeof getModel>>, text
     const result = await generateText({
       model, ...localGenerationOptions(signal, 20_000), maxOutputTokens: 200,
       output: Output.object({ schema: z.object({ planChange: z.boolean(), edits: z.array(planEditSchema).max(3) }) }),
-      system: PLAN_EDIT_INSTRUCTIONS,
+      system: cachedSystem(PLAN_EDIT_INSTRUCTIONS),
       prompt: planEditPrompt(text, plan),
     });
     return result.output;
@@ -42,8 +42,9 @@ async function planRequest(model: NonNullable<ReturnType<typeof getModel>>, text
   }
 }
 
-function buildCoachSystem(body: CoachRequestBody, planChange: boolean, saved?: string[]): string {
-  return [
+// The voice and context stay the same through a chat and are cached; the reminder follows the latest message.
+function buildCoachSystem(body: CoachRequestBody, planChange: boolean, saved?: string[]) {
+  return cachedSystem([
     coachVoiceInstructions(body.profile, body.relationship),
     "Use the approved intakeBrief to tailor suggestions, support after disruptions, and how you recognize progress. Use only the relevant notes and turn them into actions or questions. Do not recite the notes or infer missing preferences.",
     "Context (JSON):",
@@ -54,8 +55,7 @@ function buildCoachSystem(body: CoachRequestBody, planChange: boolean, saved?: s
       healthSummary: body.healthSummary ?? null,
       continuationSummary: typeof body.continuationSummary === "string" && body.messages.filter((message) => message.role === "user").length === 1 ? body.continuationSummary.slice(0, 220) : undefined,
     }),
-    coachReplyReminder(body.profile, lastUserText(body.messages), planChange, saved),
-  ].join("\n\n");
+  ].join("\n\n"), coachReplyReminder(body.profile, lastUserText(body.messages), planChange, saved));
 }
 
 export async function POST(req: Request) {
@@ -106,7 +106,8 @@ export async function POST(req: Request) {
     return Response.json({ text: safe ? `${confirmation}\n${line}` : confirmation }, { headers: header(applied) });
   }
 
-  return streamText({ ...reply, maxOutputTokens: 140 }).toUIMessageStreamResponse({
+  // Explanations (form, splits, why) need room; everyday replies stay short.
+  return streamText({ ...reply, maxOutputTokens: asksForDetail(userText) ? 700 : 140 }).toUIMessageStreamResponse({
     sendReasoning: false,
     headers: planChange ? header(null) : undefined,
     onError: () => "Your local coach is unavailable. Check that Ollama is running and try again.",

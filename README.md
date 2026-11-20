@@ -107,6 +107,17 @@ npm run lint      # ESLint
 2. Tap **Share** → **Add to Home Screen**.
 3. Launch from the home icon for standalone, safe-area layout (`manifest.webmanifest` + icons in `public/icons/`).
 
+## iOS app (Capacitor)
+
+`ios/` is a Capacitor shell around the hosted app. The coach, plan and sign-in run on the Next.js server, so the iPhone app loads that server instead of bundled files. `native/www` is only a fallback page for a build with no server address.
+
+1. Install full Xcode, then `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
+2. Point the app at a server and sync: `NOTRUDE_APP_URL=https://your-deployment npm run ios:sync`. To try a dev server on a phone on your own network, use `http://<this Mac's LAN address>:3100` and run Next.js with `-H 0.0.0.0`.
+3. `npm run ios:open`, choose your team under Signing & Capabilities, and run on a phone or simulator.
+4. For TestFlight: Product → Archive, then Distribute App → App Store Connect.
+
+The hosted server uses Claude: set `ANTHROPIC_API_KEY` on the server and leave `NOTRUDE_LLM_BASE_URL` unset. The default model is Claude Sonnet 5.5 (`NOTRUDE_CLAUDE_MODEL` overrides it), answering directly at medium effort, with Anthropic's server-side fallback for declined requests. When `NOTRUDE_LLM_BASE_URL` is set, it wins and the local model is used, so development on Ollama is unchanged. Ollama on your Mac can't be reached from a tester's phone. Inside the app, the edge swipe back is on.
+
 ## Data
 
 Profile, plan, logs, chat, and health connections live in **IndexedDB** in the browser (no account required).

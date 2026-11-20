@@ -7,6 +7,7 @@ import { CoachGlass } from "@/components/coach/CoachGlass";
 import { DAY_LABELS, dayIndexInPlanWeek } from "@/lib/dates";
 import { COACH_PALETTES, inkFor, mix, type CoachPalette } from "@/lib/coaches/palette";
 import { getCoach } from "@/lib/coaches/presets";
+import { useTilt } from "@/lib/hooks/useTilt";
 import { computeStreak } from "@/lib/progress/streaks";
 import type { PlanSession, TrainingPlan, UserProfile, WorkoutLog } from "@/lib/types";
 
@@ -54,6 +55,8 @@ export function BentoHome({ profile, plan, history, logs, dailyNote, weeklyNote,
   const [page, setPage] = useState(0);
   const [coachOpen, setCoachOpen] = useState(false);
   const rail = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  useTilt(root);
 
   const dayIndex = dayIndexInPlanWeek(plan.weekStartIso);
   const today = dayIndex == null ? null : plan.sessions.find((session) => session.dayIndex === dayIndex) ?? null;
@@ -74,7 +77,13 @@ export function BentoHome({ profile, plan, history, logs, dailyNote, weeklyNote,
   const go = (index: number) => rail.current?.scrollTo({ left: index * rail.current.clientWidth, behavior: "smooth" });
 
   return (
-    <div className="bento-root" style={{ backgroundColor: mix(p.deep, "#000000", 0.82), "--glow": `${p.glow}6b`, "--glow-top": `${p.light}38` } as CSSProperties}>
+    <div ref={root} className="bento-root" style={{
+      // Both versions' coach tones; globals.css picks light or dark from the app appearance.
+      "--bento-canvas-dark": mix(p.deep, "#000000", 0.82), "--bento-canvas-light": mix(p.light, "#ffffff", 0.82),
+      "--bento-ink": ink, "--bento-ink-soft": `${ink}b3`,
+      "--glow": `${p.glow}6b`, "--glow-top": `${p.light}38`, "--glow-light": `${p.mid}40`, "--glow-top-light": `${p.light}cc`,
+      "--bento-veil-dark": `${mix(p.deep, "#000000", 0.45)}8c`, "--bento-veil-light": `${mix(p.light, "#ffffff", 0.6)}a6`,
+    } as CSSProperties}>
       <div className="bento-scene" data-open={coachOpen || undefined} inert={coachOpen || undefined}>
         <header className="flex items-end justify-between px-5 pt-[max(1.75rem,env(safe-area-inset-top))]">
           <h1 className="font-display text-[2.1rem] font-extrabold leading-none tracking-[-0.03em]">{PAGES[page]}</h1>
@@ -146,9 +155,9 @@ export function BentoHome({ profile, plan, history, logs, dailyNote, weeklyNote,
               const session = plan.sessions.find((item) => item.dayIndex === index);
               const state = week.days[index];
               const isToday = index === dayIndex;
-              const background = !session ? "rgba(255,255,255,.06)" : state === "done" ? `linear-gradient(120deg, ${mix(p.mid, p.deep, 0.45)}, ${p.deep})`
+              const background = !session ? "var(--bento-quiet)" : state === "done" ? `linear-gradient(120deg, ${mix(p.mid, p.deep, 0.45)}, ${p.deep})`
                 : session.intensity === "easy" ? `linear-gradient(120deg, ${mix(p.light, "#ffffff", 0.35)}, ${p.light})` : `linear-gradient(120deg, ${p.deep}, ${mix(p.deep, "#000000", 0.35)})`;
-              const color = !session ? "rgba(255,255,255,.72)" : state !== "done" && session.intensity === "easy" ? ink : "#fff";
+              const color = !session ? "var(--bento-quiet-text)" : state !== "done" && session.intensity === "easy" ? ink : "#fff";
               const body = (
                 <>
                   <span className="w-11 text-[0.8rem] font-bold">{label.slice(0, 3)}</span>
@@ -157,7 +166,7 @@ export function BentoHome({ profile, plan, history, logs, dailyNote, weeklyNote,
                   <span className="text-[0.8rem] font-semibold tabular-nums">{session ? `${minutesOf(session)} min` : ""}</span>
                 </>
               );
-              const style: CSSProperties = { background, color, boxShadow: `inset 0 1px 0 rgba(255,255,255,${session ? 0.45 : 0.1})${isToday ? ", 0 0 0 2px rgba(255,255,255,.85)" : ""}` };
+              const style: CSSProperties = { background, color, boxShadow: `inset 0 1px 0 rgba(255,255,255,${session ? 0.45 : 0.1})${isToday ? ", 0 0 0 2px var(--bento-text)" : ""}` };
               return session
                 ? <Link key={label} href={`/workout/${session.id}`} aria-current={isToday ? "date" : undefined} className="bento-day" style={style}>{body}</Link>
                 : <div key={label} className="bento-day" style={style}>{body}</div>;
@@ -211,7 +220,7 @@ export function BentoHome({ profile, plan, history, logs, dailyNote, weeklyNote,
         {today && !todayLog ? <Link href={`/workout/${today.id}?checkin=1`} aria-label={`Mark ${today.title} done`} className="bento-done size-14"><Check size={22} aria-hidden /></Link> : <span className="size-14" />}
       </div>
 
-      <CoachGlass open={coachOpen} profile={profile} plan={plan} logs={logs} palette={p} onClose={() => { setCoachOpen(false); onCoachClosed(); }} />
+      <CoachGlass open={coachOpen} profile={profile} plan={plan} logs={logs} onClose={() => { setCoachOpen(false); onCoachClosed(); }} />
 
       <button type="button" onClick={() => setCoachOpen((open) => !open)} aria-label={coachOpen ? `Close ${coach.name}` : `Talk to ${coach.name}`} aria-expanded={coachOpen} className="bento-orb" data-open={coachOpen || undefined}>
         <span aria-hidden className="bento-halo" style={{ background: `radial-gradient(circle, ${p.light}73 0%, transparent 70%)` }} />

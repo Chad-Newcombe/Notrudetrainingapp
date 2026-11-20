@@ -24,7 +24,7 @@ describe("coach voices", () => {
     for (const voice of voices) {
       expect(voice).toContain("one useful point");
       expect(voice).toContain("two short sentences");
-      expect(voice).toContain("No lists");
+      expect(voice).toContain("one useful point at a time");
       expect(voice).toContain("Never open with");
       expect(voice).toContain("I see");
       expect(voice).toContain("That's okay");
@@ -111,6 +111,16 @@ it("tells every coach to apply a plan change without pushback, and keeps pain fi
     expect(coachReplyReminder(p, "I'd rather run on Friday instead of Tuesday")).toMatch(/Do not push back/);
     expect(coachReplyReminder(p, "How was my week")).not.toMatch(/Do not push back/);
     expect(coachReplyReminder(p, "My knee hurts, move my run to Friday")).not.toMatch(/Do not push back/);
-    expect(coachReplyReminder(p, "hi")).toMatch(/no markdown, asterisks, long dashes/);
+    expect(coachReplyReminder(p, "hi")).toMatch(/no markdown, asterisks, bullets, long dashes/);
+  }
+});
+
+it("lets every coach teach exercises and splits at length when asked, and stays short otherwise", () => {
+  for (const coach of COACH_PRESETS) {
+    const p = { ...profile, coachId: coach.id };
+    expect(coachVoiceInstructions(p)).toMatch(/explain or compare splits/);
+    expect(coachReplyReminder(p, "How do I do a Romanian deadlift?")).toMatch(/teach it fully/);
+    expect(coachReplyReminder(p, "What's a push pull legs split?")).toMatch(/teach it fully/);
+    expect(coachReplyReminder(p, "I skipped Tuesday")).toMatch(/at most two short sentences/);
   }
 });
