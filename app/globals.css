@@ -207,12 +207,16 @@ summary { -webkit-tap-highlight-color: transparent; }
 
 .app-shell {
   isolation: isolate;
-  max-width: 430px;
+  max-width: 480px;
   min-height: 100dvh;
   margin: 0 auto;
-  border-inline: 1px solid color-mix(in srgb, var(--app-line), transparent 35%);
   background: var(--app-canvas);
 }
+/* The column edge only shows where there is room beside it; on a phone it read as a web page frame. */
+@media (min-width: 481px) { .app-shell { border-inline: 1px solid color-mix(in srgb, var(--app-line), transparent 35%); } }
+/* A native app shows no scroll bars. */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
 
 /* Screens off the bento home: a round back button where iOS puts it, and room above the home indicator. */
 .main-back { position: fixed; z-index: 40; left: 1rem; top: max(.75rem, env(safe-area-inset-top)); display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px;

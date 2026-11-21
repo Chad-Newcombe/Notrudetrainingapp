@@ -24,6 +24,6 @@ export function CoachSessionLifecycle({ children }: { children?: React.ReactNode
     return () => window.removeEventListener("online", retry);
   }, []);
   if (visit.pathname === pathname && visit.error) return <p role="alert">Couldn’t save your conversation. Reopen Coach to try again.</p>;
-  if (visit.pathname !== pathname || !visit.ready) return <p role="status">Saving your conversation…</p>;
+  if (visit.pathname !== pathname || !visit.ready) return <p role="status" className="px-6 pt-[calc(env(safe-area-inset-top)+4.5rem)] text-[var(--app-muted)]">Saving your conversation…</p>;
   return children;
 }

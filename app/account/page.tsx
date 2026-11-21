@@ -13,7 +13,9 @@ const fieldClass = "min-h-11 w-full rounded-[var(--radius-control)] border borde
 
 export default function AccountPage() {
   const { enabled, google, user } = useAccount();
-  const native = Capacitor.isNativePlatform();
+  // An app build older than the native sign-in plugin gets email only: Google blocks its web view.
+  const native = Capacitor.isPluginAvailable("SocialLogin");
+  const showGoogle = google && (native || !Capacitor.isNativePlatform());
   const [create, setCreate] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -123,8 +125,8 @@ export default function AccountPage() {
         <form key={String(create)} onSubmit={submit} className="panel space-y-4 p-5">
           <h2 className="text-xl font-bold">{create ? "Create an account" : "Sign in"}</h2>
           {native && <Button variant="ghost" className="w-full" type="button" disabled={busy} onClick={() => void socialSignIn("apple")}>Continue with Apple</Button>}
-          {google && <Button variant="ghost" className="w-full" type="button" disabled={busy} onClick={() => void socialSignIn("google")}>Continue with Google</Button>}
-          {(native || google) && <p className="text-center text-sm text-[var(--app-muted)]">or use email</p>}
+          {showGoogle && <Button variant="ghost" className="w-full" type="button" disabled={busy} onClick={() => void socialSignIn("google")}>Continue with Google</Button>}
+          {(native || showGoogle) && <p className="text-center text-sm text-[var(--app-muted)]">or use email</p>}
           {create && <label className="block space-y-1"><span>Display name</span><input className={fieldClass} name="name" autoComplete="name" required maxLength={100} /></label>}
           <label className="block space-y-1"><span>Email</span><input className={fieldClass} name="email" type="email" autoComplete="email" required maxLength={254} /></label>
           <label className="block space-y-1"><span>Password</span><input className={fieldClass} name="password" type="password" autoComplete={create ? "new-password" : "current-password"} required minLength={create ? 10 : undefined} maxLength={128} /></label>

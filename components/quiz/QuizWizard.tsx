@@ -6,6 +6,7 @@ import { CoachAvatar } from "@/components/coach/CoachAvatar";
 import { CoachBubble } from "@/components/coach/CoachBubble";
 import { Button } from "@/components/ui/Button";
 import { ChoiceCard } from "@/components/ui/ChoiceCard";
+import { PICKS, QuickPicks } from "@/components/quiz/QuickPicks";
 import { IntakeConversation } from "./IntakeConversation";
 import { IntakeReview } from "./IntakeReview";
 import { INTAKE_ANSWER_LIMIT, intakeProposalSchema, quickIntakeProposal, type IntakeBrief, type IntakeInput, type IntakeProposal } from "@/lib/intake";
@@ -332,18 +333,18 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
                 What are you working toward?
               </h1>
               <p className="leading-relaxed text-[var(--app-muted)]">
-                In your own words—ultra, strength, moving more, anything counts.
+                Tap what fits, or say it in your own words.
               </p>
             </div>
+            <QuickPicks label="Common goals" options={PICKS.goal} value={draft.goalText} onChange={(goalText) => patch({ goalText })} />
             <textarea
-              className={`${fieldClass} min-h-[140px] resize-y`}
+              className={`${fieldClass} min-h-[100px] resize-y`}
               placeholder="e.g. train for a 50k, or start walking again without guilt"
               aria-label="What are you working toward?"
               maxLength={INTAKE_ANSWER_LIMIT}
               value={draft.goalText}
               onChange={(e) => patch({ goalText: e.target.value })}
-              rows={5}
-              autoFocus
+              rows={3}
             />
           </>
         )}
@@ -399,6 +400,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
             </label>
             <label className="block space-y-1.5">
               <span className="text-sm text-[var(--app-muted)]">Constraints or injuries</span>
+              <QuickPicks label="Common constraints" options={PICKS.constraints} value={draft.constraints} onChange={(constraints) => patch({ constraints })} />
               <textarea
                 className={`${fieldClass} min-h-[80px] resize-y`}
                 placeholder="Optional—knee issues, schedule limits, etc."
@@ -446,6 +448,7 @@ export function QuizWizard({ profile: existing, hasPlan }: { profile: UserProfil
             </label>
             <label className="block space-y-1.5">
               <span className="text-sm text-[var(--app-muted)]">Or describe it</span>
+              <QuickPicks label="What better looks like" options={PICKS.target} value={draft.targetDescription} onChange={(targetDescription) => patch({ targetDescription })} />
               <textarea
                 className={`${fieldClass} min-h-[100px] resize-y`}
                 placeholder="e.g. clothes fit easier, more energy on walks"

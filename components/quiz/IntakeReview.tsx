@@ -41,7 +41,9 @@ export function IntakeReview({
           {fields.map(({ key, label, placeholder }) => (
             <label className="space-y-2" key={key}>
               <span className="text-sm font-medium">{label}</span>
-              <textarea className={fieldClass} maxLength={220} rows={2} value={brief[key]}
+              {/* Grows with its text so a long note never scrolls inside a small box. */}
+              <textarea className={`${fieldClass} resize-none overflow-hidden`} maxLength={220} rows={2} value={brief[key]}
+                ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; } }}
                 placeholder={placeholder} onChange={(e) => onChange(key, e.target.value)} />
             </label>
           ))}
