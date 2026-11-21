@@ -44,7 +44,6 @@ const env = {
   NOTRUDE_PREVIEW_BUILD: build,
   BETTER_AUTH_URL: origin,
   BETTER_AUTH_SECRET: previewSecret(),
-  NOTRUDE_DB_PATH: ".notrude/preview.sqlite",
 };
 
 function runNext(args) {

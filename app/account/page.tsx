@@ -2,7 +2,9 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Cloud, LockKeyhole } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 import { useAccount } from "@/components/account/AccountProvider";
+import { nativeSignInBody } from "@/lib/account/native-sign-in";
 import { Button } from "@/components/ui/Button";
 import { guestRecords, importGuestData } from "@/lib/store/storage";
 import type { StoredRecord } from "@/lib/account/records";
@@ -10,7 +12,8 @@ import type { StoredRecord } from "@/lib/account/records";
 const fieldClass = "min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--app-line)] bg-[var(--app-raised)] px-4 py-3 text-[var(--app-text)] outline-offset-2 focus:outline focus:outline-3 focus:outline-[var(--app-focus)]";
 
 export default function AccountPage() {
-  const { enabled, user } = useAccount();
+  const { enabled, google, user } = useAccount();
+  const native = Capacitor.isNativePlatform();
   const [create, setCreate] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -41,6 +44,28 @@ export default function AccountPage() {
       window.location.assign(path === "sign-up/email" ? "/account" : "/");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Account access is unavailable.");
+      setBusy(false);
+    }
+  }
+
+  // In the iOS app sign-in happens natively (Google blocks web views); on the web Google redirects.
+  async function socialSignIn(provider: "google" | "apple") {
+    setBusy(true);
+    setError("");
+    const name = provider === "google" ? "Google" : "Apple";
+    try {
+      const body = native ? await nativeSignInBody(provider) : { provider, callbackURL: "/" };
+      const response = await fetch("/api/auth/sign-in/social", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json().catch(() => null) as { url?: string } | null;
+      if (!response.ok) throw new Error(`Couldn’t sign in with ${name}. Try again.`);
+      window.location.assign(native ? "/" : data?.url ?? "/");
+    } catch (reason) {
+      const cancelled = reason instanceof Error && /cancel/i.test(reason.message);
+      setError(cancelled ? "" : reason instanceof Error ? reason.message : `Couldn’t sign in with ${name}.`);
       setBusy(false);
     }
   }
@@ -97,6 +122,9 @@ export default function AccountPage() {
       ) : (
         <form key={String(create)} onSubmit={submit} className="panel space-y-4 p-5">
           <h2 className="text-xl font-bold">{create ? "Create an account" : "Sign in"}</h2>
+          {native && <Button variant="ghost" className="w-full" type="button" disabled={busy} onClick={() => void socialSignIn("apple")}>Continue with Apple</Button>}
+          {google && <Button variant="ghost" className="w-full" type="button" disabled={busy} onClick={() => void socialSignIn("google")}>Continue with Google</Button>}
+          {(native || google) && <p className="text-center text-sm text-[var(--app-muted)]">or use email</p>}
           {create && <label className="block space-y-1"><span>Display name</span><input className={fieldClass} name="name" autoComplete="name" required maxLength={100} /></label>}
           <label className="block space-y-1"><span>Email</span><input className={fieldClass} name="email" type="email" autoComplete="email" required maxLength={254} /></label>
           <label className="block space-y-1"><span>Password</span><input className={fieldClass} name="password" type="password" autoComplete={create ? "new-password" : "current-password"} required minLength={create ? 10 : undefined} maxLength={128} /></label>

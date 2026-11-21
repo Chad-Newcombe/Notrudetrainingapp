@@ -30,7 +30,7 @@ npm run preview
 
 Wait for **Ready**, then open [http://127.0.0.1:4310](http://127.0.0.1:4310) in a browser on the same machine. The **Notrude Preview** banner shows the Git commit and flags local edits. Compare that commit with the pull request before reviewing changes. Choose **Gentle start** on Welcome to try Today, Coach, and Inbox, or open **Sign in or create an account** to test saved progress.
 
-To pick up a new push, stop the preview with Ctrl+C, run `git pull --ff-only` from the branch you’re tracking, then run the commands above again. The preview builds into `.next-preview` and uses `.notrude/preview.sqlite` for test accounts. Use the same preview URL and browser to keep guest data between runs. The browser's guest data is scoped to this URL, and preview accounts use a separate database from the regular app.
+To pick up a new push, stop the preview with Ctrl+C, run `git pull --ff-only` from the branch you’re tracking, then run the commands above again. The preview builds into `.next-preview`; test accounts need `DATABASE_URL` in `.env.local`. Use the same preview URL and browser to keep guest data between runs. The browser's guest data is scoped to this URL,.
 
 If the preview was started on the shared cloud desktop, open the URL inside **Cloud browser**. To open the same URL in your own browser, run the preview on your own computer. If you’ve set up local Ollama, the preview uses the same model settings as the app.
 
@@ -126,13 +126,15 @@ Profile, plan, logs, chat, and health connections live in **IndexedDB** in the b
 
 ## Accounts and saved training data
 
-Guest mode saves data in this browser. To enable email/password accounts, add these settings to `.env.local` before starting the app.
+Guest mode saves data in this browser. Accounts are stored in Postgres (Supabase in production). To enable them, add these settings to `.env.local` (or the Vercel project) before starting the app.
 
 ```dotenv
 BETTER_AUTH_URL=http://localhost:3000
 BETTER_AUTH_SECRET=replace-with-your-generated-secret
-# NOTRUDE_DB_PATH=/absolute/path/to/notrude.sqlite
+DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
 ```
+
+Use the Supabase **Transaction pooler** connection string (Connect → Transaction pooler); it suits short serverless requests. Accounts stay off until all three are set.
 
 Generate a secret with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Keep it out of Git. Open the exact origin in `BETTER_AUTH_URL` in your browser. Use an HTTPS origin on a hosted server.
 
@@ -140,7 +142,7 @@ Use **Sign in or create an account** from Welcome or **More → Your account**. 
 
 On the account page, **Copy device data to account** imports the guest records from that browser into an empty account. The original guest data remains available when signed out. Accounts with existing records reject the import.
 
-SQLite is initialized on first use at `.notrude/notrude.sqlite` by default. For hosting, use a single Node server with persistent disk and keep the database backed up. Email verification and password recovery need an email service and are outside this iteration.
+The account tables are created on first use. Email verification and password recovery need an email service and are outside this iteration.
 
 ## Interface
 

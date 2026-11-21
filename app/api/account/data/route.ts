@@ -35,10 +35,10 @@ export async function GET(request: Request) {
   const key = query.get("key");
   if (key !== null && !validRecordKey(collection.data, key)) return respond({ error: "Invalid record key." }, 400);
   const { db, userId } = access;
-  const values = key === null
-    ? db.prepare("SELECT payload FROM coaching_record WHERE user_id = ? AND collection = ? ORDER BY record_key").all(userId, collection.data)
-    : db.prepare("SELECT payload FROM coaching_record WHERE user_id = ? AND collection = ? AND record_key = ?").all(userId, collection.data, key);
-  return respond({ values: values.map((row) => JSON.parse(String(row.payload))) });
+  const { rows } = key === null
+    ? await db.query("SELECT payload FROM coaching_record WHERE user_id = $1 AND collection = $2 ORDER BY record_key", [userId, collection.data])
+    : await db.query("SELECT payload FROM coaching_record WHERE user_id = $1 AND collection = $2 AND record_key = $3", [userId, collection.data, key]);
+  return respond({ values: rows.map((row) => JSON.parse(String(row.payload))) });
 }
 
 export async function POST(request: Request) {
@@ -65,8 +65,7 @@ export async function POST(request: Request) {
   if (parsed.data.action === "delete") {
     const { collection, key } = parsed.data;
     if (!validRecordKey(collection, key)) return respond({ error: "Invalid record key." }, 400);
-    db.prepare("DELETE FROM coaching_record WHERE user_id = ? AND collection = ? AND record_key = ?")
-      .run(userId, collection, key);
+    await db.query("DELETE FROM coaching_record WHERE user_id = $1 AND collection = $2 AND record_key = $3", [userId, collection, key]);
     return respond({ ok: true });
   }
   const records = (action === "put" ? [parsed.data.record] : parsed.data.records).map(parseRecord);
@@ -84,38 +83,42 @@ export async function POST(request: Request) {
     }
   }
 
-  db.exec("BEGIN IMMEDIATE");
+  const client = await db.connect();
   try {
-    if (action === "migrateLegacyChat" && db.prepare(
-      "SELECT 1 FROM coaching_record WHERE user_id = ? AND collection = 'meta' AND record_key = ?",
-    ).get(userId, COACH_MIGRATION_KEY)) {
-      db.exec("COMMIT");
+    await client.query("BEGIN");
+    // One writer per account at a time, as SQLite's BEGIN IMMEDIATE gave us.
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [userId]);
+    if (action === "migrateLegacyChat" && (await client.query(
+      "SELECT 1 FROM coaching_record WHERE user_id = $1 AND collection = 'meta' AND record_key = $2", [userId, COACH_MIGRATION_KEY],
+    )).rows.length) {
+      await client.query("COMMIT");
       return respond({ ok: true, migrated: false });
     }
-    if (action === "import" && db.prepare("SELECT 1 FROM coaching_record WHERE user_id = ? LIMIT 1").get(userId)) {
-      db.exec("ROLLBACK");
+    if (action === "import" && (await client.query("SELECT 1 FROM coaching_record WHERE user_id = $1 LIMIT 1", [userId])).rows.length) {
+      await client.query("ROLLBACK");
       return respond({ error: "This account already has data. Your local data was left on this device." }, 409);
     }
-    const upsert = db.prepare(`
-      INSERT INTO coaching_record (user_id, collection, record_key, payload)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT (user_id, collection, record_key) DO UPDATE SET payload = excluded.payload
-    `);
     for (const record of records) {
       if (!record) continue;
-      const current = record.collection === "coachConversations" ? db.prepare(
-        "SELECT payload FROM coaching_record WHERE user_id = ? AND collection = ? AND record_key = ?",
-      ).get(userId, record.collection, record.key) : undefined;
+      const current = record.collection === "coachConversations" ? (await client.query(
+        "SELECT payload FROM coaching_record WHERE user_id = $1 AND collection = $2 AND record_key = $3", [userId, record.collection, record.key],
+      )).rows[0] : undefined;
       if (!canWriteRecord(current ? JSON.parse(String(current.payload)) : undefined, record)) {
-        db.exec("ROLLBACK");
+        await client.query("ROLLBACK");
         return respond({ error: "Conversation is immutable or belongs to another coach." }, 409);
       }
-      upsert.run(userId, record.collection, record.key, JSON.stringify(record.value));
+      await client.query(`
+        INSERT INTO coaching_record (user_id, collection, record_key, payload)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (user_id, collection, record_key) DO UPDATE SET payload = excluded.payload
+      `, [userId, record.collection, record.key, JSON.stringify(record.value)]);
     }
-    db.exec("COMMIT");
+    await client.query("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    await client.query("ROLLBACK");
     throw error;
+  } finally {
+    client.release();
   }
   return respond({ ok: true, ...(action === "migrateLegacyChat" ? { migrated: true } : {}) });
 }

@@ -8,6 +8,6 @@ export async function GET(request: Request) {
   return Response.json({
     configured: stravaConfigured(),
     signedIn: Boolean(access),
-    connected: access ? stravaConnected(access) : false,
+    connected: access ? await stravaConnected(access) : false,
   }, { headers: { "Cache-Control": "no-store" } });
 }

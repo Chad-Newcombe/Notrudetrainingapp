@@ -6,6 +6,7 @@ import { setStorageAccount } from "@/lib/store/storage";
 
 type AccountState = {
   enabled: boolean;
+  google?: boolean;
   user: { id: string; name: string; email: string } | null;
 };
 

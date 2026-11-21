@@ -51,11 +51,11 @@ export async function beginStravaAuthorization(access: Access): Promise<string> 
   if (!clientId || !process.env.STRAVA_CLIENT_SECRET) throw new Error("Strava is not configured.");
   const state = randomBytes(24).toString("hex");
   const expiresAt = Date.now() + 10 * 60 * 1000;
-  access.db.prepare("DELETE FROM health_oauth_state WHERE expires_at <= ?").run(Date.now());
-  access.db.prepare(`
+  await access.db.query("DELETE FROM health_oauth_state WHERE expires_at <= $1", [Date.now()]);
+  await access.db.query(`
     INSERT INTO health_oauth_state (state, user_id, provider, expires_at)
-    VALUES (?, ?, ?, ?)
-  `).run(state, access.userId, STRAVA, expiresAt);
+    VALUES ($1, $2, $3, $4)
+  `, [state, access.userId, STRAVA, expiresAt]);
   return stravaAuthorizationUrl({
     clientId,
     redirectUri: new URL("/api/health/strava/callback", access.origin).toString(),
@@ -63,13 +63,12 @@ export async function beginStravaAuthorization(access: Access): Promise<string> 
   });
 }
 
-export function consumeStravaState(access: Access, state: string): boolean {
-  const row = access.db.prepare(`
-    SELECT expires_at FROM health_oauth_state
-    WHERE state = ? AND user_id = ? AND provider = ?
-  `).get(state, access.userId, STRAVA) as { expires_at: number } | undefined;
-  access.db.prepare("DELETE FROM health_oauth_state WHERE state = ?").run(state);
-  return Boolean(row && isStravaStateValid(Number(row.expires_at)));
+export async function consumeStravaState(access: Access, state: string): Promise<boolean> {
+  // A state is single use: it is deleted whoever presents it, then checked against this user.
+  const row = (await access.db.query(
+    "DELETE FROM health_oauth_state WHERE state = $1 RETURNING user_id, provider, expires_at", [state],
+  )).rows[0] as { user_id: string; provider: string; expires_at: string } | undefined;
+  return Boolean(row && row.user_id === access.userId && row.provider === STRAVA && isStravaStateValid(Number(row.expires_at)));
 }
 
 async function tokenRequest(body: URLSearchParams) {
@@ -83,17 +82,17 @@ async function tokenRequest(body: URLSearchParams) {
   return tokenResponseSchema.parse(await response.json());
 }
 
-function saveToken(access: Access, token: z.infer<typeof tokenResponseSchema>) {
-  access.db.prepare(`
+async function saveToken(access: Access, token: z.infer<typeof tokenResponseSchema>) {
+  await access.db.query(`
     INSERT INTO health_oauth_token
       (user_id, provider, access_token, refresh_token, expires_at, scope)
-    VALUES (?, ?, ?, ?, ?, ?)
+    VALUES ($1, $2, $3, $4, $5, $6)
     ON CONFLICT(user_id, provider) DO UPDATE SET
       access_token = excluded.access_token,
       refresh_token = excluded.refresh_token,
       expires_at = excluded.expires_at,
       scope = excluded.scope
-  `).run(access.userId, STRAVA, token.access_token, token.refresh_token, token.expires_at, token.scope);
+  `, [access.userId, STRAVA, token.access_token, token.refresh_token, token.expires_at, token.scope]);
 }
 
 export async function exchangeStravaCode(access: Access, code: string) {
@@ -106,7 +105,7 @@ export async function exchangeStravaCode(access: Access, code: string) {
     code,
     grant_type: "authorization_code",
   }));
-  saveToken(access, token);
+  await saveToken(access, token);
 }
 
 type StoredToken = {
@@ -117,10 +116,10 @@ type StoredToken = {
 };
 
 async function activeToken(access: Access): Promise<StoredToken | null> {
-  let token = access.db.prepare(`
+  let token = (await access.db.query(`
     SELECT access_token, refresh_token, expires_at, scope
-    FROM health_oauth_token WHERE user_id = ? AND provider = ?
-  `).get(access.userId, STRAVA) as StoredToken | undefined;
+    FROM health_oauth_token WHERE user_id = $1 AND provider = $2
+  `, [access.userId, STRAVA])).rows[0] as StoredToken | undefined;
   if (!token) return null;
   if (shouldRefreshStravaToken(Number(token.expires_at))) {
     const clientId = process.env.STRAVA_CLIENT_ID;
@@ -132,7 +131,7 @@ async function activeToken(access: Access): Promise<StoredToken | null> {
       refresh_token: token.refresh_token,
       grant_type: "refresh_token",
     }));
-    saveToken(access, refreshed);
+    await saveToken(access, refreshed);
     token = refreshed;
   }
   return token;
@@ -150,18 +149,18 @@ async function recentActivities(accessToken: string): Promise<StravaActivity[]> 
   return activitiesSchema.parse(await response.json());
 }
 
-function saveConnection(access: Access, connected: boolean, summary?: string) {
+async function saveConnection(access: Access, connected: boolean, summary?: string) {
   const value = connected ? {
     provider: STRAVA,
     connected: true,
     lastSyncedAt: new Date().toISOString(),
     sampleSummary: summary,
   } : { provider: STRAVA, connected: false };
-  access.db.prepare(`
+  await access.db.query(`
     INSERT INTO coaching_record (user_id, collection, record_key, payload)
-    VALUES (?, 'health', ?, ?)
+    VALUES ($1, 'health', $2, $3)
     ON CONFLICT(user_id, collection, record_key) DO UPDATE SET payload = excluded.payload
-  `).run(access.userId, STRAVA, JSON.stringify(value));
+  `, [access.userId, STRAVA, JSON.stringify(value)]);
 }
 
 export async function syncStrava(access: Access): Promise<string> {
@@ -169,20 +168,20 @@ export async function syncStrava(access: Access): Promise<string> {
   if (!token) throw new Error("Strava is not connected.");
   const activities = await recentActivities(token.access_token);
   const summary = summarizeStravaActivities(activities);
-  saveConnection(access, true, summary);
+  await saveConnection(access, true, summary);
   return summary;
 }
 
-export function stravaConnected(access: Access): boolean {
-  return Boolean(access.db.prepare(
-    "SELECT 1 FROM health_oauth_token WHERE user_id = ? AND provider = ?",
-  ).get(access.userId, STRAVA));
+export async function stravaConnected(access: Access): Promise<boolean> {
+  return Boolean((await access.db.query(
+    "SELECT 1 FROM health_oauth_token WHERE user_id = $1 AND provider = $2", [access.userId, STRAVA],
+  )).rows.length);
 }
 
 export async function disconnectStrava(access: Access): Promise<void> {
-  const token = access.db.prepare(`
-    SELECT refresh_token FROM health_oauth_token WHERE user_id = ? AND provider = ?
-  `).get(access.userId, STRAVA) as { refresh_token: string } | undefined;
+  const token = (await access.db.query(`
+    SELECT refresh_token FROM health_oauth_token WHERE user_id = $1 AND provider = $2
+  `, [access.userId, STRAVA])).rows[0] as { refresh_token: string } | undefined;
   if (token) {
     const clientId = process.env.STRAVA_CLIENT_ID;
     const clientSecret = process.env.STRAVA_CLIENT_SECRET;
@@ -199,7 +198,6 @@ export async function disconnectStrava(access: Access): Promise<void> {
     });
     if (!response.ok) throw new Error("Strava disconnect failed.");
   }
-  access.db.prepare("DELETE FROM health_oauth_token WHERE user_id = ? AND provider = ?")
-    .run(access.userId, STRAVA);
-  saveConnection(access, false);
+  await access.db.query("DELETE FROM health_oauth_token WHERE user_id = $1 AND provider = $2", [access.userId, STRAVA]);
+  await saveConnection(access, false);
 }

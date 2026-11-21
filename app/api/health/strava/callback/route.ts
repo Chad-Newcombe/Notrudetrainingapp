@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if (!access) return Response.redirect(new URL("/account?health=strava", url.origin));
   const state = url.searchParams.get("state") ?? "";
   const code = url.searchParams.get("code") ?? "";
-  if (url.searchParams.get("error") || !state || !code || !consumeStravaState(access, state)) {
+  if (url.searchParams.get("error") || !state || !code || !(await consumeStravaState(access, state))) {
     return Response.redirect(healthRedirect(url.origin, "strava-denied"));
   }
   try {

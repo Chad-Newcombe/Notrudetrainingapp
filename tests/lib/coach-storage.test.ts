@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { IDBFactory } from "fake-indexeddb";
 import { openDB } from "idb";
-import { DatabaseSync } from "node:sqlite";
+import { PGlite } from "@electric-sql/pglite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CoachConversation, UserProfile } from "@/lib/types";
 
@@ -27,19 +27,33 @@ const conversation = (id: string, coachId: CoachConversation["coachId"], updated
   id, coachId, status: "active", messages: [], resultLabels: [], createdAt: now, updatedAt,
 });
 const legacyMessage = { id: "old-user", role: "user" as const, content: "Walking is hard", createdAt: now };
-let accountDb: DatabaseSync;
+// A real Postgres in memory, behind the two pg Pool calls the account routes use.
+let pg: PGlite;
+const sql = async (text: string, params: unknown[] = []) => (await pg.query<Record<string, unknown>>(text, params)).rows;
+const accountDb = {
+  query: (text: string, params?: unknown[]) => pg.query(text, params),
+  // PGlite has one session, so hand it out one transaction at a time, like a pool of one connection.
+  connect: async () => {
+    const previous = held;
+    let release = () => {};
+    held = new Promise<void>((done) => { release = done; });
+    await previous;
+    return { query: (text: string, params?: unknown[]) => pg.query(text, params), release };
+  },
+};
+let held = Promise.resolve();
 
 beforeEach(async () => {
   setStorageAccount(null);
   await clearAll();
-  accountDb = new DatabaseSync(":memory:");
-  accountDb.exec("CREATE TABLE coaching_record (user_id TEXT, collection TEXT, record_key TEXT, payload TEXT, PRIMARY KEY(user_id, collection, record_key))");
+  pg = new PGlite();
+  await pg.exec("CREATE TABLE coaching_record (user_id TEXT, collection TEXT, record_key TEXT, payload TEXT, PRIMARY KEY(user_id, collection, record_key))");
   services.current = {
     db: accountDb, origin: "https://notrude.test",
     auth: { api: { getSession: async () => ({ user: { id: "account-one" } }) } },
   };
 });
-afterEach(() => { setStorageAccount(null); accountDb.close(); vi.unstubAllGlobals(); });
+afterEach(async () => { setStorageAccount(null); await pg.close(); vi.unstubAllGlobals(); });
 
 function useAccount() {
   setStorageAccount("account-one");
@@ -184,8 +198,7 @@ for (const mode of ["guest", "account"] as const) {
     it("keeps legacy data and the migration retryable for an oversized message", async () => {
       const oversized = { ...legacyMessage, content: "x".repeat(24_001) };
       if (mode === "guest") await (await getDb()).put("chat", oversized);
-      else accountDb.prepare("INSERT INTO coaching_record VALUES (?, ?, ?, ?)")
-        .run("account-one", "chat", oversized.id, JSON.stringify(oversized));
+      else await sql("INSERT INTO coaching_record VALUES ($1, $2, $3, $4)", ["account-one", "chat", oversized.id, JSON.stringify(oversized)]);
       await expect(migrateLegacyChat(profile)).rejects.toThrow("A record could not be saved.");
       expect(await readRecord("meta", "coach-conversation-migration-v2")).toBeUndefined();
       expect(await listCoachConversations()).toEqual([]);
@@ -236,7 +249,7 @@ function post(body: unknown, origin = "https://notrude.test") {
 it("validates all batch records before any writes and rejects invalid deletes and origins", async () => {
   const valid = { collection: "coachConversations", key: "valid", value: conversation("valid", "river") };
   expect((await post({ action: "putMany", records: [valid, { ...valid, key: "mismatch" }] })).status).toBe(400);
-  expect(accountDb.prepare("SELECT COUNT(*) AS n FROM coaching_record").get()?.n).toBe(0);
+  expect(await sql("SELECT COUNT(*)::int AS n FROM coaching_record")).toEqual([{ n: 0 }]);
   for (const body of [
     { action: "delete", collection: "unknown", key: "valid" },
     { action: "delete", collection: "coachConversations", key: "" },
@@ -244,7 +257,7 @@ it("validates all batch records before any writes and rejects invalid deletes an
   ]) expect((await post(body)).status).toBe(400);
   expect((await post({ action: "put", record: valid }, "https://evil.test")).status).toBe(403);
   expect((await post({ action: "putMany", records: [valid] })).status).toBe(200);
-  expect(accountDb.prepare("SELECT COUNT(*) AS n FROM coaching_record").get()?.n).toBe(1);
+  expect(await sql("SELECT COUNT(*)::int AS n FROM coaching_record")).toEqual([{ n: 1 }]);
 });
 
 
@@ -264,12 +277,12 @@ it("upgrades a version-one database while preserving legacy chat", async () => {
 });
 
 it("scopes exact deletion to the authorized account and collection", async () => {
-  const insert = accountDb.prepare("INSERT INTO coaching_record VALUES (?, ?, ?, ?)");
-  insert.run("account-one", "coachConversations", "same", JSON.stringify(conversation("same", "river")));
-  insert.run("account-two", "coachConversations", "same", JSON.stringify(conversation("same", "river")));
-  insert.run("account-one", "chat", "same", JSON.stringify({ ...legacyMessage, id: "same" }));
+  const insert = (...row: string[]) => sql("INSERT INTO coaching_record VALUES ($1, $2, $3, $4)", row);
+  await insert("account-one", "coachConversations", "same", JSON.stringify(conversation("same", "river")));
+  await insert("account-two", "coachConversations", "same", JSON.stringify(conversation("same", "river")));
+  await insert("account-one", "chat", "same", JSON.stringify({ ...legacyMessage, id: "same" }));
   expect((await post({ action: "delete", collection: "coachConversations", key: "same" })).status).toBe(200);
-  expect(accountDb.prepare("SELECT user_id, collection FROM coaching_record ORDER BY user_id").all()).toEqual([
+  expect(await sql("SELECT user_id, collection FROM coaching_record ORDER BY user_id")).toEqual([
     { user_id: "account-one", collection: "chat" },
     { user_id: "account-two", collection: "coachConversations" },
   ]);
@@ -288,5 +301,5 @@ it("rolls back an entire account batch if a later record attempts to overwrite a
     { collection: "coachConversations", key: "protected", value: { ...archived, messages: [legacyMessage] } },
   ] });
   expect(response.status).toBe(409);
-  expect(accountDb.prepare("SELECT record_key FROM coaching_record").all()).toEqual([{ record_key: "protected" }]);
+  expect(await sql("SELECT record_key FROM coaching_record")).toEqual([{ record_key: "protected" }]);
 });
