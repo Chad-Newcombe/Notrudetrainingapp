@@ -23,7 +23,10 @@ export function CoachSessionLifecycle({ children }: { children?: React.ReactNode
     window.addEventListener("online", retry);
     return () => window.removeEventListener("online", retry);
   }, []);
-  if (visit.pathname === pathname && visit.error) return <p role="alert">Couldn’t save your conversation. Reopen Coach to try again.</p>;
+  // Only Coach screens read the open chat, so only they wait for it to be archived; the rest of the
+  // app shows at once while the archive finishes in the background.
+  if (!pathname.startsWith("/coach")) return children;
+  if (visit.pathname === pathname && visit.error) return <p role="alert" className="px-6 pt-[calc(env(safe-area-inset-top)+4.5rem)]">Couldn’t save your conversation. Reopen Coach to try again.</p>;
   if (visit.pathname !== pathname || !visit.ready) return <p role="status" className="px-6 pt-[calc(env(safe-area-inset-top)+4.5rem)] text-[var(--app-muted)]">Saving your conversation…</p>;
   return children;
 }
