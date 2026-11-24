@@ -26,14 +26,14 @@ type CoachRequestBody = {
 };
 
 // People phrase plan changes too freely for a pattern match, so the model decides and names the exact edit.
-async function planRequest(model: NonNullable<ReturnType<typeof getModel>>, text: string, plan: TrainingPlan | null | undefined, signal: AbortSignal): Promise<{ planChange: boolean; edits: PlanEdit[] }> {
+async function planRequest(model: NonNullable<ReturnType<typeof getModel>>, text: string, plan: TrainingPlan | null | undefined, goal: string, signal: AbortSignal): Promise<{ planChange: boolean; edits: PlanEdit[] }> {
   if (!text.trim()) return { planChange: false, edits: [] };
   try {
     const result = await generateText({
-      model, ...localGenerationOptions(signal, 20_000), maxOutputTokens: 200,
+      model, ...localGenerationOptions(signal, 20_000), maxOutputTokens: 600,
       output: Output.object({ schema: z.object({ planChange: z.boolean(), edits: z.array(planEditSchema).max(3) }) }),
       system: cachedSystem(PLAN_EDIT_INSTRUCTIONS),
-      prompt: planEditPrompt(text, plan),
+      prompt: planEditPrompt(text, plan, undefined, goal),
     });
     return result.output;
   } catch {
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { planChange, edits } = await planRequest(model, userText, body.plan, req.signal);
+  const { planChange, edits } = await planRequest(model, userText, body.plan, body.profile.goalText ?? "", req.signal);
   // The edit is applied before the reply so the coach confirms what was actually saved.
   const applied = planChange ? apply(edits) ?? apply(parsePlanEdits(userText)) : null;
   const plan = applied?.edited ?? body.plan;
@@ -91,17 +91,24 @@ export async function POST(req: Request) {
   };
 
   if (applied) {
-    // Small models garble days and minutes, so code writes the confirmation and the coach adds one line that states no schedule facts.
+    // Code writes the confirmation so the facts are exact; the coach adds one line of coaching on top of it.
     const confirmation = applied.saved.join(" ");
     const coach = getCoach(body.profile.coachId);
-    // The model gets no plan or message here, so it has no schedule facts to get wrong.
     const voice = await generateText({
-      model, ...localGenerationOptions(req.signal, 20_000), maxOutputTokens: 40,
+      model, ...localGenerationOptions(req.signal, 20_000), maxOutputTokens: 80,
       system: `You are ${coach.name}, a training coach. ${coach.voice}`,
-      prompt: "The user just asked for a change to their training plan and the app has already confirmed it to them. Write one sentence of at most 14 words, in your own voice, reacting to them having made the change. Do not mention any day, number, activity, or what the change was. Do not ask a question. Plain text only.",
+      prompt: [
+        `The user's goal: ${(body.profile.goalText ?? "").slice(0, 200)}`,
+        `They asked: ${userText.slice(0, 300)}`,
+        `The app already made this change and showed them: ${confirmation}`,
+        "Write one sentence of at most 22 words in your own voice that coaches them on this change: the training reason it works, or what to focus on in that session.",
+        "Do not open with praise or agreement such as Nice, Great, Good call, Love, Agreed, or Sure. Do not repeat the confirmation, do not ask a question, and do not add any day, time, or exercise that is not in the confirmation. Plain text only.",
+      ].join("\n"),
     }).then((result) => result.text, () => "");
     const line = voice.trim().split(/(?<=[.!?])\s+/)[0] ?? "";
-    const safe = line.includes(" ") && !/\d|\b(?:mon|tues|wednes|thurs|fri|satur|sun)day|\btoday\b|\btomorrow\b/i.test(line)
+    const days = line.toLowerCase().match(/\b(?:mon|tues|wednes|thurs|fri|satur|sun)day\b/g) ?? [];
+    const safe = line.includes(" ") && !/^(?:nice|great|good call|love|agreed|sure)\b/i.test(line)
+      && days.every((day) => confirmation.toLowerCase().includes(day))
       && !confirmation.toLowerCase().includes(line.toLowerCase().slice(0, 20));
     return Response.json({ text: safe ? `${confirmation}\n${line}` : confirmation }, { headers: header(applied) });
   }

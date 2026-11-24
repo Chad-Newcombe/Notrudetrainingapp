@@ -15,6 +15,7 @@ export const planEditSchema = z.object({
   newActivity: z.string().nullish(),
   minutes: z.number().nullish(),
   intensity: z.enum(["easy", "moderate", "hard"]).nullish(),
+  exercises: z.array(z.object({ name: z.string(), detail: z.string() })).max(5).nullish(),
 });
 export type PlanEdit = z.infer<typeof planEditSchema>;
 
@@ -30,12 +31,13 @@ export const PLAN_EDIT_INSTRUCTIONS = [
   "harder or easier: the whole plan, or one session if the user named its day or activity.",
   "rewrite: anything else, such as a whole new plan or a different number of training days.",
   "Use null for every field the user did not state. Never invent a day, minutes, intensity, or activity.",
+  "The one thing you do choose as their coach: for add and replace, fill exercises with 3 to 5 specific exercises that fit the session and the user's goal, each with a short detail such as '3 x 8-10, 2 reps in reserve' or '10 min easy pace'. Balance the week: if the plan already trains a pattern hard, pick the one it misses. Use null for a single activity such as a run, walk, or class.",
   "Examples: 'add a yoga day' gives add with newActivity yoga. 'swap my run for a bike ride' gives replace with activity run and newActivity bike ride. 'move Tuesday to Friday' gives move with day tuesday and toDay friday. 'make Thursday 20 minutes' gives set with day thursday and minutes 20. 'I want a harder plan' gives harder. 'can I get a new plan' gives rewrite. 'I skipped Tuesday', 'I'm not feeling it today', 'what should I eat', and 'be funnier' give planChange false.",
 ].join("\n");
 
-export function planEditPrompt(text: string, plan: TrainingPlan | null | undefined, today = todayIndex()): string {
-  const sessions = (plan?.sessions ?? []).map((s) => `${DAYS[s.dayIndex]}: ${s.title}, ${minutesOf(s)} min, ${s.intensity}`);
-  return `Today is ${DAYS[today]}.\nCurrent plan:\n${sessions.join("\n") || "none"}\n\nMessage: ${text.slice(0, 500)}`;
+export function planEditPrompt(text: string, plan: TrainingPlan | null | undefined, today = todayIndex(), goal = ""): string {
+  const sessions = (plan?.sessions ?? []).map((s) => `${DAYS[s.dayIndex]}: ${s.title}, ${minutesOf(s)} min, ${s.intensity}${s.steps.length > 1 ? ` (${s.steps.map((step) => step.name).join(", ")})` : ""}`);
+  return `Today is ${DAYS[today]}.${goal ? `\nUser's goal: ${goal.slice(0, 200)}` : ""}\nCurrent plan:\n${sessions.join("\n") || "none"}\n\nMessage: ${text.slice(0, 500)}`;
 }
 
 const todayIndex = () => (new Date().getDay() + 6) % 7;
@@ -43,8 +45,11 @@ const minutesOf = (session: PlanSession) => session.steps.reduce((sum, step) => 
 const titled = (name: string) => name.trim().slice(0, 40).replace(/^./, (c) => c.toUpperCase());
 const stem = (word: string) => word.replace(/(.)\1ing$/, "$1").replace(/(?:ing|e|s)$/, "");
 
-function withMinutes(session: PlanSession, minutes: number): PlanSession {
+function withMinutes(session: PlanSession, minutes: number, exercises?: PlanEdit["exercises"]): PlanSession {
   const total = Math.min(180, Math.max(5, Math.round(minutes)));
+  const named = (exercises ?? []).filter((e) => e.name.trim()).slice(0, 5);
+  // A coached session lists its exercises and splits the time between them.
+  if (named.length) return { ...session, steps: named.map((e) => ({ name: e.name.trim().slice(0, 60), detail: e.detail.trim().slice(0, 80), durationMin: Math.max(1, Math.round(total / named.length)) })) };
   return { ...session, steps: [{ name: session.steps[0]?.name ?? session.title, detail: `${total} minutes, ${session.intensity} effort.`, durationMin: total }] };
 }
 
@@ -101,7 +106,7 @@ export function applyPlanEdits(
       sessions.push(withMinutes({
         id: createId(), dayIndex, title: titled(name), rationale: "Added because you asked for it.",
         intensity: edit.intensity ?? "easy", steps: [],
-      }, edit.minutes ?? 30));
+      }, edit.minutes ?? 30, edit.exercises));
     } else if (edit.op === "harder" || edit.op === "easier") {
       const one = edit.day || edit.activity ? target : undefined; // otherwise the whole week
       if ((edit.day || edit.activity) && !one) return null;
@@ -124,7 +129,7 @@ export function applyPlanEdits(
       if (!renamed && !edit.minutes && !edit.intensity) return null;
       if (renamed) Object.assign(target, { title: titled(edit.newActivity!), rationale: "Swapped in because you asked for it." });
       if (edit.intensity) target.intensity = edit.intensity;
-      if (renamed || edit.minutes) Object.assign(target, withMinutes(renamed ? { ...target, steps: [] } : target, edit.minutes ?? (minutesOf(target) || 30)));
+      if (renamed || edit.minutes) Object.assign(target, withMinutes(renamed ? { ...target, steps: [] } : target, edit.minutes ?? (minutesOf(target) || 30), renamed ? edit.exercises : undefined));
     } else {
       return null;
     }

@@ -266,6 +266,12 @@ describe("plan edits", () => {
     expect(applyPlanEdits(week, [{ op: "harder" }], [], "", 0)?.sessions.map((s) => s.intensity)).toEqual(["moderate", "hard"]);
   });
 
+  it("gives an added session the coach's exercises, splitting its minutes between them", () => {
+    const exercises = [{ name: "Goblet squat", detail: "3 x 8-10" }, { name: "Romanian deadlift", detail: "3 x 8" }, { name: "Dumbbell row", detail: "3 x 10" }];
+    const lift = at(applyPlanEdits(week, [{ op: "add", newActivity: "strength", minutes: 45, exercises }], [], "", 1), 2);
+    expect(lift?.steps).toEqual(exercises.map((e) => ({ ...e, durationMin: 15 })));
+  });
+
   it("ignores a day the user never said and finds the session named in the message", () => {
     const moved = applyPlanEdits(week, [{ op: "move", day: "tuesday", toDay: "friday" }], [], "move my walk to Friday", 0);
     expect([at(moved, 4)?.id, at(moved, 1)?.id]).toEqual(["b", "a"]);
