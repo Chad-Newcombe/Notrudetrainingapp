@@ -27,6 +27,7 @@ import {
   uiMessageText,
 } from "@/lib/coach/messages";
 import { buildHealthSummary } from "@/lib/health/summary";
+import { appleHealthAvailable, syncAppleHealth } from "@/lib/health/apple";
 import { archiveCoachConversation, getCoachConversation, getCoachRelationship, saveCoachRelationship, listHealth, savePlan } from "@/lib/store";
 import { storageGeneration } from "@/lib/store/db";
 import { storageScope } from "@/lib/store/storage";
@@ -117,6 +118,12 @@ export function CoachChat({ profile, plan, logs, conversation, variant = "page" 
       }
       setHealthSummary(buildHealthSummary(health));
       setBoot(stored.map(chatMessageToUi));
+      // Refresh Apple Health in the background when it's over six hours old, so the coach sees today's numbers.
+      const apple = health.find((connection) => connection.provider === "apple_health" && connection.connected);
+      if (apple && appleHealthAvailable() && Date.now() - Date.parse(apple.lastSyncedAt ?? "") > 6 * 3_600_000) {
+        await syncAppleHealth().catch(() => undefined);
+        setHealthSummary(buildHealthSummary(await listHealth()));
+      }
     })().catch(() => { /* The account provider surfaces storage errors. */ });
   }, [conversation]);
 

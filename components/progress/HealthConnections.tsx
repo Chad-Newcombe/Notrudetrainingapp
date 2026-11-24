@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useAccount } from "@/components/account/AccountProvider";
 import { Button } from "@/components/ui/Button";
 import { getHealthSources } from "@/lib/health/registry";
-import { listHealth } from "@/lib/store";
+import { appleHealthAvailable, syncAppleHealth } from "@/lib/health/apple";
+import { listHealth, saveHealth } from "@/lib/store";
 import type { HealthConnection } from "@/lib/types";
 
 type StravaStatus = {
@@ -25,7 +26,8 @@ export function HealthConnections() {
   const sources = getHealthSources();
   const [connections, setConnections] = useState<HealthConnection[]>([]);
   const [status, setStatus] = useState<StravaStatus | null>(null);
-  const [busy, setBusy] = useState<"sync" | "disconnect" | null>(null);
+  const [busy, setBusy] = useState<"sync" | "disconnect" | "apple" | null>(null);
+  const [appleReady, setAppleReady] = useState(false);
   const [message, setMessage] = useState("");
 
   const reload = useCallback(async () => {
@@ -41,8 +43,26 @@ export function HealthConnections() {
   useEffect(() => {
     const result = new URLSearchParams(window.location.search).get("health");
     if (result && resultMessages[result]) setMessage(resultMessages[result]);
+    setAppleReady(appleHealthAvailable());
     void reload().catch(() => setMessage("Health connections couldn’t be loaded."));
   }, [reload]);
+
+  async function appleAction(action: "sync" | "disconnect") {
+    if (busy) return;
+    setBusy(action === "sync" ? "apple" : "disconnect");
+    setMessage("");
+    try {
+      if (action === "sync") await syncAppleHealth();
+      // iOS keeps the permission itself; this only stops Notrude using the data.
+      else await saveHealth({ provider: "apple_health", connected: false });
+      setMessage(action === "sync" ? "Apple Health synced." : "Apple Health disconnected. To remove access fully, open the Health app, then Sharing, then Apps.");
+      await reload();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Apple Health couldn’t sync.");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   function connectionFor(provider: HealthConnection["provider"]) {
     return connections.find((connection) => connection.provider === provider);
@@ -81,14 +101,15 @@ export function HealthConnections() {
         {sources.map((source) => {
           const connection = connectionFor(source.id);
           const isStrava = source.id === "strava";
-          const isConnected = isStrava ? status?.connected === true : false;
+          const isApple = source.id === "apple_health";
+          const isConnected = isStrava ? status?.connected === true : isApple ? connection?.connected === true : false;
           const availability = isConnected
             ? "Connected"
             : isStrava && status === null
               ? "Checking"
               : isStrava && status?.configured === false
                 ? "Not configured"
-                : source.mode === "oauth"
+                : source.mode === "oauth" || (isApple && appleReady)
                   ? "Available"
                   : "Requires app";
           return (
@@ -104,9 +125,7 @@ export function HealthConnections() {
               </div>
 
               {isStrava && status?.configured === false ? (
-                <p className="text-sm leading-relaxed text-[var(--app-muted)]">
-                  Add STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET to the server environment to enable this connection.
-                </p>
+                <p className="text-sm leading-relaxed text-[var(--app-muted)]">Strava isn’t available yet. It’s coming soon.</p>
               ) : null}
 
               {isConnected && connection?.sampleSummary ? (
@@ -131,6 +150,19 @@ export function HealthConnections() {
                   <Button variant="ghost" className="w-full" disabled>Not configured</Button>
                 ) : (
                   <Button href="/api/health/strava/connect" prefetch={false} variant="ghost" className="w-full">Connect Strava</Button>
+                )
+              ) : isApple && appleReady ? (
+                isConnected ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="ghost" disabled={busy !== null} onClick={() => void appleAction("sync")}>
+                      {busy === "apple" ? "Syncing…" : "Sync now"}
+                    </Button>
+                    <Button variant="ghost" disabled={busy !== null} onClick={() => void appleAction("disconnect")}>Disconnect</Button>
+                  </div>
+                ) : (
+                  <Button variant="ghost" className="w-full" disabled={busy !== null} onClick={() => void appleAction("sync")}>
+                    {busy === "apple" ? "Connecting…" : "Connect Apple Health"}
+                  </Button>
                 )
               ) : (
                 <Button variant="ghost" className="w-full" disabled>{source.actionLabel}</Button>

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 /**
  * The app's loading screen: the launch image's orb, drawn at the same size and place, now breathing
  * while the ring of coaches turns. It is in the server HTML, so it paints with the first frame, and it
- * fades out as soon as the app is interactive. Shown only in the installed app (see BOOT_SCRIPT).
+ * fades out once the app has loaded the account. Shown only in the installed app (see BOOT_SCRIPT).
  */
 export function BootSplash({ orb, ring, cloud }: { orb: string; ring: string; cloud: string }) {
   const [state, setState] = useState<"on" | "done" | "gone">("on");
@@ -15,8 +15,11 @@ export function BootSplash({ orb, ring, cloud }: { orb: string; ring: string; cl
     void SplashScreen.hide({ fadeOutDuration: 150 }).catch(() => undefined); // in case the early hide missed
     // Hidden in a browser tab, so there's no fade to wait for.
     if (!document.documentElement.classList.contains("boot-on")) return setState("gone");
-    const frame = requestAnimationFrame(() => setState("done"));
-    return () => cancelAnimationFrame(frame);
+    // Stay up until the account has loaded, so the only thing seen at launch is this animation.
+    const done = () => setState("done");
+    if (document.documentElement.hasAttribute("data-app-ready")) { const frame = requestAnimationFrame(done); return () => cancelAnimationFrame(frame); }
+    window.addEventListener("notrude-ready", done, { once: true });
+    return () => window.removeEventListener("notrude-ready", done);
   }, []);
 
   if (state === "gone") return null;

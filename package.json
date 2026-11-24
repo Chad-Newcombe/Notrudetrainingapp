@@ -21,6 +21,7 @@
     "@capacitor/ios": "^8.6.2",
     "@capacitor/keyboard": "^8.0.6",
     "@capacitor/splash-screen": "^8.0.2",
+    "@capgo/capacitor-health": "^8.13.0",
     "@capgo/capacitor-social-login": "^8.7.13",
     "ai": "^6.0.325",
     "better-auth": "^1.7.20",

@@ -19,6 +19,12 @@ export function useAccount() {
 export function AccountProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AccountState | null>(null);
   const [error, setError] = useState("");
+  // Tells the launch animation the first real screen is ready (or that there's an error to show).
+  useEffect(() => {
+    if (!state && !error) return;
+    document.documentElement.setAttribute("data-app-ready", "");
+    window.dispatchEvent(new Event("notrude-ready"));
+  }, [state, error]);
   useEffect(() => {
     const controller = new AbortController();
     const onError = (event: Event) => setError((event as CustomEvent<string>).detail);
@@ -46,7 +52,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
   if (!state) return (
     <main className="grid min-h-[100dvh] place-content-center gap-3 px-6 text-center">
-      <p role="status" className="text-[var(--app-muted)]">{error || "Opening Not Rude Training…"}</p>
+      <p role="status" className={error ? "text-[var(--app-muted)]" : "sr-only"}>{error || "Opening Not Rude Training…"}</p>
       {error && <button className="underline" onClick={() => window.location.reload()}>Try again</button>}
     </main>
   );

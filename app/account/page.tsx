@@ -14,7 +14,7 @@ const fieldClass = "min-h-11 w-full rounded-[var(--radius-control)] border borde
 export default function AccountPage() {
   const { enabled, google, user } = useAccount();
   // An app build older than the native sign-in plugin gets email only: Google blocks its web view.
-  const native = Capacitor.isPluginAvailable("SocialLogin");
+  const native = Capacitor.isNativePlatform() && Capacitor.isPluginAvailable("SocialLogin");
   const showGoogle = google && (native || !Capacitor.isNativePlatform());
   const [create, setCreate] = useState(false);
   const [busy, setBusy] = useState(false);

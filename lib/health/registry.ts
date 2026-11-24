@@ -13,8 +13,8 @@ const sources: HealthProviderDefinition[] = [
     id: "apple_health",
     label: "Apple Health",
     mode: "native_required",
-    availabilityNote: "HealthKit access requires the native iOS app and your permission on iPhone.",
-    actionLabel: "iOS app required",
+    availabilityNote: "Workouts, steps, sleep, resting heart rate and weight, read only, so your coach can judge load and recovery.",
+    actionLabel: "Open the iPhone app to connect",
   },
   {
     id: "garmin",

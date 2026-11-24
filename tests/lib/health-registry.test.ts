@@ -21,7 +21,7 @@ describe("health registry", () => {
     const apple = getHealthSource("apple_health");
     const garmin = getHealthSource("garmin");
     expect(apple.mode).toBe("native_required");
-    expect(apple.availabilityNote).toMatch(/HealthKit.*iOS/i);
+    expect(apple.availabilityNote).toMatch(/workouts.*sleep/i);
     expect(garmin.mode).toBe("partner_required");
     expect(garmin.availabilityNote).toMatch(/developer program/i);
   });

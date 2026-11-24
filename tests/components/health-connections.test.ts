@@ -35,7 +35,7 @@ describe("HealthConnections", () => {
 
     expect(await screen.findByRole("link", { name: "Connect Strava" }))
       .toHaveAttribute("href", "/api/health/strava/connect");
-    expect(screen.getByRole("button", { name: "iOS app required" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Open the iPhone app to connect" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Partner access required" })).toBeDisabled();
     expect(screen.queryByText(/mock sync/i)).not.toBeInTheDocument();
   });
@@ -58,7 +58,7 @@ describe("HealthConnections", () => {
     render(createElement(HealthConnections));
 
     expect(await screen.findByText("Not configured", { selector: ".health-status" })).toBeInTheDocument();
-    expect(screen.getByText(/STRAVA_CLIENT_ID.*STRAVA_CLIENT_SECRET/i)).toBeInTheDocument();
+    expect(screen.getByText(/Strava isn’t available yet/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Not configured" })).toBeDisabled();
     expect(screen.queryByRole("link", { name: "Connect Strava" })).not.toBeInTheDocument();
   });

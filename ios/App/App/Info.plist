@@ -75,5 +75,9 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Not Rude Training reads your workouts, steps, sleep, resting heart rate and weight so your coach can fit your plan to your load and recovery.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Not Rude Training does not write to Apple Health.</string>
 </dict>
 </plist>
