@@ -15,6 +15,7 @@ const PROGRAMMING_RULES = [
   "Each step name is one exercise or block (Goblet squat, Easy run). Its detail gives the prescription and one form cue, for example: 3 x 8-10, stop 2 reps short of failure, rest 90 s. Chest up, knees track over toes. Strength sessions have 3 to 5 main exercises. Cardio steps give minutes and effort: easy enough to talk, steady, or intervals with work and rest times.",
   "Fit the goal: muscle gain uses mostly 6 to 12 reps and enough hard sets per muscle each week; strength uses 3 to 6 reps on the main lifts; fat loss combines strength work with conditioning; endurance is mostly easy aerobic work with one harder session.",
   "Across the week, cover squat, hinge, push, pull and core patterns for strength goals, and never put hard sessions for the same muscles on consecutive days.",
+  "Rationales make only well-supported training claims, with no exaggerated fat-burning promises.",
   "Use only the equipment and setting the user has, swap movements that load a stated injury for safe ones, and scale to their level: beginners get simpler movements and fewer sets.",
 ].join(" ");
 

@@ -72,7 +72,7 @@ it("defines immutable boundaries and limits relationship adaptation to the selec
     expect(voice).toContain(forbidden[index]);
     expect(voice).toContain("Keep it short");
     expect(voice.indexOf("Immutable core")).toBeLessThan(voice.indexOf("Keep it short"));
-    expect(voice).toContain("never a question that hands planning back");
+    expect(voice).toContain("never ask one that hands planning back");
     expect(voice).toContain("Never write the user's presumed reply");
     expect(voice).toContain("do not suggest switching again");
     expect(voice).toMatch(/pain or injury/);
