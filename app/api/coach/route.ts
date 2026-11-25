@@ -114,7 +114,7 @@ export async function POST(req: Request) {
   }
 
   // Explanations (form, splits, why) need room; everyday replies stay short.
-  return streamText({ ...reply, maxOutputTokens: asksForDetail(userText) ? 700 : 220 }).toUIMessageStreamResponse({
+  return streamText({ ...reply, maxOutputTokens: asksForDetail(userText) ? 450 : 220 }).toUIMessageStreamResponse({
     sendReasoning: false,
     headers: planChange ? header(null) : undefined,
     onError: () => "Your local coach is unavailable. Check that Ollama is running and try again.",
