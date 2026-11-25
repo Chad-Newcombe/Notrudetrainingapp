@@ -124,3 +124,8 @@ it("lets every coach teach exercises and splits at length when asked, and stays 
     expect(coachReplyReminder(p, "I skipped Tuesday")).toMatch(/two or three short sentences/);
   }
 });
+
+it("ends explanations without a follow-up question", () => {
+  expect(coachReplyReminder(profile, "How do I know when to add weight?")).toMatch(/end on the advice with no question/);
+  expect(coachReplyReminder(profile, "My squats felt heavy")).not.toMatch(/end on the advice with no question/);
+});
