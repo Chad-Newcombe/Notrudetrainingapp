@@ -101,7 +101,7 @@ export async function POST(req: Request) {
         `The user's goal: ${(body.profile.goalText ?? "").slice(0, 200)}`,
         `They asked: ${userText.slice(0, 300)}`,
         `The app already made this change and showed them: ${confirmation}`,
-        "Write one sentence of at most 22 words in your own voice that coaches them on this change: the training reason it works, or what to focus on in that session.",
+        `Write one sentence of at most ${coach.id === "knox" ? 12 : 22} words in your own voice that coaches them on this change: the training reason it works, or what to focus on in that session.`,
         "Do not open with praise or agreement such as Nice, Great, Good call, Love, Agreed, or Sure. Do not repeat the confirmation, do not ask a question, and do not add any day, time, or exercise that is not in the confirmation. Plain text only.",
       ].join("\n"),
     }).then((result) => result.text, () => "");
@@ -114,7 +114,7 @@ export async function POST(req: Request) {
   }
 
   // Explanations (form, splits, why) need room; everyday replies stay short.
-  return streamText({ ...reply, maxOutputTokens: asksForDetail(userText) ? 700 : 140 }).toUIMessageStreamResponse({
+  return streamText({ ...reply, maxOutputTokens: asksForDetail(userText) ? 700 : 220 }).toUIMessageStreamResponse({
     sendReasoning: false,
     headers: planChange ? header(null) : undefined,
     onError: () => "Your local coach is unavailable. Check that Ollama is running and try again.",

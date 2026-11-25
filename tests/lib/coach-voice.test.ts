@@ -23,7 +23,7 @@ describe("coach voices", () => {
     expect(new Set(voices).size).toBe(6);
     for (const voice of voices) {
       expect(voice).toContain("one useful point");
-      expect(voice).toContain("two short sentences");
+      expect(voice).toContain("two or three short sentences");
       expect(voice).toContain("one useful point at a time");
       expect(voice).toContain("Never open with");
       expect(voice).toContain("I see");
@@ -72,7 +72,7 @@ it("defines immutable boundaries and limits relationship adaptation to the selec
     expect(voice).toContain(forbidden[index]);
     expect(voice).toContain("Keep it short");
     expect(voice.indexOf("Immutable core")).toBeLessThan(voice.indexOf("Keep it short"));
-    expect(voice).toContain("only when missing information blocks");
+    expect(voice).toContain("never a question that hands planning back");
     expect(voice).toContain("Never write the user's presumed reply");
     expect(voice).toContain("do not suggest switching again");
     expect(voice).toMatch(/pain or injury/);
@@ -121,6 +121,6 @@ it("lets every coach teach exercises and splits at length when asked, and stays 
     expect(coachVoiceInstructions(p)).toMatch(/explain or compare splits/);
     expect(coachReplyReminder(p, "How do I do a Romanian deadlift?")).toMatch(/teach it fully/);
     expect(coachReplyReminder(p, "What's a push pull legs split?")).toMatch(/teach it fully/);
-    expect(coachReplyReminder(p, "I skipped Tuesday")).toMatch(/at most two short sentences/);
+    expect(coachReplyReminder(p, "I skipped Tuesday")).toMatch(/two or three short sentences/);
   }
 });
