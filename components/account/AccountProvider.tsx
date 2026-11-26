@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { setStorageAccount } from "@/lib/store/storage";
 
 type AccountState = {
@@ -12,6 +13,13 @@ type AccountState = {
 
 const AccountContext = createContext<AccountState>({ enabled: false, user: null });
 
+/** Lets the launch animation fade out; safe to call more than once. */
+export function markAppReady() {
+  if (document.documentElement.hasAttribute("data-app-ready")) return;
+  document.documentElement.setAttribute("data-app-ready", "");
+  window.dispatchEvent(new Event("notrude-ready"));
+}
+
 export function useAccount() {
   return useContext(AccountContext);
 }
@@ -19,12 +27,12 @@ export function useAccount() {
 export function AccountProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AccountState | null>(null);
   const [error, setError] = useState("");
+  const pathname = usePathname();
   // Tells the launch animation the first real screen is ready (or that there's an error to show).
+  // The welcome page decides for itself, since a returning user goes straight on to Today.
   useEffect(() => {
-    if (!state && !error) return;
-    document.documentElement.setAttribute("data-app-ready", "");
-    window.dispatchEvent(new Event("notrude-ready"));
-  }, [state, error]);
+    if ((state && pathname !== "/") || error) markAppReady();
+  }, [state, error, pathname]);
   useEffect(() => {
     const controller = new AbortController();
     const onError = (event: Event) => setError((event as CustomEvent<string>).detail);

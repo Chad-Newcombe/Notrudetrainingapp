@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CoachStage } from "@/components/coach/CoachStage";
-import { useAccount } from "@/components/account/AccountProvider";
+import { markAppReady, useAccount } from "@/components/account/AccountProvider";
 import { NotrudeMark } from "@/components/brand/NotrudeMark";
 import { Button } from "@/components/ui/Button";
 import { type DemoProfileId, seedDemoProfile } from "@/lib/demo/seed";
@@ -31,6 +31,17 @@ export default function WelcomePage() {
 
   const continueHref =
     profile && plan ? "/today" : profile ? "/acknowledgment" : undefined;
+  const returning = ready && Boolean(profile && plan);
+
+  // Someone with a plan goes straight to Today behind the launch animation instead of seeing this page.
+  useEffect(() => {
+    if (!ready) return;
+    if (!returning) return markAppReady();
+    router.replace("/today");
+    return markAppReady; // fades the animation once Today replaces this page
+  }, [ready, returning, router]);
+
+  if (!ready || returning) return <main className="min-h-[100dvh] bg-[var(--app-canvas)]" />;
 
   return (
     <main className="flex min-h-[100dvh] flex-col justify-between bg-[var(--app-canvas)] px-6 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]">

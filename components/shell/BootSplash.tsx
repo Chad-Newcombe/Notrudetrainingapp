@@ -33,6 +33,6 @@ export function BootSplash({ orb, ring, cloud }: { orb: string; ring: string; cl
   );
 }
 
-// Runs as the HTML parses, before the first paint: turn the loader on only inside the iOS app or a
+// Runs as the HTML parses, before the first paint: restore the last coach's colors, turn the loader on only inside the iOS app or a
 // home-screen install, then let the native launch image go, since the loader now shows the same orb.
-export const BOOT_SCRIPT = `(function(){var C=window.Capacitor;var app=(C&&C.isNativePlatform&&C.isNativePlatform())||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;if(!app)return;document.documentElement.classList.add("boot-on");try{C&&C.nativePromise&&C.nativePromise("SplashScreen","hide",{fadeOutDuration:150}).catch(function(){})}catch(e){}})();`;
+export const BOOT_SCRIPT = `(function(){try{var t=JSON.parse(localStorage.getItem("notrude-theme")||"null");var d=document.documentElement.dataset;if(t&&/^[a-z]+$/.test(t.coachId))d.coach=t.coachId;if(t&&/^(system|light|dark)$/.test(t.appearance))d.appearance=t.appearance}catch(e){}var C=window.Capacitor;var app=(C&&C.isNativePlatform&&C.isNativePlatform())||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;if(!app)return;document.documentElement.classList.add("boot-on");try{C&&C.nativePromise&&C.nativePromise("SplashScreen","hide",{fadeOutDuration:150}).catch(function(){})}catch(e){}})();`;

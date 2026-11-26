@@ -8,6 +8,8 @@ export type ThemeSelection = {
   appearance: AppearanceMode;
 };
 
+export const THEME_STORAGE_KEY = "notrude-theme";
+
 export function themeSelection(
   profile?: Pick<UserProfile, "coachId" | "appearance"> | null,
 ): ThemeSelection {
