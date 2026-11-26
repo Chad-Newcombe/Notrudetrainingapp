@@ -38,3 +38,10 @@ export const DAY_LABELS = [
   "Saturday",
   "Sunday",
 ] as const;
+
+/** Monday-first day index of the user's local date, or undefined when it is missing or malformed. */
+export function localDayIndex(today: unknown): number | undefined {
+  if (typeof today !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(today)) return undefined;
+  const date = new Date(`${today}T12:00:00Z`);
+  return Number.isNaN(date.getTime()) ? undefined : (date.getUTCDay() + 6) % 7;
+}

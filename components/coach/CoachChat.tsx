@@ -288,6 +288,8 @@ function CoachChatInner({
             plan: activePlanRef.current,
             logs,
             healthSummary,
+            // The server runs on UTC, so the phone says what day it is for the user.
+            today: new Date().toLocaleDateString("en-CA"),
             continuationSummary: messages.filter((message) => message.role === "user").length === 1 ? continuationSummary : undefined,
           },
         };

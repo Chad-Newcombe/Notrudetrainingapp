@@ -129,3 +129,13 @@ it("ends explanations without a follow-up question", () => {
   expect(coachReplyReminder(profile, "How do I know when to add weight?")).toMatch(/end on the advice with no question/);
   expect(coachReplyReminder(profile, "My squats felt heavy")).not.toMatch(/end on the advice with no question/);
 });
+
+it("reads the user's local date as a Monday-first day and rejects anything else", async () => {
+  const { localDayIndex } = await import("@/lib/dates");
+  expect(localDayIndex("2026-11-25")).toBe(2); // a Wednesday
+  expect(localDayIndex("2026-11-30")).toBe(0); // a Monday
+  expect(localDayIndex("2026-11-29")).toBe(6); // a Sunday
+  expect(localDayIndex("Wednesday")).toBeUndefined();
+  expect(localDayIndex(undefined)).toBeUndefined();
+  expect(coachVoiceInstructions(profile)).toMatch(/Context.today is the user's own day/);
+});

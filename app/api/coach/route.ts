@@ -7,6 +7,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { lastUserText } from "@/lib/ai/coach-messages";
+import { localDayIndex } from "@/lib/dates";
 import { applyPlanEdits, parsePlanEdits, PLAN_EDIT_INSTRUCTIONS, planEditPrompt, planEditSchema, summarizePlanEdits, type PlanEdit } from "@/lib/coach/plan-edit";
 import { classifyPlanIntent } from "@/lib/coach/plan-revision";
 import { fixtureCoachReply } from "@/lib/ai/fixtures";
@@ -23,17 +24,19 @@ type CoachRequestBody = {
   logs?: WorkoutLog[];
   healthSummary?: string;
   continuationSummary?: string;
+  /** The user's local date, YYYY-MM-DD. */
+  today?: string;
 };
 
 // People phrase plan changes too freely for a pattern match, so the model decides and names the exact edit.
-async function planRequest(model: NonNullable<ReturnType<typeof getModel>>, text: string, plan: TrainingPlan | null | undefined, goal: string, signal: AbortSignal): Promise<{ planChange: boolean; edits: PlanEdit[] }> {
+async function planRequest(model: NonNullable<ReturnType<typeof getModel>>, text: string, plan: TrainingPlan | null | undefined, goal: string, today: number | undefined, signal: AbortSignal): Promise<{ planChange: boolean; edits: PlanEdit[] }> {
   if (!text.trim()) return { planChange: false, edits: [] };
   try {
     const result = await generateText({
       model, ...localGenerationOptions(signal, 20_000), maxOutputTokens: 600,
       output: Output.object({ schema: z.object({ planChange: z.boolean(), edits: z.array(planEditSchema).max(3) }) }),
       system: cachedSystem(PLAN_EDIT_INSTRUCTIONS),
-      prompt: planEditPrompt(text, plan, undefined, goal),
+      prompt: planEditPrompt(text, plan, today, goal),
     });
     return result.output;
   } catch {
@@ -52,6 +55,7 @@ function buildCoachSystem(body: CoachRequestBody, planChange: boolean, saved?: s
       profile: body.profile,
       plan: body.plan ?? null,
       logs: body.logs?.slice(-7) ?? [],
+      today: localDayIndex(body.today) === undefined ? null : `${["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][localDayIndex(body.today)!]} ${body.today}`,
       healthSummary: body.healthSummary ?? null,
       continuationSummary: typeof body.continuationSummary === "string" && body.messages.filter((message) => message.role === "user").length === 1 ? body.continuationSummary.slice(0, 220) : undefined,
     }),
@@ -62,10 +66,11 @@ export async function POST(req: Request) {
   const body = (await req.json()) as CoachRequestBody;
 
   const userText = lastUserText(body.messages);
+  const today = localDayIndex(body.today);
   const notes: string[] = [];
   const apply = (edits: PlanEdit[]) => {
     notes.length = 0;
-    const edited = applyPlanEdits(body.plan, edits, body.logs, userText, undefined, notes);
+    const edited = applyPlanEdits(body.plan, edits, body.logs, userText, today, notes);
     return edited ? { edits, edited, saved: summarizePlanEdits(body.plan ?? null, edited, edits, notes) } : null;
   };
   const header = (applied: ReturnType<typeof apply>) => ({ "X-Notrude-Plan-Change": applied ? encodeURIComponent(JSON.stringify(applied.edits)) : "1" });
@@ -79,7 +84,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { planChange, edits } = await planRequest(model, userText, body.plan, body.profile.goalText ?? "", req.signal);
+  const { planChange, edits } = await planRequest(model, userText, body.plan, body.profile.goalText ?? "", today, req.signal);
   // The edit is applied before the reply so the coach confirms what was actually saved.
   const applied = planChange ? apply(edits) ?? apply(parsePlanEdits(userText)) : null;
   const plan = applied?.edited ?? body.plan;
